@@ -28,8 +28,9 @@ public class MovementFacade
 
     /**
      * PWM Frequency
+     * TODO: Setter with bounds
      */
-    public static final int FREQUENCY = 60000;
+    private static int FREQUENCY = 60000;
 
     /**
      * PWM Duty Cycle
@@ -165,6 +166,7 @@ public class MovementFacade
         PwmConfigBuilder configBuilder;
         switch (address)
         {
+            //TODO: Set PWM duty cycle
             //The following pins allow for hardware PWM support.
             case 12:
             case 13:

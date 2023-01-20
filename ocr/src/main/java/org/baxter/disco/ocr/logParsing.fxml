@@ -11,7 +11,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <Pane AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
@@ -64,14 +63,14 @@
                   </HBox>
                   <HBox spacing="5.0">
                      <children>
-                        <Label text="Max diff. for anomaly detection:" translateY="3.0" />
-                        <TextField text="0.5" />
+                        <Label text="Max Size for Running Mean:" translateY="3.0" />
+                        <TextField promptText="No max size" />
                      </children>
                   </HBox>
                   <HBox spacing="5.0">
                      <children>
-                        <Label text="Max Size for Running Mean:" translateY="3.0" />
-                        <TextField promptText="No max size" />
+                        <Label text="Max diff. for anomaly detection:" translateY="3.0" />
+                        <TextField text="0.5" />
                      </children>
                   </HBox>
                   <Separator prefWidth="200.0" />

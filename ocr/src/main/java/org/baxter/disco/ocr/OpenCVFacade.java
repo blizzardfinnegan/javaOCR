@@ -177,7 +177,7 @@ public class OpenCVFacade
         }
         else
         {
-            ErrorLogging.logError("CAMERA ERROR!!! - Illegal camera name.");
+            ErrorLogging.logError("CAMERA ERROR!!! - Given camera name not initialised.");
             return false;
         }
     }
@@ -228,6 +228,7 @@ public class OpenCVFacade
 
     /**
      * 
+     * TODO: Overload frameCount
      * @param cameraName    Name of the camera to take a picture with.
      * @param frameCount    The number of images to take.
      *
@@ -351,6 +352,7 @@ public class OpenCVFacade
     /**
      * Processes image from defined camera, using the config defaults.
      *
+     * TODO: More robust file output checking
      * @param cameraName        Name of the camera to take a picture from.
      * @param crop              Whether to crop the image
      * @param threshold         Whether to threshold the image

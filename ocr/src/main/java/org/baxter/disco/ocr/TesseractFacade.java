@@ -57,14 +57,19 @@ public class TesseractFacade
         //Determine whether the OCR output is actually a double
         if(!stringOutput.isEmpty())
         {
-            Scanner sc = new Scanner(stringOutput.trim());
-            if(!sc.hasNextDouble()) 
+            try(Scanner sc = new Scanner(stringOutput.trim());)
             {
-                output = sc.nextDouble();
-                if(output >= 200) ErrorLogging.logError("OCR ERROR!!! - OCR output is too high for DUT, potential misread.");
-                if(output <= -10) ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
+                /*
+                 *Discos have error messages (LO, HI, POS, ?). Consider parsing as well.
+                 */
+                if(sc.hasNextDouble()) 
+                {
+                    output = sc.nextDouble();
+                    if(output >= 200) ErrorLogging.logError("OCR ERROR!!! - OCR output is too high for DUT, potential misread.");
+                    if(output <= -10) ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
+                }
+                else ErrorLogging.logError("OCR ERROR!!! - OCR output is not a Double.");
             }
-            else ErrorLogging.logError("OCR ERROR!!! - OCR output is not a Double.");
         }
 
         //Return output

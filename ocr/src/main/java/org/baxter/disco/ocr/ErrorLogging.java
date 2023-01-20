@@ -26,6 +26,9 @@ public class ErrorLogging
     {
         try
         {
+            /*
+             * New file per runtime
+             */
         fw = new FileWriter(logFile, true);
         bw = new BufferedWriter(fw);
         fileOut = new PrintWriter(bw);

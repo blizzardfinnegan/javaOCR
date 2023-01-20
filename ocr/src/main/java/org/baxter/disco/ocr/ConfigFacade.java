@@ -53,7 +53,7 @@ public class ConfigFacade
     /**
      * Map of all config values relating to the camera.
      */
-    private static final Map<String,Map<ConfigProperties,Double>> configMap = new HashMap<>();
+    private static final Map<String, Map<ConfigProperties, Double>> configMap = new HashMap<>();
 
     private static final Configurations CONFIGURATIONS = new Configurations();
     private static FileBasedConfigurationBuilder<INIConfiguration> CONFIG_BUILDER = CONFIGURATIONS.iniBuilder(configFileLocation);
@@ -61,6 +61,7 @@ public class ConfigFacade
 
     static
     {
+        //TODO: Fix
         loadConfig();
     }
     /**
@@ -231,7 +232,7 @@ public class ConfigFacade
             for(String sectionName : CONFIG_STORE.getSections())
             {
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
-                SubnodeConfiguration section = CONFIG_STORE.getSection(sectionName);
+                var section = CONFIG_STORE.getSection(sectionName);
 
                 for(ConfigProperties configState : ConfigProperties.values())
                 {
