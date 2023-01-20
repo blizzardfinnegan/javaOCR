@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class OpenCVFacade
 {
+    //Local variable instantiation
     /**
      * Storage of all cameras as Map.
      * To get available camera names, getKeys.
@@ -57,6 +58,7 @@ public class OpenCVFacade
      */
     private static final String CAMERA_CODEC = "mjpg";
 
+    //Initial Camera creation
     static
     {
         //Pis should already be configured to create this symlink.
