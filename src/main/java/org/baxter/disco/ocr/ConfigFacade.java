@@ -29,7 +29,6 @@ public class ConfigFacade
     /**
      * Location for the current config to be saved to.
      * 
-     * TODO: Set default path
      * Defaults to [currentWorkingDirectory]/config.properties
      */
     private static String configFileLocation = "config.ini";
@@ -61,7 +60,7 @@ public class ConfigFacade
 
     static
     {
-        //TODO: Fix
+        //FIXME
         loadConfig();
     }
     /**
@@ -187,7 +186,7 @@ public class ConfigFacade
      */
     public static boolean saveDefaultConfig() { return saveDefaultConfig(configFileLocation); }
 
-    /**TODO: Implement
+    /**FIXME
      * Save current config to a user-defined file location.
      *
      * @param filename  Name and location of the config file (typically, config.properties)

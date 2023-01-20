@@ -27,7 +27,7 @@ mvn clean package
 
 ## Documentation
 
-This project was built with Javadoc in mind, as it is a good way to explore a project in an interactie manner. To generate Javadocs, run the following:
+This project was built with Javadoc in mind, as it is a good way to explore a project in an interactive manner. To generate Javadocs, run the following:
 
 ```
 mvn site
