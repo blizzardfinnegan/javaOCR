@@ -15,7 +15,7 @@ There are several required dependencies for this project. Maven handles these de
 
 ## Installation
 
-The project is then built from source, and the output final binary (located in `ocr/target/discoTesting.jar`) is copied to the Raspberry Pi for use.
+The project is then built from source, and the output final binary (located in `target/discoTesting.jar`) is copied to the Raspberry Pi for use.
 
 ## Building from source
 
@@ -33,4 +33,4 @@ This project was built with Javadoc in mind, as it is a good way to explore a pr
 mvn site
 ```
 
-The documentation site can then be found in `ocr/target/site/index.html`.
+The documentation site can then be found in `target/site/index.html`.
