@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Class containing a single function for easily writing errors to a log file, as well as stderr.
+ * Class containing a single function for easily writing errors to a log file, 
+ * as well as stderr.
  *
  * @author Blizzard Finnegan
  * @version 19 Jan. 2023
@@ -48,7 +49,7 @@ public class ErrorLogging
      */
     public static void logError(Throwable error)
     {
-        String errorMessage = datetime.format(LocalDateTime.now()) + error.toString();
+        String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error.toString();
         fileOut.println(errorMessage);
         System.err.println(errorMessage);
     }
@@ -61,7 +62,7 @@ public class ErrorLogging
      */
     public static void logError(String error)
     {
-        String errorMessage = datetime.format(LocalDateTime.now()) + error;
+        String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error;
         fileOut.println(errorMessage);
         System.err.println(errorMessage);
     }

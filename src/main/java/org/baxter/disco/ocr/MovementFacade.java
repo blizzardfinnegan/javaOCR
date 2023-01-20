@@ -268,12 +268,15 @@ public class MovementFacade
             motorDirection.low();
             limitSense = lowerLimit;
         }
+
+        motorEnable.on();
         for(int i = 0; i < (timeout * 20);i++)
         {
             try{ Thread.sleep(50); } catch(Exception e) {ErrorLogging.logError(e);};
             output = limitSense.isHigh();
-            if(output) return output;
+            if(output) break;
         }
+        motorEnable.off();
         return output;
     }
 
@@ -353,16 +356,4 @@ public class MovementFacade
 //        {
 //        }
 //    }
-
-    /**
-     * Main function.
-     *
-     * Run this class by itself to test the GPIO functionality.
-     */
-    public static void main(String[] args)
-    {
-        testMotions();
-        closeGPIO();
-    }
-
 }

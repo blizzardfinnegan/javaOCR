@@ -6,7 +6,7 @@ import javafx.scene.*;
 import javafx.scene.text.Text;
 
 /**
- * TODO: READ DOCUMENTATION
+ * To be implemented.
  */
 public class Gui
 {

@@ -16,10 +16,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
- * Facade for working with config files.
- * Stores current config setup in RAM for easy access.
- * Can write to file when requested, reads from file on 
- * initial start.
+ * Facade for working with config files, using the Apache Commons 
+ * Configuration library.
+ * Stores current config setup in a HashMap for easy and quick access.
+ * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
  * @version 20 Jan. 2023
@@ -29,7 +29,7 @@ public class ConfigFacade
     /**
      * Location for the current config to be saved to.
      * 
-     * Defaults to [currentWorkingDirectory]/config.properties
+     * Defaults to [currentWorkingDirectory]/config.ini
      */
     private static String configFileLocation = "config.ini";
 
@@ -42,8 +42,8 @@ public class ConfigFacade
 
     /**
      * Read-Only List of available cameras.
-     * 
-     * Is not set as final, due to current initialisation procedure.
+     *
+     * TODO: Fill activeCameras
      */
     public static final List<String> activeCameras = new ArrayList<>();
 
@@ -114,8 +114,8 @@ public class ConfigFacade
      * Set a given config value.
      * DOES NOT SAVE VALUE TO FILE.
      *
-     * @param cameraName    Name of the camera (as defined in {@link #activeCameras})
-     * @param property      name of the property ({@link ConfigProperties}
+     * @param cameraName    Name of the camera 
+     * @param property      name of the property 
      * @param propertyValue Value of the property
      * @return true if set successfully, otherwise false
      */
@@ -131,7 +131,7 @@ public class ConfigFacade
     /**
      * Save current config to a user-defined file location.
      *
-     * @param filename  Name and location of the config file (typically, config.properties)
+     * @param filename  Name and location of the config file (typically, config.ini)
      * @return true if saved successfully, otherwise false
      */
     public static boolean saveDefaultConfig(String filename)
