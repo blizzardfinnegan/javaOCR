@@ -2,13 +2,16 @@ package org.baxter.disco.ocr;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import org.apache.commons.configuration2.INIConfiguration;
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.*;
+import org.apache.commons.configuration2.builder.*;
+import org.apache.commons.configuration2.builder.fluent.*;
 
 import java.util.List;
+import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
@@ -19,7 +22,7 @@ import java.util.ArrayList;
  * initial start.
  *
  * @author Blizzard Finnegan
- * @version 19 Jan. 2023
+ * @version 20 Jan. 2023
  */
 public class ConfigFacade
 {
@@ -58,9 +61,6 @@ public class ConfigFacade
 
     static
     {
-        CONFIG_BUILDER = CONFIGURATIONS.iniBuilder(configFileLocation);
-        try { CONFIG_STORE = CONFIG_BUILDER.getConfiguration(); }
-        catch(Exception e){ ErrorLogging.logError(e); }
         loadConfig();
     }
     /**
@@ -127,14 +127,71 @@ public class ConfigFacade
         Double oldValue = cameraConfig.get(property);
         return cameraConfig.replace(property,oldValue,propertyValue);
     }
-
     /**
      * Save current config to a user-defined file location.
      *
      * @param filename  Name and location of the config file (typically, config.properties)
      * @return true if saved successfully, otherwise false
      */
-    public static boolean saveConfig(String filename)
+    public static boolean saveDefaultConfig(String filename)
+    {
+        boolean output = false;
+        Set<String> cameraNames = OpenCVFacade.getCameraNames();
+        for(String camera : cameraNames)
+        {
+            for(ConfigProperties property : ConfigProperties.values())
+            {
+                String propertyName = camera + "/" + property.toString();
+                String propertyValue = "-1.0";
+                switch(property)
+                {
+                    case PRIME:
+                        propertyValue = "true";
+                        break;
+                    case GAMMA:
+                        propertyValue = "1.0";
+                        break;
+                    case CROP_Y:
+                    case CROP_X:
+                        propertyValue = "250.0";
+                        break;
+                    case CROP_H:
+                    case CROP_W:
+                        propertyValue = "300.0";
+                        break;
+                    case COMPOSITE_FRAMES:
+                        propertyValue = "5.0";
+                }
+                CONFIG_STORE.addProperty(propertyName,propertyValue);
+            }
+        }
+        try
+        { 
+            CONFIG_BUILDER.save(); 
+            output = true;
+        }
+        catch(Exception e)
+        { 
+            ErrorLogging.logError(e); 
+        }
+
+        return output;
+    }
+
+    /**
+     * Save current config to the default file location.
+     *
+     * @return true if saved successfully, otherwise false
+     */
+    public static boolean saveDefaultConfig() { return saveDefaultConfig(configFileLocation); }
+
+    /**TODO: Implement
+     * Save current config to a user-defined file location.
+     *
+     * @param filename  Name and location of the config file (typically, config.properties)
+     * @return true if saved successfully, otherwise false
+     */
+    public static boolean saveCurrentConfig(String filename)
     {
         boolean output = false;
         try
@@ -155,7 +212,7 @@ public class ConfigFacade
      *
      * @return true if saved successfully, otherwise false
      */
-    public static boolean saveConfig() { return saveConfig(configFileLocation); }
+    public static boolean saveCurrentConfig() { return saveCurrentConfig(configFileLocation); }
 
     /** TODO: Implement
      * Load config from a user-defined file location.
@@ -166,7 +223,38 @@ public class ConfigFacade
     public static boolean loadConfig(String filename)
     {
         boolean output = false;
+        if(Files.isRegularFile(Path.of(URI.create(filename))))
+        {
+            try{ CONFIG_STORE = CONFIGURATIONS.ini(filename); }
+            catch(Exception e){ ErrorLogging.logError(e); }
 
+            for(String sectionName : CONFIG_STORE.getSections())
+            {
+                Map<ConfigProperties,Double> savedSection = new HashMap<>();
+                SubnodeConfiguration section = CONFIG_STORE.getSection(sectionName);
+
+                for(ConfigProperties configState : ConfigProperties.values())
+                {
+                    if(!section.containsKey(configState.toString()))
+                    {
+                        ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid config file.");
+                        return output;
+                    }
+                    else
+                    {
+                        Double configValue = section.getDouble(configState.toString());
+                        savedSection.put(configState,configValue);
+                    }
+                }
+                if(configMap.containsKey(sectionName))
+                {
+                    configMap.put(sectionName,savedSection);
+                }
+            }
+            output = true;
+        }
+
+        if(!output) ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid path.");
         return output;
     }
 

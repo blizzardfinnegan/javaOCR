@@ -1,6 +1,7 @@
 org/baxter/disco/ocr/TesseractFacade.class
 org/baxter/disco/ocr/MovementFacade.class
 org/baxter/disco/ocr/Pi4JBaseMain.class
+org/baxter/disco/ocr/ConfigFacade$1.class
 module-info.class
 org/baxter/disco/ocr/Cli.class
 org/baxter/disco/ocr/ConfigProperties.class
