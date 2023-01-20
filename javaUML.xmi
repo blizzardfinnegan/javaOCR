@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMI verified="false" xmi.version="1.2" timestamp="2023-01-19T10:52:37" xmlns:UML="http://schema.omg.org/spec/UML/1.4">
+ <XMI.header>
+  <XMI.documentation>
+   <XMI.exporter>umbrello uml modeller http://umbrello.kde.org</XMI.exporter>
+   <XMI.exporterVersion>1.6.18</XMI.exporterVersion>
+   <XMI.exporterEncoding>UnicodeUTF8</XMI.exporterEncoding>
+  </XMI.documentation>
+  <XMI.metamodel xmi.version="1.4" href="UML.xml" xmi.name="UML"/>
+ </XMI.header>
+ <XMI.content>
+  <UML:Model isSpecification="false" isAbstract="false" isLeaf="false" xmi.id="m1" isRoot="false" name="UML Model">
+   <UML:Namespace.ownedElement>
+    <UML:Stereotype visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="folder" name="folder"/>
+    <UML:Stereotype visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="interface" name="interface"/>
+    <UML:Stereotype visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="enum" name="enum"/>
+    <UML:Model visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Logical_View" name="Logical View">
+     <UML:Namespace.ownedElement>
+      <UML:Package stereotype="folder" visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Datatypes" name="Datatypes">
+       <UML:Namespace.ownedElement>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="unGH1ehNX74bc" name="char"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uKvEIgYk9g8JI" name="int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uygsbWwXhk2m1" name="float"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uY7bhfg6lB5uV" name="double"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uoZycNLqqV0ww" name="bool"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uONbHBGqQ9Nvv" name="string"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ub7ypctDu92WZ" name="unsigned char"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="upRJjkXlPqrFh" name="signed char"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uDNmix9A1rSFJ" name="unsigned int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u9KBxVkAp4uvL" name="signed int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uanN98x2TwISy" name="short int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uReJmNAio9RrE" name="unsigned short int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uiFqAUDOly5yj" name="signed short int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ukhRlSgv8QdFW" name="long int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u6uUmJmCxhsjC" name="signed long int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="unsriP0Q138uN" name="unsigned long int"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u1QWWJqpb9m5f" name="long double"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uQdWUCCTWOP0y" name="wchar_t"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uxMhzRp06YV1R" comment="Java default List implementation" name="List"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u8TbzuEngzmfS" name="File"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="umo3ql2C2Amof" comment="Imported from com.github.sarxos.webcam.Webcam&#xa;&#xa;Object for interacting with webcams." name="Webcam"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uGGgOwJv59ljs" name="String[]"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u7ht7KCJgYqdN" name="Map"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="utlSt8DaxCIGP" name="DigitalInput"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uk6EygyWY8vOo" name="DigitalOutput"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uCuFa9fEJgiwo" name="Pwm"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u90UknEksNL4a" name="Frame"/>
+        <UML:DataType visibility="public" isSpecification="false" namespace="Datatypes" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uEFGMLeVeYyDj" name="undef"/>
+       </UML:Namespace.ownedElement>
+      </UML:Package>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uqMhPoSe1k8QA" comment="Facade for Tess4J/Tesseract API&#xa;&#xa;Design complete, not yet implemented." name="TesseractFacade">
+       <UML:Classifier.feature>
+        <UML:Attribute visibility="private" isSpecification="false" xmi.id="uHbPPHt8Aepmq" type="uONbHBGqQ9Nvv" comment="NOTE:&#xa;This is copied directly from the Python class. This needs to be modified in the class itself.&#xa;&#xa;Tesseract configuration: &#xa;&#xa;Language (-l): custom language (Pro6_temp_test)&#xa;&#xa;Engine Mode (--oem): Defines performance and speed of the OCR engine. (3 autoselects, based on available hardware)&#xa;&#xa;Page Segmentation Mode (--psm): Affects how Tesseract splits images into lines of text. (7 treats the image as a single line of text)" initialValue="-l Pro6_temp_test --oem 3 --psm 7" name="CONFIG"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="umz3Tv2eyA6Cd" comment="Facade for Tess4J's TessBaseAPI.&#xa;Given an input File, this function will pass the File to Tesseract, the image will be processed. The double returned is the parsed input given by Tesseract. If Tesseract is unable to read the image, or if any error is experienced, this function will return Double.NaN" isOverride="false" name="imageToDouble" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uMjS6W9J86vqg" type="uY7bhfg6lB5uV"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="usRhAJ8rbpRdm" type="u8TbzuEngzmfS" value="" comment="The image file to be parsed" name="file"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Interface stereotype="interface" visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="true" isLeaf="false" isRoot="false" xmi.id="um7AiVvcWgsjF" comment="Class used for interacting with Files containing images.&#xa;&#xa;Imported library" name="ImageIO">
+       <UML:Classifier.feature>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="true" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u7QUTrR4m9Knl" comment="Writes an image using an arbitrary ImageWriter that supports the given format to an ImageOutputStream." isOverride="false" name="write" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="ueDW0FmDm9Q70" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uYfBYmbboiMS1" type="uEFGMLeVeYyDj" value="" name="image"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uAH9HwaVeu6vf" type="uONbHBGqQ9Nvv" value="" name="formatName"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uinSFjfInuj4L" type="u8TbzuEngzmfS" value="" name="file"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="true" isLeaf="false" isRoot="false" xmi.id="u1JdCQiZpCH8p" comment="Reads an image File into a BufferedImage" isOverride="false" name="read" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uyTRynw7gkVbB" type="uEFGMLeVeYyDj"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uQlX4qYPtt3Qa" type="u8TbzuEngzmfS" value="" name="file"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Interface>
+      <UML:Association visibility="public" isSpecification="false" namespace="Logical_View" xmi.id="u04gEi9BJjfBt" name="">
+       <UML:Association.connection>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="true" isSpecification="false" xmi.id="uGyp4BrUjj2zM" type="uqMhPoSe1k8QA" name="" aggregation="composite"/>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="true" isSpecification="false" xmi.id="uIxXu00M1mNAY" type="u8TbzuEngzmfS" name="" aggregation="none"/>
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Dependency visibility="public" isSpecification="false" namespace="Logical_View" supplier="uqMhPoSe1k8QA" xmi.id="ueBqYdCuDaOq5" client="um7AiVvcWgsjF" name=""/>
+      <UML:Dependency visibility="public" isSpecification="false" namespace="Logical_View" supplier="um7AiVvcWgsjF" xmi.id="ugrIUdxHOogtj" client="uqMhPoSe1k8QA" name=""/>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u1dxzpJ6YJaZZ" comment="Facade over JavaCV for getting images from cameras.&#xa;&#xa;Design complete, not yet implemented." name="CameraFacade">
+       <UML:Classifier.feature>
+        <UML:Attribute visibility="private" isSpecification="false" xmi.id="uzc2k3NCdeHGs" type="uKvEIgYk9g8JI" comment="Not sure what the actual type will be for this yet, we'll see. But I'd rather not hard-code the resolution" name="CAMERA_RESOLUTION"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uboqiQ2IGgrn6" comment="Generates Webcam objects, and returns them in a list." isOverride="false" name="listCameras" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="umPCY2U7E4is4" type="uxMhzRp06YV1R"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u8rQsyJtESj0k" comment="Take a picture from a given camera" isOverride="false" name="takePicture" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uuTuxchLsGPjD" type="u90UknEksNL4a"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uRKDJmw30mXeu" type="umo3ql2C2Amof" value="" name="camera"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uTb9nmqZ3EbwA" comment="Takes several pictures in rapid succession. Returns List&lt;BufferedImage>" isOverride="false" name="pictureBurst" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uY5RulRXPBOup" type="uxMhzRp06YV1R"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uffsSnLfERCIU" type="uKvEIgYk9g8JI" value="" comment="Number of pictures to take" name="frameCount"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ukYbnC12j97Tq" name="OpenCVFacade">
+       <UML:Classifier.feature>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uhnR0Lj9od5tD" comment="Crop the given BufferedImage to the given dimensions, using the input BufferedImage's getSubimage(x, y, w, h) function" isOverride="false" name="cropImage" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uJfOBbDNrdmgb" type="u90UknEksNL4a"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u94uuOb68KFVg" type="u90UknEksNL4a" value="" comment="BufferedImage to crop" name="image"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uzQOK6Y25EHG6" type="uKvEIgYk9g8JI" value="" comment="X-coordinate of the upper left corner of the newly-cropped image" name="x"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u6ZvGbbFLKUGS" type="uKvEIgYk9g8JI" value="" comment="Y-coordinate of the top-left corner of the newly cropped image" name="y"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uPyRotFwGYE7j" type="uKvEIgYk9g8JI" value="" comment="Width, in pixels, of the newly cropped image" name="width"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uvMBinnpfg7b7" type="uKvEIgYk9g8JI" value="" comment="Height, in pixels, of the newly cropped image" name="height"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u6P8ZdhMmgO7E" comment="Puts the image through a binary threshold" isOverride="false" name="threshold" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="ulZ5udtVkyPMX" type="u90UknEksNL4a"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="urY0CY2xWnZQI" type="u90UknEksNL4a" value="" comment="Image to put through the threshold" name="image"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uOU2tdo7Z41Xh" comment="Adjusts the given BufferedImage's gamma" isOverride="false" name="gammaAdjust" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="utJJmMtQGWrkv" type="u90UknEksNL4a"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uY3YHml1e6tBd" type="u90UknEksNL4a" value="" comment="Image to adjust" name="image"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="ub8Wktj3YHdp0" type="uY7bhfg6lB5uV" value="" comment="Gamma adjustment value" name="gamma"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="private" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uyBxTNM6FtH67" comment="Performs all above-listed functions, with boolean toggles. This function will have several wrapper functions, depending on the argument count" isOverride="false" name="composeImage" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="u2aVQmiLCAYVm" type="u90UknEksNL4a"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uGytMlxbjSXSZ" type="uxMhzRp06YV1R" value="" comment="Images to be modified. Images are passed as List&lt;BufferedImages>, and are modified in sequence" name="images"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u6DVmlqtEd9ws" type="uoZycNLqqV0ww" value="" comment="Whether or not to use the threshold function" name="threshold"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uOZMOUb9qj0rQ" type="uY7bhfg6lB5uV" value="" comment="Gamma value" name="gamma"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u43anAkKRaHP5" type="uoZycNLqqV0ww" value="" name="gammaAdjust"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u5lTEWxufeOSj" type="uoZycNLqqV0ww" value="" name="crop"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="usY4pLUG2i7ur" comment="Save given BufferedImage to given file location" isOverride="false" name="saveImage" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uzYFAWzVyRJ47" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uzIRLxDLwiLTJ" type="u90UknEksNL4a" value="" comment="Image to save" name="image"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uRzISRvfnjoTl" type="uONbHBGqQ9Nvv" value="" comment="Path to file to store the image in" name="fileLocation"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uW2zxcXVLsoSs" comment="Wrapper around several functions to process image(s) by using default config definitions in ConfigCascade. Automatically takes picture, crops if necessary, thresholds the image if necessary, adjusts the gamma as necessary, and composes the images into a final image. This image is then saved to a file, which is returned as as File. &#xa;&#xa;Returns null if an error occurs." isOverride="false" name="defaultProcessImage" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uES5qCSGWu9Ty" type="u8TbzuEngzmfS"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uTSw9T9fNXQxO" type="uONbHBGqQ9Nvv" value="" comment="name of the camera taking the picture" name="cameraName"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uc7w1LgfuqqNW" type="uoZycNLqqV0ww" value="true" comment="Whether or not to crop the image" name="cropImage"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uaZUGYH1ix4ar" type="uoZycNLqqV0ww" value="true" comment="Whether or not to threshold the image" name="thresholdImage"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uSAPlDOdUrnhF" type="uoZycNLqqV0ww" value="true" comment="Whether or not to adjust the image's gamma" name="gammaAdjust"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uwiESoechVNdI" type="uONbHBGqQ9Nvv" value="" comment="Path to where to save the image" name="saveLocation"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uJjuxKWEXGyzb" comment="Facade for Pi4J&#xa;&#xa;Designed and implemented (except Run Switch Interrupts)" name="MovementFacade">
+       <UML:Classifier.feature>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="u9jXkL25P1C9K" type="uKvEIgYk9g8JI" comment="PWM frequency" initialValue="60000" name="FREQUENCY"/>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="ut4DJxEPUXKfa" type="uKvEIgYk9g8JI" comment="PWM duty cycle" initialValue="50" name="DUTY_CYCLE"/>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="u2f5fJc7U8PDh" type="uKvEIgYk9g8JI" comment="Default number of test cycles to perform" initialValue="10000" name="CYCLES"/>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="uEdhLYHfnBmxz" type="uKvEIgYk9g8JI" comment="Maximum time in seconds to wait for a limit switch to be activated when moving." initialValue="20" name="TIME_OUT"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uEdcGAlvTefQq" type="uEFGMLeVeYyDj" comment="Motor enable pin address.&#xa;&#xa;This pin is active-high." initialValue="22" name="MOTOR_ENABLE_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uEa6S4Xx7T82L" type="uKvEIgYk9g8JI" comment="GPIO pin address for determining motor movement direction&#xa;&#xa;Set this pin high to send the motor up.&#xa;Set this pin low to send the motor down." initialValue="27" name="MOTOR_DIRECTION_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="u8GL0Ozyhk3Ci" type="uKvEIgYk9g8JI" comment="Compressed air piston control pin address&#xa;&#xa;Setting this high extends the piston.&#xa;Setting this low retracts the piston." initialValue="15" name="PISTON_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="ulbUGU1Rekllx" type="uKvEIgYk9g8JI" comment="PWM pin address" initialValue="12" name="PWM_PIN_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="ujIpp37wSEYHO" type="uKvEIgYk9g8JI" comment="External physical run/pause switch pin address&#xa;&#xa;Test will run as long as this remains high." initialValue="10" name="RUN_SWITCH_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uHJpn5r81B3z7" type="uKvEIgYk9g8JI" comment="Upper limit switch pin address&#xa;&#xa;When this reads high, the upper limit switch has been reached." initialValue="23" name="TOP_LIMIT_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uOyHCaQUmsFQ7" type="uKvEIgYk9g8JI" comment="Lower limit switch pin address&#xa;&#xa;When this reads high, the lower limit switch has been reached." initialValue="24" name="BOTTOM_LIMIT_ADDR"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="u6K7K4y35coSt" type="uCuFa9fEJgiwo" comment="PWM pin object" name="pwmPin"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uBodGFXo9Nndx" type="utlSt8DaxCIGP" comment="Upper limit switch pin object" name="upperLimit"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="ulpGEjmhww2N0" type="utlSt8DaxCIGP" comment="Lower limit switch object" name="lowerLimit"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uC4YefTJn9iEW" type="utlSt8DaxCIGP" comment="Physical run switch object" name="runSwitch"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uYEWDteQWD2Q1" type="uk6EygyWY8vOo" comment="Motor enable pin object" name="motorEnable"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uU5tQwFEcKcC6" type="uk6EygyWY8vOo" comment="Motor direction pin object" name="motorDirection"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="u4WqDqw9pt105" type="uk6EygyWY8vOo" comment="Piston movement pin object" name="piston"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uRitO9MdiJErv" comment="Creates necessary pi4j object, initialises GPIO according to constants." isOverride="false" name="initGPIO" isInline="false" isVirtual="false"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u6RvYZ275sv3h" comment="Closes GPIO pins. Wrapper around pi4j.shutdown()" isOverride="false" name="closeGPIO" isInline="false" isVirtual="false"/>
+        <UML:Operation visibility="private" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u7lPokjezKj3b" comment="Sends the moving part of the fixture to either the upper or lower limit switch, based on input. " isOverride="false" name="gotoLimit" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uHNVLlqhxJNzY" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u1gER5bkuy4nO" type="uoZycNLqqV0ww" value="" comment="Defines whether the fixture moves up or down" name="moveUp"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="urG19bODuaVrv" type="uKvEIgYk9g8JI" value="TIME_OUT" comment="How long to wait before giving up" name="timeout"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uvcvAkNuhAkEv" comment="Sends fixture to the lower limit " isOverride="false" name="goDown" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uMvndbYpUwvIf" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uiUt443QUOgQO" type="uKvEIgYk9g8JI" value="TIME_OUT" comment="how long to wait before giving up" name="timeout"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u1tBm05sn42fl" comment="Sends fixture to the upper limit" isOverride="false" name="goUp" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uREhQNdJm1Xc1" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="ujuGngTRzsSC2" type="uKvEIgYk9g8JI" value="TIME_OUT" comment="how long to wait before giving up" name="timeout"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uQBnFo3GJFnB0" comment="Extends the compressed air piston for 1 second to press the temperature button, then retracts it" isOverride="false" name="pressButton" isInline="false" isVirtual="false"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uXQowGHe8LlXb" comment="Pauses program flow if the physical Run switch is flipped.&#xa;&#xa;Unsure how to implement yet. We'll see." isOverride="false" name="queryRunSwitch" isInline="false" isVirtual="false"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uShW47EjvzILh" comment="Tests the movement of all known GPIO devices." isOverride="false" name="testMovement" isInline="false" isVirtual="false"/>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ulLupzB8231re" comment="Class used to write logs and saving results to an XLSX file." name="ErrorLogging">
+       <UML:Classifier.feature>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="ulz7KMMCXsmdT" comment="Catch that an error exists, writed it to stderr and the current logfile" isOverride="false" name="logError" isInline="false" isVirtual="false"/>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Association visibility="public" isSpecification="false" namespace="Logical_View" xmi.id="uNbEzIIZv0mis" name="">
+       <UML:Association.connection>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="false" isSpecification="false" xmi.id="u6p56uA0ZWdrW" type="uJjuxKWEXGyzb" name="" aggregation="none"/>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="true" isSpecification="false" xmi.id="uh9nXryIvhjvt" type="u1dxzpJ6YJaZZ" name="" aggregation="none"/>
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uxG4FUzxo9gKu" comment="main() class" name="cli">
+       <UML:Classifier.feature>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u8JjgzO1FnOBq" comment="Fixture moves up&#xa;Fixture moves down&#xa;Piston extends&#xa;Piston retracts&#xa;Take picture&#xa;Greyscale picture&#xa;Gamma-correct picture&#xa;Binary threshold picture&#xa;Composite pictures&#xa;Composite passed to Tesseract&#xa;Tesseract parses picture&#xa;Text from Tesseract gets put into a CSV/XLSX file" isOverride="false" name="main" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="ukdxWn23wKD9t" type="uGGgOwJv59ljs" value="" name="args"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uTYhbY1wUYfd5" comment="Facade for Apache Commons Configuration API. All internal values are stored in Maps of values, for expandability. &#xa;&#xa;Designed and written" name="ConfigFacade">
+       <UML:Classifier.feature>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="uhFcuO7uJk2Ws" type="uONbHBGqQ9Nvv" comment="List&lt;String> of available camera names. This needs to be set as an unmodifiableList, so it is read-only." name="activeCameras"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uRWDjLuysWYMZ" type="u7ht7KCJgYqdN" comment="Map of available cameras. Key = camera name; value is a Map of all values. &#xa;&#xa;To get a given setting, you will need the key for both which camera, and the key for what value you need." name="config"/>
+        <UML:Attribute visibility="private" isSpecification="false" ownerScope="classifier" xmi.id="uZEnq8Kbd1LrY" type="uONbHBGqQ9Nvv" comment="String for file location." name="configFileDirectory"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uRRZ1iZajAvSk" comment="Getter for any config value. Returns the value as a String; needs to be parsed into the proper type.&#xa;&#xa;Returns an empty string if any errors occur." isOverride="false" name="getValue" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="" type="uONbHBGqQ9Nvv"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u7guJXKcZ0ui4" type="u5tGbxO8iG8Iv" value="" comment="The name of the property you want the value of." name="property"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uOS9Bx5rjYylP" type="uONbHBGqQ9Nvv" value="" comment="Name of the camera" name="cameraName"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uZoVh5PL44Wsj" comment="Setter for available config values. Returns whether the input values were properly set." isOverride="false" name="setValue" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uDl5NqeifGvyG" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="udYlH55IqPmsx" type="uONbHBGqQ9Nvv" value="" comment="Name of camera to be configured" name="camera"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uQCjq7LAHQrCP" type="uONbHBGqQ9Nvv" value="" comment="Name of the property to be changed" name="propertyName"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uuCFbj4Z4Gcxr" type="uONbHBGqQ9Nvv" value="" comment="Value the given property should be changed to. Strings are parsed into int, double, bool, or string, as necessary." name="propertyValue"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uR540dsAq0MtX" comment="Save the current configuration to a config file. Returns whether or not the file save was successful." isOverride="false" name="saveConfig" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="u0A21qU6rlcav" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uUmOGrIIFdtVn" type="uONbHBGqQ9Nvv" value="configFileDirectory" comment="User-defined file location" name="filename"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="u8eZZqnLYnJsZ" comment="Loads the config from the given location. " isOverride="false" name="loadConfig" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="u4BuivO7bxPqh" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u5Gt5BGlPtSxB" type="uONbHBGqQ9Nvv" value="configFileDirectory" name="filepath"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+      <UML:Enumeration stereotype="enum" visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="u5tGbxO8iG8Iv" comment="Enum of possible config properties.&#xa;&#xa;Designed and written." name="ConfigProperties">
+       <UML:Enumeration.literal>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="udFtNckfSYvhc" value="&quot;Crop X&quot;" name="CROP_X"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uFDj73DuzfkoM" value="&quot;Crop Y&quot;" name="CROP_Y"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uWvRk5z0IEwsf" value="&quot;Crop Width&quot;" name="CROP_W"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ut34PlG56PVCw" value="&quot;Crop Height&quot;" name="CROP_H"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uRb0Mo120svKv" value="&quot;Gamma value&quot;" name="GAMMA"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uCzabsPIKF2fr" value="&quot;Composite frame count&quot;" name="COMPOSITE_FRAMES"/>
+        <UML:EnumerationLiteral visibility="public" isSpecification="false" namespace="u5tGbxO8iG8Iv" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="ujXL34ZRbqZ9t" value="&quot;Prime device?&quot;" name="PRIME"/>
+       </UML:Enumeration.literal>
+      </UML:Enumeration>
+      <UML:Association visibility="public" isSpecification="false" namespace="Logical_View" xmi.id="uZpX5Dw6MUhVF" name="">
+       <UML:Association.connection>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="true" isSpecification="false" xmi.id="uuhpkwj6f0CLO" type="uTYhbY1wUYfd5" name="" aggregation="composite"/>
+        <UML:AssociationEnd changeability="changeable" visibility="public" isNavigable="true" isSpecification="false" xmi.id="uf2sBOHTYudgr" type="u5tGbxO8iG8Iv" name="" aggregation="none"/>
+       </UML:Association.connection>
+      </UML:Association>
+      <UML:Class visibility="public" isSpecification="false" namespace="Logical_View" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="uLsx1LzuxKTQk" name="DataSaving">
+       <UML:Classifier.feature>
+        <UML:Attribute visibility="public" isSpecification="false" ownerScope="classifier" xmi.id="utZ98UQw7GOj6" type="uONbHBGqQ9Nvv" comment="Path to Excel file" name="excelFile"/>
+        <UML:Operation visibility="public" isSpecification="false" isQuery="false" isAbstract="false" isLeaf="false" ownerScope="classifier" isRoot="false" xmi.id="uJ0oNZhpsFIB1" comment="Writes next line to XLSX file. Returns bool of whether the write was successful.&#xa;&#xa;For backwards compatibility, this requires storage of the path to the log file, and a system call to get the current date and time." isOverride="false" name="writeValues" isInline="false" isVirtual="false">
+         <UML:BehavioralFeature.parameter>
+          <UML:Parameter kind="return" xmi.id="uwJLj5H6CFdVD" type="uoZycNLqqV0ww"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uAW4oPF9oLcLJ" type="uKvEIgYk9g8JI" value="" name="cycle"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uHjGXNjaMMTW0" type="uY7bhfg6lB5uV" value="" comment="Camera1 OCR result" name="cam1Result"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="u2wK1WY6lNqdf" type="uONbHBGqQ9Nvv" value="" comment="Path to relevant image file for Cam1" name="cam1Image"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uo79v03e4isNM" type="uY7bhfg6lB5uV" value="" comment="Camera2 OCR result" name="cam2Result"/>
+          <UML:Parameter visibility="private" isSpecification="false" xmi.id="uLtbrf4aZe1HH" type="uONbHBGqQ9Nvv" value="" comment="Path to relevant image for Cam2" name="cam2Image"/>
+         </UML:BehavioralFeature.parameter>
+        </UML:Operation>
+       </UML:Classifier.feature>
+      </UML:Class>
+     </UML:Namespace.ownedElement>
+     <XMI.extension xmi.extender="umbrello">
+      <diagrams resolution="192">
+       <diagram showopsig="1" linecolor="#ff0000" snapx="25" showattribassocs="1" snapy="25" linewidth="0" showattsig="1" textcolor="#000000" isopen="1" showpackage="1" showpubliconly="0" showstereotype="1" name="class diagram" font="72,9,-1,5,50,0,0,0,0,0" canvasheight="2425.96" canvaswidth="4707.18" localid="-1" snapcsgrid="0" showgrid="0" showops="1" griddotcolor="#f6f6f6" backgroundcolor="#ffffff" usefillcolor="1" fillcolor="#ffffc0" zoom="61.52787621294764" xmi.id="unReUR2YloiR7" documentation="" showscope="1" snapgrid="0" showatts="1" type="1">
+        <widgets>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="2397.35" showattsigs="601" showstereotype="1" y="991.929" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="u8zNPcHt4r37E" width="783" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="uqMhPoSe1k8QA" autoresize="1" showscope="1" height="111" showopsigs="601"/>
+         <interfacewidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="0" x="2979.31" showattsigs="601" showstereotype="1" y="1721.16" showattributes="0" font="72,12,-1,5,50,0,0,0,0,0" drawascircle="0" localid="uX9qoYww8INRA" width="847" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="um7AiVvcWgsjF" autoresize="1" showscope="1" height="148" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="3236.34" showattsigs="601" showstereotype="1" y="918.46" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="ut6gHdqePmykD" width="589" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="u1dxzpJ6YJaZZ" autoresize="1" showscope="1" height="185" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="6104.53" showattsigs="601" showstereotype="1" y="738.37" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="uNm72yGqlA9lS" width="1000" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="ukYbnC12j97Tq" autoresize="1" showscope="1" height="277" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="5171.42" showattsigs="601" showstereotype="1" y="814.678" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="u64rTnKBAIVPH" width="857" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="uJjuxKWEXGyzb" autoresize="1" showscope="1" height="999" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="3907.44" showattsigs="601" showstereotype="1" y="617.38" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="utl1KR7Bq1aFN" width="207" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="ulLupzB8231re" autoresize="1" showscope="1" height="92" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="4521.16" showattsigs="601" showstereotype="1" y="12.2243" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="u3s8hWaa9IySG" width="317" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="uxG4FUzxo9gKu" autoresize="1" showscope="1" height="92" showopsigs="601"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="2588.4" showattsigs="601" showstereotype="1" y="146.804" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="upZUt3HdJywQE" width="1000" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="uTYhbY1wUYfd5" autoresize="1" showscope="1" height="296" showopsigs="601"/>
+         <enumwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" usesdiagramusefillcolor="0" showpackage="1" x="2722.23" showstereotype="1" y="-556.797" font="72,12,-1,5,50,0,0,0,0,0" localid="uI1wUQvO6NV3T" width="726" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="u5tGbxO8iG8Iv" autoresize="1" height="370"/>
+         <classwidget linecolor="#ff0000" usesdiagramfillcolor="0" linewidth="0" textcolor="#000000" showoperations="1" usesdiagramusefillcolor="0" showpubliconly="0" showpackage="1" x="4259.24" showattsigs="601" showstereotype="1" y="610.887" showattributes="1" font="72,12,-1,5,50,0,0,0,0,0" localid="uOvpQbyzquusg" width="1000" isinstance="0" usefillcolor="1" fillcolor="#ffffc0" xmi.id="uLsx1LzuxKTQk" autoresize="1" showscope="1" height="111" showopsigs="601"/>
+        </widgets>
+        <messages/>
+        <associations>
+         <assocwidget indexa="1" linecolor="#ff0000" usesdiagramfillcolor="1" widgetbid="um7AiVvcWgsjF" indexb="1" linewidth="0" seqnum="" textcolor="none" usesdiagramusefillcolor="1" totalcounta="2" totalcountb="2" widgetaid="uqMhPoSe1k8QA" font="72,9,-1,5,50,0,0,0,0,0" localid="uopLUatHg2QN2" usefillcolor="1" fillcolor="none" xmi.id="ugrIUdxHOogtj" autoresize="1" type="502">
+          <linepath layout="Direct">
+           <startpoint startx="3180.35" starty="1102.93"/>
+           <endpoint endx="3180.35" endy="1721.16"/>
+          </linepath>
+         </assocwidget>
+         <assocwidget indexa="1" linecolor="#ff0000" usesdiagramfillcolor="1" widgetbid="u5tGbxO8iG8Iv" indexb="1" linewidth="0" seqnum="" textcolor="none" usesdiagramusefillcolor="1" totalcounta="2" totalcountb="2" widgetaid="uTYhbY1wUYfd5" font="72,9,-1,5,50,0,0,0,0,0" localid="uwL5PsqAoqxkQ" usefillcolor="1" fillcolor="none" xmi.id="uZpX5Dw6MUhVF" autoresize="1" type="510">
+          <linepath layout="Direct">
+           <startpoint startx="2897.74" starty="146.804"/>
+           <endpoint endx="2897.74" endy="-186.797"/>
+          </linepath>
+         </assocwidget>
+        </associations>
+       </diagram>
+      </diagrams>
+     </XMI.extension>
+    </UML:Model>
+    <UML:Model visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Use_Case_View" name="Use Case View">
+     <UML:Namespace.ownedElement/>
+    </UML:Model>
+    <UML:Model visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Component_View" name="Component View">
+     <UML:Namespace.ownedElement/>
+    </UML:Model>
+    <UML:Model visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Deployment_View" name="Deployment View">
+     <UML:Namespace.ownedElement/>
+    </UML:Model>
+    <UML:Model visibility="public" isSpecification="false" namespace="m1" isAbstract="false" isLeaf="false" isRoot="false" xmi.id="Entity_Relationship_Model" name="Entity Relationship Model">
+     <UML:Namespace.ownedElement/>
+    </UML:Model>
+   </UML:Namespace.ownedElement>
+  </UML:Model>
+ </XMI.content>
+ <XMI.extensions xmi.extender="umbrello">
+  <docsettings viewid="unReUR2YloiR7" uniqueid="uES5qCSGWu9Ty" documentation=""/>
+  <listview>
+   <listitem open="1" type="800" id="Views">
+    <listitem open="1" type="821" id="Component_View"/>
+    <listitem open="1" type="827" id="Deployment_View"/>
+    <listitem open="1" type="836" id="Entity_Relationship_Model"/>
+    <listitem open="1" type="801" id="Logical_View">
+     <listitem open="0" type="813" id="u1dxzpJ6YJaZZ">
+      <listitem open="0" type="814" id="uzc2k3NCdeHGs"/>
+      <listitem open="0" type="815" id="uboqiQ2IGgrn6"/>
+      <listitem open="0" type="815" id="uTb9nmqZ3EbwA"/>
+      <listitem open="0" type="815" id="u8rQsyJtESj0k"/>
+     </listitem>
+     <listitem open="0" type="807" id="unReUR2YloiR7" label="class diagram"/>
+     <listitem open="0" type="813" id="uxG4FUzxo9gKu">
+      <listitem open="0" type="815" id="u8JjgzO1FnOBq"/>
+     </listitem>
+     <listitem open="1" type="813" id="uTYhbY1wUYfd5">
+      <listitem open="0" type="814" id="uhFcuO7uJk2Ws"/>
+      <listitem open="0" type="814" id="uRWDjLuysWYMZ"/>
+      <listitem open="0" type="814" id="uZEnq8Kbd1LrY"/>
+      <listitem open="0" type="815" id="uRRZ1iZajAvSk"/>
+      <listitem open="0" type="815" id="u8eZZqnLYnJsZ"/>
+      <listitem open="0" type="815" id="uR540dsAq0MtX"/>
+      <listitem open="0" type="815" id="uZoVh5PL44Wsj"/>
+     </listitem>
+     <listitem open="1" type="831" id="u5tGbxO8iG8Iv">
+      <listitem open="0" type="839" id="uCzabsPIKF2fr"/>
+      <listitem open="0" type="839" id="ut34PlG56PVCw"/>
+      <listitem open="0" type="839" id="uWvRk5z0IEwsf"/>
+      <listitem open="0" type="839" id="udFtNckfSYvhc"/>
+      <listitem open="0" type="839" id="uFDj73DuzfkoM"/>
+      <listitem open="0" type="839" id="uRb0Mo120svKv"/>
+      <listitem open="0" type="839" id="ujXL34ZRbqZ9t"/>
+     </listitem>
+     <listitem open="1" type="813" id="uLsx1LzuxKTQk">
+      <listitem open="0" type="814" id="utZ98UQw7GOj6"/>
+      <listitem open="0" type="815" id="uJ0oNZhpsFIB1"/>
+     </listitem>
+     <listitem open="0" type="830" id="Datatypes">
+      <listitem open="0" type="829" id="uoZycNLqqV0ww"/>
+      <listitem open="0" type="829" id="unGH1ehNX74bc"/>
+      <listitem open="1" type="829" id="utlSt8DaxCIGP"/>
+      <listitem open="1" type="829" id="uk6EygyWY8vOo"/>
+      <listitem open="0" type="829" id="uY7bhfg6lB5uV"/>
+      <listitem open="1" type="829" id="u8TbzuEngzmfS"/>
+      <listitem open="0" type="829" id="uygsbWwXhk2m1"/>
+      <listitem open="1" type="829" id="u90UknEksNL4a"/>
+      <listitem open="0" type="829" id="uKvEIgYk9g8JI"/>
+      <listitem open="1" type="829" id="uxMhzRp06YV1R"/>
+      <listitem open="0" type="829" id="u1QWWJqpb9m5f"/>
+      <listitem open="0" type="829" id="ukhRlSgv8QdFW"/>
+      <listitem open="1" type="829" id="u7ht7KCJgYqdN"/>
+      <listitem open="1" type="829" id="uCuFa9fEJgiwo"/>
+      <listitem open="0" type="829" id="uanN98x2TwISy"/>
+      <listitem open="0" type="829" id="upRJjkXlPqrFh"/>
+      <listitem open="0" type="829" id="u9KBxVkAp4uvL"/>
+      <listitem open="0" type="829" id="u6uUmJmCxhsjC"/>
+      <listitem open="0" type="829" id="uiFqAUDOly5yj"/>
+      <listitem open="0" type="829" id="uONbHBGqQ9Nvv"/>
+      <listitem open="1" type="829" id="uGGgOwJv59ljs"/>
+      <listitem open="0" type="829" id="uEFGMLeVeYyDj"/>
+      <listitem open="0" type="829" id="ub7ypctDu92WZ"/>
+      <listitem open="0" type="829" id="uDNmix9A1rSFJ"/>
+      <listitem open="0" type="829" id="unsriP0Q138uN"/>
+      <listitem open="0" type="829" id="uReJmNAio9RrE"/>
+      <listitem open="0" type="829" id="uQdWUCCTWOP0y"/>
+      <listitem open="1" type="829" id="umo3ql2C2Amof"/>
+     </listitem>
+     <listitem open="0" type="813" id="ulLupzB8231re">
+      <listitem open="0" type="815" id="ulz7KMMCXsmdT"/>
+     </listitem>
+     <listitem open="0" type="817" id="um7AiVvcWgsjF">
+      <listitem open="0" type="815" id="u1JdCQiZpCH8p"/>
+      <listitem open="0" type="815" id="u7QUTrR4m9Knl"/>
+     </listitem>
+     <listitem open="0" type="813" id="uJjuxKWEXGyzb">
+      <listitem open="0" type="814" id="uOyHCaQUmsFQ7"/>
+      <listitem open="0" type="815" id="u6RvYZ275sv3h"/>
+      <listitem open="0" type="814" id="u2f5fJc7U8PDh"/>
+      <listitem open="0" type="814" id="ut4DJxEPUXKfa"/>
+      <listitem open="0" type="814" id="u9jXkL25P1C9K"/>
+      <listitem open="0" type="815" id="uvcvAkNuhAkEv"/>
+      <listitem open="0" type="815" id="u7lPokjezKj3b"/>
+      <listitem open="0" type="815" id="u1tBm05sn42fl"/>
+      <listitem open="0" type="815" id="uRitO9MdiJErv"/>
+      <listitem open="0" type="814" id="ulpGEjmhww2N0"/>
+      <listitem open="0" type="814" id="uEa6S4Xx7T82L"/>
+      <listitem open="0" type="814" id="uEdcGAlvTefQq"/>
+      <listitem open="0" type="814" id="uU5tQwFEcKcC6"/>
+      <listitem open="0" type="814" id="uYEWDteQWD2Q1"/>
+      <listitem open="0" type="814" id="u4WqDqw9pt105"/>
+      <listitem open="0" type="814" id="u8GL0Ozyhk3Ci"/>
+      <listitem open="0" type="815" id="uQBnFo3GJFnB0"/>
+      <listitem open="0" type="814" id="ulbUGU1Rekllx"/>
+      <listitem open="0" type="814" id="u6K7K4y35coSt"/>
+      <listitem open="0" type="815" id="uXQowGHe8LlXb"/>
+      <listitem open="0" type="814" id="ujIpp37wSEYHO"/>
+      <listitem open="0" type="814" id="uC4YefTJn9iEW"/>
+      <listitem open="0" type="815" id="uShW47EjvzILh"/>
+      <listitem open="0" type="814" id="uEdhLYHfnBmxz"/>
+      <listitem open="0" type="814" id="uHJpn5r81B3z7"/>
+      <listitem open="0" type="814" id="uBodGFXo9Nndx"/>
+     </listitem>
+     <listitem open="1" type="813" id="ukYbnC12j97Tq">
+      <listitem open="0" type="815" id="uyBxTNM6FtH67"/>
+      <listitem open="0" type="815" id="uhnR0Lj9od5tD"/>
+      <listitem open="0" type="815" id="uW2zxcXVLsoSs"/>
+      <listitem open="0" type="815" id="uOU2tdo7Z41Xh"/>
+      <listitem open="0" type="815" id="usY4pLUG2i7ur"/>
+      <listitem open="0" type="815" id="u6P8ZdhMmgO7E"/>
+     </listitem>
+     <listitem open="0" type="813" id="uqMhPoSe1k8QA">
+      <listitem open="0" type="814" id="uHbPPHt8Aepmq"/>
+      <listitem open="0" type="815" id="umz3Tv2eyA6Cd"/>
+     </listitem>
+    </listitem>
+    <listitem open="1" type="802" id="Use_Case_View"/>
+   </listitem>
+  </listview>
+  <codegeneration>
+   <codegenerator language="C++">
+    <sourcecode value="//Output config&#xa;var motorEnableConfig = DigitalOutput&#xa;                  .newConfigBuilder(pi4j)&#xa;&#x9;       .address(MOTOR_ENABLE)&#xa;                  .shutdown(DigitalState.LOW)&#xa;                  .initial(DigitalState.LOW)&#xa;                  .build();&#xa;&#xa;//Output pin creation&#xa;var motorEnable = pi4j.create(motorEnableConfig);&#xa;&#xa;//Input config&#xa;var topLimitConfig = DigitalInput.newConfigBuilder(pi4j).address(TOP_LIMIT).pull(PullResistance.PULL_DOWN);&#xa;&#xa;//Input pin creation&#xa;var topLimit = pi4j.create(topLimitConfig);&#xa;&#xa;//PWM setup&#xa;var pwmConfig = Pwm newConfigBuilder(pi4j).address(PWM_PIN).pwmType(PwmType.HARDWARE).shutdown(0).initial(DUTY_CYCLE).build();&#xa;&#xa;//PWM pin creation&#xa;var pwmPin = pi4j.create(config);" id="uRitO9MdiJErv"/>
+    <sourcecode value="pi4j.shutdown();" id="u6RvYZ275sv3h"/>
+   </codegenerator>
+  </codegeneration>
+ </XMI.extensions>
+</XMI>
