@@ -8,10 +8,10 @@
 
 ### DataSaving
 
-- [ ] complete implementation:
+- [ ] complete implementation
 	- [ ] need to store location of excel file
 	- [ ] need to have a function to write values to an excel file, parsing along the way for anomalies
-		- [ ] requires looking back at logging_tools.py
+		- requires looking back at logging_tools.py
 
 ### ConfigFacade
 
@@ -31,13 +31,18 @@
 		- [ ] some upper bound (probably the RPi's upper bound of HW PWM)
 - [ ] actually set PWM duty cycle in PWM creator
 - [ ] Implement multithreading for physical Run switch
-	- [ ] requires much documentation reading
+	- requires much documentation reading
 
 ### OpenCVFacade
 
 - [ ] Overload takeBurst with a default framecount from config
 - [ ] Overload crop with default values from config
 - [ ] completeProcess should have more robust file output checking
+
+### Gui
+- [ ] Complete implementation; waiting on:
+	- [ ] read documentation
+	- [ ] implement Cli successfully
 
 ## Low-priority improvements
 
@@ -52,6 +57,3 @@
 ### Gui
 
 - [ ] rebuild menus with current feature set
-- [ ] Complete implementation; waiting on:
-	- [ ] read documentation
-	- [ ] implement Cli successfully
