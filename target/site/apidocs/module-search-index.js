@@ -1,1 +1,0 @@
-moduleSearchIndex = [{"l":"org.baxter.disco.ocr"}]

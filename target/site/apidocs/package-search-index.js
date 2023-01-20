@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"m":"org.baxter.disco.ocr","l":"org.baxter.disco.ocr"}]
