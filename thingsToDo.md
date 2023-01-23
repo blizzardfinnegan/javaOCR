@@ -4,7 +4,7 @@
 
 ### CLI
 
-- [ ] complete implementation (see comments in file)
+- [ x ] complete implementation (see comments in file)
 
 ### DataSaving
 
