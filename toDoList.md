@@ -8,6 +8,7 @@
 	- [ x ] primary functionality
 	- [ ] connect to other classes
 		- partially complete
+	- [ x ] Javadoc documentation
 
 ### DataSaving
 
@@ -15,6 +16,7 @@
 	- [ x ] need to store location of excel file
 	- [ x ] need to have a function to write values to an excel file, parsing along the way for anomalies (Currently not backwards compatible)
 		- requires looking back at `logging_tools.py`
+	- [ ] Javadoc documentation
 
 ### ConfigFacade
 

@@ -5,16 +5,30 @@ import java.util.Scanner;
 /**
  * CLI for the Fixture.
  *
- * Current build runs a preset Main function.
- * Will build out a proper CLI interface.
+ * Creates a terminal-based user interface for the other 
+ * classes in this package (with the exception of {@link Gui} [for now].
  *
  * @author Blizzard Finnegan
  * @version 23 Jan. 2023
  */
 public class Cli
 {
+    /**
+     * Currently saved iteration count
+     */
     private static int iterationCount = 5;
+
+    /**
+     * Scanner used for monitoring user input.
+     * This is a global object, so that functions 
+     * can access it without requiring to pass the 
+     * object around.
+     */
     private static Scanner inputScanner;
+
+    /**
+     * Number of options currently available in the menu.
+     */
     private static final int menuOptionCount = 6;
 
     public static void main(String[] args)
@@ -59,6 +73,10 @@ public class Cli
         MovementFacade.closeGPIO();
     }
 
+    /**
+     * Prints a complete list of descriptions for all 
+     * available functions in the menu.
+     */
     private static void printHelp()
     {
         println("========================================");
@@ -94,10 +112,23 @@ public class Cli
         inputScanner.nextLine();
     }
 
+    /**
+     * Wrapper around System.out.println().
+     *
+     * Because its easier to read, and less to type.
+     */
     private static void println(String input) { System.out.println(input); }
 
+    /**
+     * Wrapper around System.out.print().
+     *
+     * Because its easier to read, and less to type.
+     */
     private static void prompt(String input) { System.out.print(input); }
 
+    /**
+     * Print function for the main menu.
+     */
     private static void printMainMenu()
     {
         println("\n\n");
@@ -115,13 +146,18 @@ public class Cli
         println("====================================");
     }
 
+    /**
+     * Sub-function used to configure cameras.
+     */
     private static void configureCamera()
     {
-        println("Configuring camera...");
         //might want to be a separate function in OpenCVFacade
         println("Configuration complete!");
     }
 
+    /**
+     * Setter for {@link #iterationCount}
+     */
     private static void setIterationCount() 
     { 
         prompt("Input the number of test iterations to complete: ");
@@ -132,15 +168,31 @@ public class Cli
         }
     }
 
+    /**
+     * Starts running tests in {@link OpenCVFacade}
+     */
     private static void runTests()
     {
         println("Running tests");
     }
 
+    /**
+     * Parse the user's input at the main menu, and check it for errors.
+     *
+     * @param input     The unparsed user input, directly from the {@link Scanner}
+     */
     private static int inputFiltering(String input) 
     { return inputFiltering(input,true); }
 
-    private static int inputFiltering(String input, boolean bounded)
+    /**
+     * Parse the user's input, and check it for errors.
+     *
+     * @param input     The unparsed user input, directly from the {@link Scanner}
+     * @param mainMenu  Whether or not the parsed input is a main menu value
+     * 
+     * @return The parsed value from the user. Returns -1 upon any error.
+     */
+    private static int inputFiltering(String input, boolean mainMenu)
     {
         int output = -1;
         input.trim();
@@ -152,24 +204,57 @@ public class Cli
                 return output; 
             }
             output = sc.nextInt();
-            if(bounded)
-            {
-                if(output < 0 || output > menuOptionCount)
+                if(output < 0)
                 {
-                    invalidInput();
+                    negativeInput();
                     output = -1;
-                    return output;
+                }
+            if(mainMenu)
+            {
+                if(output > menuOptionCount)
+                {
+                    invalidPromptInput();
+                    output = -1;
                 }
             }
         }
         return output;
     }
 
+    /**
+     * Prints a message when user inputs an invalid main menu value.
+     */
+    private static void invalidPromptInput()
+    {
+        invalidInput("Please input a number from 1 to 6.");
+    }
+
+    /**
+     * Prints a response for when the user's input is negative.
+     */
+    private static void negativeInput()
+    {
+        invalidInput("Please input a positive number.");
+    }
+
+    /**
+     * Prints a generic response when the user's input is invalid.
+     */
     private static void invalidInput()
+    {
+        invalidInput("");
+    }
+    
+    /**
+     * Prints a defined response; used when user input is invalid.
+     *
+     * @param String    Custom message to print in the error block.
+     */
+    private static void invalidInput(String input)
     {
         println("");
         println("=================================================");
-        println("Invalid input! Please input a number from 1 to 6.");
+        println("Invalid input! - " + input);
         println("=================================================");
         println("");
     }
