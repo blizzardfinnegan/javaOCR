@@ -12,15 +12,36 @@ import java.time.format.DateTimeFormatter;
  * as well as stderr.
  *
  * @author Blizzard Finnegan
- * @version 19 Jan. 2023
+ * @version 23 Jan. 2023
  */
 
 public class ErrorLogging
 {
-    public static String logFile;
+    /**
+     * Name of the location for the logfile.
+     */
+    private static String logFile;
+
+    /**
+     * Object used to write streams of characters to the file.
+     *
+     * This intermediate object is required to use {@link BufferedWriter} properly.
+     */
     private static FileWriter fw;
+
+    /**
+     * Object used for buffering file write functions, for improved efficiency.
+     */
     private static BufferedWriter bw;
+
+    /**
+     * Object called to write to the file.
+     */
     private static PrintWriter fileOut;
+
+    /**
+     * Object used to format UNIX timestamps into human-readable values.
+     */
     private static DateTimeFormatter datetime;
 
     static
@@ -43,6 +64,7 @@ public class ErrorLogging
 
     /**
      * Logs error thrown by runtime.
+     * Prepends the current date and time to the log line.
      *
      * @param error     Pass in the appropriate error,
      *                  for it to be parsed and logged.
@@ -56,6 +78,9 @@ public class ErrorLogging
 
     /**
      * Logs error manually caught by user.
+     * Prepends the current date and time to the log line.
+     * Particularly useful for catching potential errors that do not 
+     * eplicitly throw an error.
      *
      * @param error     Pass in the necessary error information,
      *                  as a string.

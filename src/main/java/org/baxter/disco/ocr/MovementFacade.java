@@ -16,7 +16,7 @@ import com.pi4j.io.pwm.PwmType;
  * Facade for all movement of the fixture.
  *
  * @author Blizzard Finnegan
- * @version 19 Jan. 2023
+ * @version 23 Jan. 2023
  */
 public class MovementFacade
 {
@@ -24,23 +24,22 @@ public class MovementFacade
     /**
      * Number of times to test the Device Under Test
      */
-    public static int CYCLES = 10000;
+    private static int CYCLES = 10000;
 
     /**
      * PWM Frequency
-     * TODO: Setter with bounds
      */
     private static int FREQUENCY = 60000;
 
     /**
      * PWM Duty Cycle
      */
-    public static final int DUTY_CYCLE = 50;
+    private static int DUTY_CYCLE = 50;
 
     /**
      * Number of seconds to wait before timing out a fixture movement.
      */
-    public static final int TIME_OUT = 20;
+    private static int TIME_OUT = 20;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -56,12 +55,12 @@ public class MovementFacade
     private static final int MOTOR_DIRECTION_ADDR = 27;
 
     /**
-     * Output pin addres for piston control.
+     * Output pin address for piston control.
      */
     private static final int PISTON_ADDR = 15;
 
     /**
-     * PWM pin address
+     * PWM pin address.
      */
     private static final int PWM_PIN_ADDR = 12;
 
@@ -98,7 +97,7 @@ public class MovementFacade
      */
     private static DigitalInput lowerLimit;
 
-    /**
+    /**TODO: Multithreading;
      * Lower limit switch object.
      *
      * Status: High; Test may continue.
@@ -130,6 +129,9 @@ public class MovementFacade
      */
     private static DigitalOutput pistonActivate;
 
+    /**
+     * {@link Pi4J} API interaction object.
+     */
     private static Context pi4j;
 
     static
@@ -183,6 +185,7 @@ public class MovementFacade
                                    .address(address)
                                    .pwmType(PwmType.HARDWARE)
                                    .provider("pigpio-pwm")
+                                   .frequency(FREQUENCY)
                                    //Start PWM signal on initialisation
                                    .initial(1)
                                    //On program close, turn off PWM.
@@ -196,6 +199,7 @@ public class MovementFacade
                                    .address(address)
                                    .pwmType(PwmType.SOFTWARE)
                                    .provider("pigpio-pwm")
+                                   .frequency(FREQUENCY)
                                    //Start PWM signal on initialisation
                                    .initial(1)
                                    //On program close, turn off PWM.
@@ -246,6 +250,124 @@ public class MovementFacade
         return pi4j.create(configBuilder);
 
     }
+
+    /**
+     * Setter for the fixture's PWM duty cycle.
+     *
+     * @param newDutyCycle  The new duty cycle to be set by the user.
+     *
+     * @return True if the value was set successfully; otherwise false.
+     */
+    public static boolean setDutyCycle(int newDutyCycle)
+    {
+        boolean output = false;
+        if(newDutyCycle < 0)
+        {
+            ErrorLogging.logError("Movement error!!! - Invalid DutyCycle input.");
+        }
+        else
+        {
+            DUTY_CYCLE = newDutyCycle;
+            pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+            output = true;
+        }
+        return output;
+    }
+
+    /**
+     * Getter for the fixture's PWM duty cycle.
+     *
+     * @return The current DutyCycle.
+     */
+    public static int getDutyCycle() { return DUTY_CYCLE; }
+
+    /**
+     * Setter for the fixture's number of times to test the Device Under Test.
+     *
+     * @param newCycles  The new number of cycles to be set by the user.
+     *
+     * @return True if the value was set successfully; otherwise false.
+     */
+    public static boolean setCycles(int newCycles)
+    {
+        boolean output = false;
+        if(newCycles < 0)
+        {
+            ErrorLogging.logError("Movement error!!! - Invalid Cycles input.");
+        }
+        else
+        {
+            CYCLES = newCycles;
+            output = true;
+        }
+        return output;
+    }
+
+    /**
+     * Getter for the fixture's number of times to test the device under test.
+     *
+     * @return The current Cycles.
+     */
+    public static int getCycles() { return CYCLES; }
+
+    /**
+     * Setter for the fixture's time to give up on a movement.
+     *
+     * @param newTimeout  The new timeout (in seconds) to be set by the user.
+     *
+     * @return True if the value was set successfully; otherwise false.
+     */
+    public static boolean setTimeout(int newTimeout)
+    {
+        boolean output = false;
+        if(newTimeout < 0)
+        {
+            ErrorLogging.logError("Movement error!!! - Invalid timeout input.");
+        }
+        else
+        {
+            TIME_OUT = newTimeout;
+            output = true;
+        }
+        return output;
+    }
+
+    /**
+     * Getter for the fixture's time to give up on a movement.
+     *
+     * @return The current timeout.
+     */
+    public static int getTimeout() { return TIME_OUT; }
+
+    /**
+     * Setter for the fixture's PWM frequency.
+     *
+     * @param newFrequency  The new frequency to be set by the user.
+     *
+     * @return True if the value was set successfully; otherwise false.
+     */
+    public static boolean setFrequency(int newFrequency)
+    {
+        boolean output = false;
+        if(newFrequency < 0)
+        {
+            ErrorLogging.logError("Movement error!!! - Invalid frequency input.");
+        }
+        else
+        {
+            FREQUENCY = newFrequency;
+            pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+            output = true;
+        }
+        return output;
+    }
+
+    /**
+     * Getter for the fixture's PWM frequency.
+     *
+     * @return The current PWM frequency.
+     */
+    public static int getFrequency() { return FREQUENCY; }
 
     /**
      * Internal function to send the fixture to one limit switch or another.

@@ -6,7 +6,7 @@ import java.util.Scanner;
  * CLI for the Fixture.
  *
  * Creates a terminal-based user interface for the other 
- * classes in this package (with the exception of {@link Gui} [for now].
+ * classes in this package (with the exception of {@link Gui} [for now]).
  *
  * @author Blizzard Finnegan
  * @version 23 Jan. 2023
@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class Cli
 {
     /**
-     * Currently saved iteration count
+     * Currently saved iteration count.
      */
     private static int iterationCount = 5;
 
@@ -146,7 +146,7 @@ public class Cli
         println("====================================");
     }
 
-    /**
+    /** TODO:
      * Sub-function used to configure cameras.
      */
     private static void configureCamera()
@@ -160,15 +160,16 @@ public class Cli
      */
     private static void setIterationCount() 
     { 
-        prompt("Input the number of test iterations to complete: ");
-        int input = inputFiltering(inputScanner.nextLine(), false);
-        if(input != -1)
+        int input;
+        do 
         {
-            iterationCount = input;
-        }
+            prompt("Input the number of test iterations to complete: ");
+            input = inputFiltering(inputScanner.nextLine(), false);
+        } while(input == -1);
+        iterationCount = input;
     }
 
-    /**
+    /**TODO:
      * Starts running tests in {@link OpenCVFacade}
      */
     private static void runTests()
@@ -248,7 +249,7 @@ public class Cli
     /**
      * Prints a defined response; used when user input is invalid.
      *
-     * @param String    Custom message to print in the error block.
+     * @param input    Custom message to print in the error block.
      */
     private static void invalidInput(String input)
     {

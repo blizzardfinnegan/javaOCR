@@ -16,13 +16,13 @@
 	- [ x ] need to store location of excel file
 	- [ x ] need to have a function to write values to an excel file, parsing along the way for anomalies (Currently not backwards compatible)
 		- requires looking back at `logging_tools.py`
-	- [ ] Javadoc documentation
+	- [ x ] Javadoc documentation
 
 ### ConfigFacade
 
 - [ ] refactor static block to load defaults
 - [ ] refactor `saveCurrentConfig(String filename)`
-- [ ] set default for `imageSaveLocation`
+- [ x ] set default for `imageSaveLocation`
 - [ ] properly fill the list of active cameras
 	- Is this still a necessary object? Appears to be similar to the `Set<String>` of `configMap`; consider replacing with a wrapper around `configMap.keySet()`
 
@@ -32,19 +32,19 @@
 
 ### MovementFacade
 
-- [ ] refactor with frequency as private
-	- [ ] getter
-	- [ ] setter, with bounds
-		- [ ] no negatives
-		- [ ] some upper bound (probably the RPi's upper bound of HW PWM)
-- [ ] actually set PWM duty cycle in PWM creator
+- [ x ] refactor with frequency as private
+	- [ x ] getter
+	- [ x ] setter, with bounds
+		- [ x ] no negatives
+		- [ ] ~~some upper bound (probably the RPi's upper bound of HW PWM)~~ According to Ed, this is not necessary.
+- [ x ] actually set PWM duty cycle in PWM creator
 - [ ] Implement multithreading for physical Run switch
 	- requires much documentation reading
 
 ### OpenCVFacade
 
 - [ ] Overload takeBurst with a default framecount from config
-- [ ] Overload crop with default values from config
+- [ x ] Overload crop with default values from config
 - [ ] completeProcess should have more robust file output checking
 
 ### Gui
@@ -56,15 +56,13 @@
 
 ### All
 
-- [ ] change Javadoc to be parameter type, rather than parameter name
-- [ ] denote overrided functions in first sentence of function
+- [ x ] denote overrided functions in first sentence of function
 - [ ] reduce linking to one link per reference per class
-- [ ] Use generated Javadocs to improve Javadocs
+- [ ] Use generated Javadocs to improve Javadocs (perpetual)
 
 ### OpenCVFacade
 
-- [ ] convert all uses of Frame to Mat
-	- not sure if it does much; will have to finish building to find out.
+- [ x ] convert all uses of Frame to Mat
 
 ### TesseractFacade
 
@@ -73,7 +71,7 @@
 
 ### ConfigProperties
 
-- [ ] More complete documentation
+- [ x ] More complete documentation
 
 ### Gui
 

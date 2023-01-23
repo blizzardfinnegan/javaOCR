@@ -21,12 +21,22 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class DataSaving
 {
+    /**
+     * Workbook object; used for writing to the final XLSX file.
+     */
     private static XSSFWorkbook outputWorkbook;
+    /**
+     * Object defining what sheet within the workbook we are working in.
+     */
     private static XSSFSheet outputSheet;
+
+    /**
+     * File representing the location of the final output file.
+     */
     private static File outputFile;
 
     /**
-     *
+     * Prepares writer to write to XLSX file.
      */
     public static boolean initWorkbook(String filename)
     {
@@ -41,14 +51,14 @@ public class DataSaving
         catch(Exception e) { ErrorLogging.logError(e); }
         return output;
     }
-    /** TODO: Test
+    /** TODO: Test;
      * Writes line to XLSX file.
      *
      * For backwards compatibility, this requires 
      * a system call for the current date and time.
      *
      * @param cycle         What test cycle is being saved to the file 
-     * @param inputMap      Map<String,Double> list of inputs
+     * @param inputMap      Map[String,Double] list of inputs
      *
      * @return Returns whether values were saved successfully.
      */
@@ -82,5 +92,12 @@ public class DataSaving
         }
         catch(Exception e) {ErrorLogging.logError(e);}
         return output;
+    }
+
+    /**
+     * Main function; used for testing of individual functions.
+     */
+    public static void main(String[] args)
+    {
     }
 }

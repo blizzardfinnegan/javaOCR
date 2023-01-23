@@ -9,7 +9,6 @@ import static org.bytedeco.opencv.global.opencv_core.*;
 
 import org.bytedeco.javacv.*;
 import org.bytedeco.opencv.opencv_core.*;
-import java.awt.image.BufferedImage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ import java.util.List;
  * takeImages().
  *
  * @author Blizzard Finnegan
- * @version 19 Jan. 2023
+ * @version 23 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -36,9 +35,13 @@ public class OpenCVFacade
     private static final Map<String,FrameGrabber> cameraMap = new HashMap<>();
 
     /**
-     *
+     * Object used to convert between BufferedImages and Frames
      */
-    private static final Java2DFrameConverter BUFF_CONVERTER = new Java2DFrameConverter();
+    //private static final Java2DFrameConverter BUFF_CONVERTER = new Java2DFrameConverter();
+
+    /**
+     * Object used to convert between Mats and Frames
+     */
     private static final OpenCVFrameConverter.ToMat MAT_CONVERTER = new OpenCVFrameConverter.ToMat();
 
     /**
@@ -67,7 +70,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Camera creator function.
+     * Default camera creator function.
      * Creates a camera, and adds it to cameraMap.
      * Uses values in constants, listed previous.
      *
@@ -83,7 +86,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Camera creator function.
+     * Camera creator function, with custom width and height.
      * Creates a camera, and adds it to cameraMap.
      * Defaults to {@link #CAMERA_CODEC} definition.
      *
@@ -101,7 +104,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Camera creator function.
+     * Camera creator function, with custom width, height, and codec.
      * Creates a camera, and adds it to cameraMap.
      *
      * @param name      Name of the new camera
@@ -147,7 +150,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Modify a camera's Gamma value, based on config data.
+     * Modify a single camera's Gamma value, based on config data.
      *
      * @param cameraName    The name of the camera you would like to modify
      *
@@ -160,7 +163,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Modify a camera's Gamma value, based on a given value.
+     * Modify a single camera's Gamma value, based on a given value.
      *
      * @param cameraName    The name of the camera you would like to modify
      * @param gamma         The new gamma value for the camera
@@ -181,22 +184,7 @@ public class OpenCVFacade
         }
     }
 
-    /**
-     * Modify the gamma of a single image.
-     * !!This should only be done to assist in setting config values.!!
-     *
-     * @param image     Image to have its gamma adjusted
-     * @param gamma     Gamma value to set 
-     *
-     * @return Frame of the modified image
-     */
-    public static Frame gammaAdjust(Frame image, double gamma)
-    {
-        Java2DFrameConverter.applyGamma(image,gamma);
-        return image;
-    }
-
-    /**
+    /** FIXME: Frame to Mat convert;
      * Wrapper function for native "take picture" function.
      * Image is immediately converted to greyscale to improve RAM footprint.
      *
@@ -205,37 +193,41 @@ public class OpenCVFacade
      * @return              null if camera doesn't exist, or if capture fails;
      *                      otherwise, Frame of the taken image
      */
-    public static Frame takePicture(String cameraName)
+    public static Mat takePicture(String cameraName)
     {
-        Frame output = null;
+        Mat output = null;
         Frame temp = null;
 
         if(getCameraNames().contains(cameraName))
         {
+            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
+            if(configGamma != cameraMap.get(cameraName).getGamma())
+            {
+                gammaCalibrate(cameraName, configGamma);
+            }
             try{ temp = cameraMap.get(cameraName).grab(); }
             catch(Exception e) { ErrorLogging.logError(e); }
         }
 
         //Convert to grayscale
         Mat in = MAT_CONVERTER.convertToMat(temp);
-        Mat out = MAT_CONVERTER.convertToMat(temp);
-        cvtColor(in,out,CV_BGR2GRAY);
-        output = MAT_CONVERTER.convert(out);
+        output = MAT_CONVERTER.convertToMat(temp);
+        cvtColor(in,output,CV_BGR2GRAY);
 
         return output;
     }
 
-    /**
-     * 
-     * TODO: Overload frameCount
+    /** 
+     * Take multiple pictures in quick succession. 
+     *
      * @param cameraName    Name of the camera to take a picture with.
      * @param frameCount    The number of images to take.
      *
      * @return List of Frames taken from the camera. List is in order
      */
-    public static List<Frame> takeBurst(String cameraName, int frameCount)
+    public static List<Mat> takeBurst(String cameraName, int frameCount)
     {
-        List<Frame> output = null;
+        List<Mat> output = null;
         if(getCameraNames().contains(cameraName))
         {
             output = new LinkedList<>();
@@ -247,7 +239,27 @@ public class OpenCVFacade
         return output;
     }
 
-    /** TODO: Implement Overloads
+    /** 
+     * Crop the given image to the dimensions in the configuration.
+     *
+     * @param image         Frame taken from the camera.
+     * @param cameraName    Name of the camera taking the picture
+     *
+     * @return Frame of the cropped image
+     */
+    public static Mat crop(Mat image, String cameraName)
+    {
+        Mat output = null;
+        int x = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X);
+        int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
+        int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
+        int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
+        var cropRectangle = new Rect(x,y,width,height);
+        output = new Mat(image,cropRectangle);
+        return output;
+    }
+
+    /**
      * Crop the given image to the given dimensions.
      *
      * @param image     Frame taken from the camera.
@@ -258,16 +270,15 @@ public class OpenCVFacade
      *
      * @return Frame of the cropped image
      */
-    public static Frame crop(Frame image, int x, int y, int width, int height)
+    public static Mat crop(Mat image, int x, int y, int width, int height)
     {
-        Frame output = null;
-        BufferedImage bufImage = BUFF_CONVERTER.getBufferedImage(image);
-        bufImage.getSubimage(x,y,width,height);
-        output = BUFF_CONVERTER.getFrame(bufImage);
+        Mat output = null;
+        var cropRectangle = new Rect(x,y,width,height);
+        output = new Mat(image,cropRectangle);
         return output;
     }
 
-    /** 
+    /**
      * Put the given image through a binary threshold.
      * This reduces the image from greyscale to only pure white and black pixels.
      *
@@ -275,12 +286,11 @@ public class OpenCVFacade
      *
      * @return Frame of the thresholded image
      */
-    public static Frame thresholdImage(Frame image)
+    public static Mat thresholdImage(Mat image)
     {
-        Frame output = null;
-        Mat in = MAT_CONVERTER.convertToMat(image);
-        Mat out = MAT_CONVERTER.convertToMat(image);
-        threshold(in,out,127,255,THRESH_BINARY);
+        Mat output = image;
+        Mat in = image;
+        threshold(in,output,127,255,THRESH_BINARY);
         return output;
     }
 
@@ -292,10 +302,10 @@ public class OpenCVFacade
      *
      * @return File if save was successful, otherwise null
      */
-    public static File saveImage(Frame image, String fileLocation)
+    public static File saveImage(Mat image, String fileLocation)
     {
         File output = null;
-        IplImage temp = MAT_CONVERTER.convertToIplImage(image);
+        IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
         cvSaveImage(fileLocation,temp);
         output = new File(fileLocation);
         return output;
@@ -308,8 +318,6 @@ public class OpenCVFacade
      *
      * @param images        List of images to be composed
      * @param threshold     Whether to put the image through a binary threshold
-     * @param gammaAdjust   Whether to adjust the image's gamma
-     * @param gamma         Gamma value to be set on the camera
      * @param crop          Whether to crop the image
      * @param x             X-coordinate of the top-left of the cropped portion of the image.
      * @param y             y-coordinate of the top-left of the cropped portion of the image.
@@ -318,28 +326,24 @@ public class OpenCVFacade
      *
      * @return A single image, found by boolean AND-ing together all parsed images.
      */
-    public static Frame compose(List<Frame> images, boolean threshold, 
-                                boolean gammaAdjust, double gamma, boolean crop, 
-                                int x, int y, int width, int height)
+    public static Mat compose(List<Mat> images, boolean threshold, 
+                                boolean crop, String cameraName)
     {
-        Frame output = null;
-        for(Frame image : images)
+        Mat output = null;
+        for(Mat image : images)
         {
-            if(gammaAdjust) gammaAdjust(image,gamma);
-            if(crop) crop(image,x,y,width,height);
+            if(crop) crop(image,cameraName);
             if(threshold) thresholdImage(image);
         }
 
         //Composite images
         if(images.size() > 1)
         {
-            Mat matOut = MAT_CONVERTER.convertToMat(images.get(0));
-            for(Frame image : images)
+            output = images.get(0);
+            for(Mat image : images)
             {
-                Mat temp = MAT_CONVERTER.convertToMat(image);
-                bitwise_and(matOut,temp,matOut);
+                bitwise_and(output,image,output);
             }
-            output = MAT_CONVERTER.convert(matOut);
         }
         else
         {
@@ -348,22 +352,21 @@ public class OpenCVFacade
         return output;
     }
 
-    /**
+    /**TODO: More robust file output checking;
      * Processes image from defined camera, using the config defaults.
      *
-     * TODO: More robust file output checking
+     * 
      * @param cameraName        Name of the camera to take a picture from.
      * @param crop              Whether to crop the image
      * @param threshold         Whether to threshold the image
-     * @param gammaAdjust       Whether to adjust the gamma of the image
      * @param compositeFrames   Number of frames to composite together
      * @param saveLocation      Name of the outgoing file
      *
      * @return null if any error occurs; otherwise File of output image
      */
     public static File completeProcess(String cameraName, boolean crop, 
-                                       boolean threshold, boolean gammaAdjust, 
-                                       int compositeFrames, String saveLocation)
+                                       boolean threshold, int compositeFrames, 
+                                       String saveLocation)
     {
         File output = null;
         if(!getCameraNames().contains(cameraName))
@@ -371,14 +374,8 @@ public class OpenCVFacade
             ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
             return output;
         }
-        List<Frame> imageList = takeBurst(cameraName, compositeFrames);
-        double gamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-        int x = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X);
-        int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
-        int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
-        int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
-        Frame finalImage = compose(imageList, threshold, gammaAdjust, gamma, 
-                                   crop, x, y, width, height);
+        List<Mat> imageList = takeBurst(cameraName, compositeFrames);
+        Mat finalImage = compose(imageList, threshold, crop, cameraName);
         output = saveImage(finalImage, saveLocation);
         return output;
     }
@@ -396,7 +393,7 @@ public class OpenCVFacade
     public static File completeProcess(String cameraName, String saveLocation)
     {
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        return completeProcess(cameraName,true,true,false,compositeFrames,saveLocation);
+        return completeProcess(cameraName,true,true,compositeFrames,saveLocation);
     }
 
     /**

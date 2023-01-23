@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
- * @version 20 Jan. 2023
+ * @version 23 Jan. 2023
  */
 public class ConfigFacade
 {
@@ -35,15 +35,16 @@ public class ConfigFacade
 
     /**
      * Location to save images to. 
-     *
-     * TODO: Set default path
      */
     private static String imageSaveLocation;
 
     /**
+     * Location to save output XLSX file to.
+     */
+    private static String outputSaveLocation;
+
+    /**
      * Read-Only List of available cameras.
-     *
-     * TODO: Fill activeCameras
      */
     public static final List<String> activeCameras = new ArrayList<>();
 
@@ -54,13 +55,33 @@ public class ConfigFacade
      */
     private static final Map<String, Map<ConfigProperties, Double>> configMap = new HashMap<>();
 
+    /**
+     * Base class used for interacting with Configuration files.
+     */
     private static final Configurations CONFIGURATIONS = new Configurations();
-    private static FileBasedConfigurationBuilder<INIConfiguration> CONFIG_BUILDER = CONFIGURATIONS.iniBuilder(configFileLocation);
+
+    /**
+     * Builder for the main Configuration object.
+     *
+     * Also used for saving out to file.
+     */
+    private static FileBasedConfigurationBuilder<INIConfiguration> CONFIG_BUILDER;
+
+    /**
+     * Object used for reading and writing config values.
+     *
+     * This is used only for file-read and file-write operations.
+     */
     private static INIConfiguration CONFIG_STORE;
 
     static
     {
+        CONFIGURATIONS.iniBuilder(configFileLocation);
         //FIXME
+        //TODO: Fill activeCameras
+        //TODO: Set default image location
+        //TODO: Set default output file location
+        outputSaveLocation = "";
         loadConfig();
     }
     /**
@@ -84,6 +105,32 @@ public class ConfigFacade
         return output;
     }
 
+    /**
+     * Getter for the location of the output XLSX file.
+     *
+     * @return Absolute path of the image save location.
+     */
+    public static String getOutputSaveLocation()
+    {
+        return outputSaveLocation;
+    }
+
+    /**
+     * Setter for the location of the output XLSX file.
+     *
+     * @return false if path does not exist; otherwise true
+     */
+    public static boolean setOutputSaveLocation(String path)
+    {
+        boolean output = false;
+        if(Files.exists(Paths.get(path)))
+        {
+            outputSaveLocation = path;
+            output = true;
+        }
+        return output;
+    }
+    
     /**
      * Getter for the saved image location.
      *
@@ -186,7 +233,7 @@ public class ConfigFacade
      */
     public static boolean saveDefaultConfig() { return saveDefaultConfig(configFileLocation); }
 
-    /**FIXME
+    /**
      * Save current config to a user-defined file location.
      *
      * @param filename  Name and location of the config file (typically, config.properties)
@@ -195,6 +242,15 @@ public class ConfigFacade
     public static boolean saveCurrentConfig(String filename)
     {
         boolean output = false;
+        for(String camera : activeCameras)
+        {
+            for(ConfigProperties property : ConfigProperties.values())
+            {
+                String propertyName = camera + "/" + property.toString();
+                String propertyValue =configMap.get(camera).get(property).toString();
+                CONFIG_STORE.addProperty(propertyName,propertyValue);
+            }
+        }
         try
         { 
             CONFIG_BUILDER.save(); 

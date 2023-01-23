@@ -14,7 +14,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 20 Jan. 2023
+ * @version 23 Jan. 2023
  */
 public class TesseractFacade
 {
@@ -44,7 +44,7 @@ public class TesseractFacade
     /** 
      * Converts an image file to a double.
      *
-     * @param File  File object of the image to be parsed by Tesseract.
+     * @param file  File object of the image to be parsed by Tesseract.
      * @return Double, as read from the image by Tesseract. Anomalous data returns -1.
      */
     public static double imageToDouble(File file)
