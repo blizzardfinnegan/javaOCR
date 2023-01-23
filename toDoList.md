@@ -4,13 +4,16 @@
 
 ### CLI
 
-- [ x ] complete implementation (see comments in file)
+- [ ] complete implementation (see comments in file)
+	- [ x ] primary functionality
+	- [ ] connect to other classes
+		- partially complete
 
 ### DataSaving
 
 - [ ] complete implementation
-	- [ ] need to store location of excel file
-	- [ ] need to have a function to write values to an excel file, parsing along the way for anomalies
+	- [ x ] need to store location of excel file
+	- [ x ] need to have a function to write values to an excel file, parsing along the way for anomalies (Currently not backwards compatible)
 		- requires looking back at `logging_tools.py`
 
 ### ConfigFacade
@@ -45,7 +48,7 @@
 ### Gui
 - [ ] Complete implementation; waiting on:
 	- [ ] read documentation
-	- [ ] implement Cli successfully
+	- [ x ] implement Cli successfully
 
 ## Low-priority improvements
 

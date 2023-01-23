@@ -1,4 +1,4 @@
-//package org.baxter.disco.ocr;
+package org.baxter.disco.ocr;
 
 import java.util.Scanner;
 
@@ -9,7 +9,7 @@ import java.util.Scanner;
  * Will build out a proper CLI interface.
  *
  * @author Blizzard Finnegan
- * @version 19 Jan. 2023
+ * @version 23 Jan. 2023
  */
 public class Cli
 {
@@ -31,7 +31,7 @@ public class Cli
             {
                 case 1:
                     println("Testing movement...");
-                    //MovementFacade.testMotions();
+                    MovementFacade.testMotions();
                     break;
                 case 2:
                     configureCamera();
@@ -55,8 +55,8 @@ public class Cli
         } while (userInput != 6);
 
         inputScanner.close();
-        //ErrorLogging.closeLogs();
-        //MovementFacade.closeGPIO();
+        ErrorLogging.closeLogs();
+        MovementFacade.closeGPIO();
     }
 
     private static void printHelp()
@@ -100,6 +100,7 @@ public class Cli
 
     private static void printMainMenu()
     {
+        println("\n\n");
         println("====================================");
         println("Main Menu:");
         println("------------------------------------");
