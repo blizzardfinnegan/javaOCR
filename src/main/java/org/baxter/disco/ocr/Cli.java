@@ -16,7 +16,7 @@ import org.bytedeco.javacv.CanvasFrame;
  * classes in this package (with the exception of {@link Gui} [for now]).
  *
  * @author Blizzard Finnegan
- * @version 0.2.0, 24 Jan. 2023
+ * @version 0.3.0, 24 Jan. 2023
  */
 public class Cli
 {
@@ -414,14 +414,17 @@ public class Cli
         Map<String, Double> resultMap = new HashMap<>();
         for(int i = 0; i < iterationCount; i++)
         {
-            List<File> fileList = OpenCVFacade.iteration();
-            for(File file : fileList)
+            List<List<File>> iterationList = OpenCVFacade.multipleIterations(iterationCount);
+            for(List<File> iteration : iterationList)
             {
-                Double result = TesseractFacade.imageToDouble(file);
-                String fileLocation = file.getAbsolutePath();
-                resultMap.put(fileLocation,result);
+                for(File file : iteration)
+                {
+                    Double result = TesseractFacade.imageToDouble(file);
+                    String fileLocation = file.getAbsolutePath();
+                    resultMap.put(fileLocation,result);
+                }
+                DataSaving.writeValues(i,resultMap);
             }
-            DataSaving.writeValues(i,resultMap);
         }
         println("=======================================");
         println("Tests complete!");

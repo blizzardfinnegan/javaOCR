@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
- * @version 23 Jan. 2023
+ * @version 24 Jan. 2023
  */
 public class ConfigFacade
 {
@@ -289,7 +289,8 @@ public class ConfigFacade
     public static boolean loadConfig(String filename)
     {
         boolean output = false;
-        if(Files.isRegularFile(Path.of(URI.create(filename))))
+        File file = new File(filename);
+        if(Files.isRegularFile(Path.of(file.toURI())))
         {
             try{ CONFIG_STORE = CONFIGURATIONS.ini(filename); }
             catch(Exception e){ ErrorLogging.logError(e); }

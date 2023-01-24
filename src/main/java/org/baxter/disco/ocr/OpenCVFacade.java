@@ -15,14 +15,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.awt.image.BufferedImage;
 
 /**
  * Facade for the OpenCV package.
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 0.0.1, 24 Jan. 2023
+ * @version 0.0.2, 24 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -60,7 +59,6 @@ public class OpenCVFacade
         //Pis should already be configured to create this symlink.
         newCamera("left", "/dev/video-cam1");
         newCamera("right","/dev/video-cam2");
-        gammaCalibrate();
     }
 
     /**
@@ -416,17 +414,22 @@ public class OpenCVFacade
     }
 
     /**
-     * Processes image from defined camera, using the config defaults.
-     * Assumes you want to crop and threshold, but not gamma adjust the image.
-     * (Gamma should be set on the camera by modifying the config.)
+     * Internal function to process image without saving to file.
+     * Runs the same function as {@link #completeProcess(String, String)},
+     * without file I/O, and ensuring to set the gamma for the camera according
+     * to the config.
      *
      * @param cameraName        Name of the camera to take a picture from.
-     * @param saveLocation      Name of the outgoing file
      *
      * @return null if any error occurs; otherwise File of output image
      */
     private static Mat completeProcess(String cameraName)
     {
+        double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
+        double cameraGamma = cameraMap.get(cameraName).getGamma();
+        if(configGamma != cameraGamma)
+            gammaCalibrate(cameraName,configGamma);
+
         Mat output = null;
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
         if(!getCameraNames().contains(cameraName))
@@ -441,16 +444,68 @@ public class OpenCVFacade
 
     /**
      * Collect images from all cameras and save them, using the config defaults.
+     * Configures the camera's gamma before running process.
      *
      * @return List of Files, as defined by {@code #completeProcess(String, String)}
      */
-    public static List<File> iteration()
+    public static List<File> singleIteration()
     {
         List<File> output = new ArrayList<>();
         for(String cameraName : getCameraNames())
         {
+            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
+            double cameraGamma = cameraMap.get(cameraName).getGamma();
+            if(configGamma != cameraGamma)
+                gammaCalibrate(cameraName,configGamma);
+
             output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
         }
+        return output;
+    }
+
+    /**
+     * Collect images from all cameras and save them, using the config defaults.
+     * Does NOT configure camera's gamma before running process.
+     *
+     * @param filler    Not used for anything, just exists so we can use the same function name 
+     *                  without setting the camera's gamma level on every iteration.
+     *
+     * @return List of Files, as defined by {@code #completeProcess(String, String)}
+     */
+    private static List<File> singleIteration(Object filler)
+    {
+        List<File> output = new ArrayList<>();
+        for(String cameraName : getCameraNames())
+        {
+            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
+            double cameraGamma = cameraMap.get(cameraName).getGamma();
+            if(configGamma != cameraGamma)
+                gammaCalibrate(cameraName,configGamma);
+
+            output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
+        }
+        return output;
+    }
+
+    /**
+     *
+     */
+    public static List<List<File>> multipleIterations(int iterationCount)
+    {
+        List<List<File>> output = new ArrayList<>();
+        for(String cameraName : getCameraNames())
+        {
+            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
+            double cameraGamma = cameraMap.get(cameraName).getGamma();
+            if(configGamma != cameraGamma)
+                gammaCalibrate(cameraName,configGamma);
+        }
+
+        for(int i = 0; i < iterationCount; i++)
+        {
+            output.add(singleIteration(new Object()));
+        }
+
         return output;
     }
 }
