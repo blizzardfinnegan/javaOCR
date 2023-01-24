@@ -111,6 +111,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>19</javafx.version>
     <junit.version>5.9.1</junit.version>
-    <webcam.version>0.3.12</webcam.version>
+    <beanutils.version>1.9.4</beanutils.version>
   </properties>
 </project>

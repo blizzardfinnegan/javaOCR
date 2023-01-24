@@ -51,6 +51,7 @@ public class Cli
     public static void main(String[] args)
     {
         inputScanner = new Scanner(System.in);
+        ErrorLogging.logError("Run program.");
 
         int userInput = 0;
 

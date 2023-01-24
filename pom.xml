@@ -31,7 +31,7 @@
         <opencv.version>1.5.6</opencv.version>
         <junit.version>5.9.1</junit.version>
         <tess4j.version>4.1.1</tess4j.version>
-        <webcam.version>0.3.12</webcam.version>
+        <beanutils.version>1.9.4</beanutils.version>
     </properties>
 
     <dependencies>
@@ -54,6 +54,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-configuration2</artifactId>
             <version>${commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>${beanutils.version}</version>
         </dependency>
 
         <!-- Edit Excel document via Apache POI/poi-ooxml -->

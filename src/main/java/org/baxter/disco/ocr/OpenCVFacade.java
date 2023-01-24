@@ -58,7 +58,7 @@ public class OpenCVFacade
     static
     {
         //Pis should already be configured to create this symlink.
-        newCamera("left", "/dev/video0");
+        newCamera("left", "/dev/video-cam1");
         newCamera("right","/dev/video-cam2");
         gammaCalibrate();
     }
@@ -114,11 +114,19 @@ public class OpenCVFacade
     {
         boolean output = true;
         FrameGrabber camera = new OpenCVFrameGrabber(location);
+        try{ camera.start(); }
+        catch(Exception e) { ErrorLogging.logError(e); }
         camera.setFormat(codec);
         camera.setImageWidth(width);
         camera.setImageHeight(height);
         FrameGrabber oldCamera = cameraMap.putIfAbsent(name, camera);
-        if(!oldCamera.equals(null)) output = false;
+
+        //debug removal of below statement
+        if(false) 
+        {
+            ErrorLogging.logError("Camera Initialisation Error!!! - Illegal camera location.");
+            output = false;
+        }
         return output;
     }
 

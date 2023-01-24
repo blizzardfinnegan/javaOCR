@@ -9,6 +9,7 @@ import org.apache.commons.configuration2.builder.*;
 import org.apache.commons.configuration2.builder.fluent.*;
 
 import java.util.List;
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,11 +44,6 @@ public class ConfigFacade
      */
     private static String outputSaveLocation;
 
-    /**
-     * Read-Only List of available cameras.
-     */
-    public static final List<String> activeCameras = new ArrayList<>();
-
     //For values that are ultimately ints, truncate.
     //For values that are ultimately booleans, anything that isn't 0 should be considered True.
     /**
@@ -76,12 +72,18 @@ public class ConfigFacade
 
     static
     {
+        File configFile = new File(configFileLocation);
+        boolean newConfig = true;
+        try{ newConfig = configFile.createNewFile(); }
+        catch(Exception e){ ErrorLogging.logError(e); }
         CONFIGURATIONS.iniBuilder(configFileLocation);
-        //FIXME
-        //TODO: Fill activeCameras
-        //TODO: Set default image location
-        //TODO: Set default output file location
+        File imageLocation  = new File("images");
+        imageLocation.mkdir();
+        File outputFile = new File("output.xlsx");
+        try{ outputFile.createNewFile(); }
+        catch(Exception e){ ErrorLogging.logError(e); }
         outputSaveLocation = "";
+        if(newConfig) saveDefaultConfig();
         loadConfig();
     }
     /**
@@ -98,6 +100,7 @@ public class ConfigFacade
     public static double getValue(String cameraName, ConfigProperties property)
     {
         double output = -1.0;
+        List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         if(cameraConfig.equals(null)) return output;
@@ -169,6 +172,7 @@ public class ConfigFacade
     public static boolean setValue(String cameraName, ConfigProperties property, double propertyValue)
     {
         boolean output = false;
+        List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         if(cameraConfig.equals(null)) return output;
@@ -246,6 +250,7 @@ public class ConfigFacade
     public static boolean saveCurrentConfig(String filename)
     {
         boolean output = false;
+        List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         for(String camera : activeCameras)
         {
             for(ConfigProperties property : ConfigProperties.values())

@@ -8,6 +8,7 @@ module org.baxter.disco.ocr {
     requires javafx.fxml;
     requires org.apache.poi.poi;
     requires org.apache.commons.configuration2;
+    requires org.apache.xmlbeans;
     requires org.bytedeco.tesseract;
     requires org.bytedeco.opencv;
     requires org.bytedeco.javacpp;

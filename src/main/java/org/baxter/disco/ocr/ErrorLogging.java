@@ -1,6 +1,7 @@
 package org.baxter.disco.ocr;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -48,11 +49,13 @@ public class ErrorLogging
     {
         datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
         logFile = datetime.format(LocalDateTime.now()) + "-log.txt";
+        File outFile = new File(logFile);
         try
         {
-        fw = new FileWriter(logFile, true);
-        bw = new BufferedWriter(fw);
-        fileOut = new PrintWriter(bw);
+            outFile.createNewFile();
+            fw = new FileWriter(logFile, true);
+            bw = new BufferedWriter(fw);
+            fileOut = new PrintWriter(bw);
         }
         catch (IOException e)
         {
