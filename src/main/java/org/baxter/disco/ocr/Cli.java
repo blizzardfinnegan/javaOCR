@@ -1,6 +1,13 @@
 package org.baxter.disco.ocr;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+
+import org.bytedeco.javacv.CanvasFrame;
 
 /**
  * CLI for the Fixture.
@@ -9,7 +16,7 @@ import java.util.Scanner;
  * classes in this package (with the exception of {@link Gui} [for now]).
  *
  * @author Blizzard Finnegan
- * @version 0.1.0, 24 Jan. 2023
+ * @version 0.2.0, 24 Jan. 2023
  */
 public class Cli
 {
@@ -39,7 +46,7 @@ public class Cli
     /**
      * Number of options currently available in the camera configuration sub-menu.
      */
-    private static final int cameraMenuOptionCount = 5;
+    private static final int cameraMenuOptionCount = 7;
 
     public static void main(String[] args)
     {
@@ -57,7 +64,7 @@ public class Cli
                     testMovement();
                     break;
                 case 2:
-                    configureCamera();
+                    configureCameras();
                     break;
                 case 3:
                     setIterationCount();
@@ -81,6 +88,27 @@ public class Cli
         ErrorLogging.closeLogs();
         MovementFacade.closeGPIO();
     }
+
+    /**
+     * Wrapper around System.out.println().
+     *
+     * Because its easier to read, and less to type.
+     */
+    private static void println(String input) { System.out.println(input); }
+
+    /**
+     * Wrapper around System.out.print().
+     *
+     * Because its easier to read, and less to type.
+     */
+    private static void prompt(String input) { System.out.print(input); }
+
+    /**
+     * Wrapper around System.out.print().
+     *
+     * Because its easier to read, and less to type.
+     */
+    private static void print(String input) { System.out.print(input); }
 
     /**
      * Prints a complete list of descriptions for all 
@@ -126,20 +154,6 @@ public class Cli
     }
 
     /**
-     * Wrapper around System.out.println().
-     *
-     * Because its easier to read, and less to type.
-     */
-    private static void println(String input) { System.out.println(input); }
-
-    /**
-     * Wrapper around System.out.print().
-     *
-     * Because its easier to read, and less to type.
-     */
-    private static void prompt(String input) { System.out.print(input); }
-
-    /**
      * Print function for the main menu.
      */
     private static void printMainMenu()
@@ -158,6 +172,70 @@ public class Cli
         println("6. Exit");
         println("====================================");
     }
+
+    private static void printMovementMenu()
+    {
+        println("\n\n");
+        println("====================================");
+        println("Movement Menu:");
+        println("------------------------------------");
+        println("Current Duty Cycle: " + MovementFacade.getDutyCycle());
+        println("Current Frequency: " + MovementFacade.getFrequency());
+        println("Current Motor Time-out: " + MovementFacade.getTimeout());
+        println("------------------------------------");
+        println("1. Change Duty Cycle");
+        println("2. Change Frequency");
+        println("3. Change Motor Time-out");
+        println("4. Exit");
+        println("====================================");
+    }
+
+    private static void printCameraMenu(List<String> cameraList)
+    {
+        println("Available cameras to configure:");
+        println("------------------------------------");
+        for(int index = 0; index < cameraList.size(); index++)
+        {
+            int humanIndex = index+1;
+            String cameraName = (String)cameraList.get(index);
+            println(humanIndex + " - " + cameraName);
+        }
+        println(cameraList.size() + " - Exit to Main Menu");
+        println("------------------------------------");
+    }
+
+    private static void printCameraConfigMenu(String cameraName)
+    {
+        println("\n\n");
+        println("====================================");
+        println("Camera Config Menu:");
+        println("------------------------------------");
+        println("Current Crop values: ");
+        println("************************************");
+        print("X: " + ConfigFacade.getValue(cameraName,
+                                            ConfigProperties.CROP_X));
+        print(" | Y: " + ConfigFacade.getValue(cameraName,
+                                               ConfigProperties.CROP_Y));
+        print(" | Width: " + ConfigFacade.getValue(cameraName,
+                                                   ConfigProperties.CROP_W));
+        print(" | Height: " + ConfigFacade.getValue(cameraName,
+                                                    ConfigProperties.CROP_H));
+        println("************************************");
+        println("Current Gamma value: " + ConfigFacade.getValue(cameraName,
+                                                                ConfigProperties.GAMMA));
+        println("Current composite frame count: " + 
+                ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
+        println("------------------------------------");
+        println("1. Change Crop X");
+        println("2. Change Crop Y");
+        println("3. Change Crop Width");
+        println("4. Change Crop Height");
+        println("5. Change Gamma Value");
+        println("6. Change Composite Frame Count");
+        println("7. Exit");
+        println("====================================");
+    }
+
 
     private static void testMovement()
     {
@@ -210,29 +288,104 @@ public class Cli
         while(userInput != 4);
     }
 
-    private static void printMovementMenu()
-    {
-        println("\n\n");
-        println("====================================");
-        println("Movement Menu:");
-        println("------------------------------------");
-        println("Current Duty Cycle: " + MovementFacade.getDutyCycle());
-        println("Current Frequency: " + MovementFacade.getFrequency());
-        println("Current Motor Time-out: " + MovementFacade.getTimeout());
-        println("------------------------------------");
-        println("1. Change Duty Cycle");
-        println("2. Change Frequency");
-        println("3. Change Motor Time-out");
-        println("4. Exit");
-        println("====================================");
-    }
-
-    /** TODO:
+    /** 
      * Sub-function used to configure cameras.
      */
-    private static void configureCamera()
+    private static void configureCameras()
     {
-        //might want to be a separate function in OpenCVFacade
+        List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+        
+        //Open a single new thread, so the canvas 
+        //used further down to display the temporary 
+        //image doesn't accidentally kill the program.
+        //Created at beginning of function call to reduce 
+        //thread spawn count.
+        //See also: https://docs.oracle.com/javase/8/docs/api/java/awt/doc-files/AWTThreadIssues.html#Autoshutdown
+        Runnable r = new Runnable() {
+            public void run() {
+                Object o = new Object();
+                try {
+                    synchronized (o) {
+                        o.wait();
+                    }
+                } catch (InterruptedException ie) {
+                }
+            }
+        };
+        Thread t = new Thread(r);
+        t.setDaemon(false);
+        t.start();
+        do
+        {
+            //Main menu
+            printCameraMenu(cameraList);
+
+            //Pick a camera to configure
+            int userInput;
+
+            String cameraName = "";
+            do
+            {
+                prompt("Enter a camera number to configure: ");
+                userInput = inputFiltering(inputScanner.nextLine());
+            } while (cameraList.size() < userInput);
+
+            //Leave do-while loop if the user asks to
+            if(userInput == cameraList.size()) break;
+            else cameraName = cameraList.get(userInput);
+
+            do
+            {
+                //Show image (need to implement in OpenCVFacade)
+                CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
+
+
+                //list configurable settings
+                printCameraConfigMenu(cameraList.get(userInput));
+
+                //User input parsing
+                ConfigProperties modifiedProperty = ConfigProperties.PRIME;
+                do
+                {
+                    userInput = inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
+                    switch (userInput)
+                    {
+                        case 1:
+                            modifiedProperty = ConfigProperties.CROP_X;
+                            break;
+                        case 2:
+                            modifiedProperty = ConfigProperties.CROP_Y;
+                            break;
+                        case 3:
+                            modifiedProperty = ConfigProperties.CROP_W;
+                            break;
+                        case 4:
+                            modifiedProperty = ConfigProperties.CROP_H;
+                            break;
+                        case 5:
+                            modifiedProperty = ConfigProperties.GAMMA;
+                            break;
+                        case 6:
+                            modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
+                            break;
+                        case 7:
+                            modifiedProperty = ConfigProperties.PRIME;
+                        default:
+                    }
+                } while(userInput != -1);
+                
+                if(modifiedProperty != ConfigProperties.PRIME)
+                {
+                    prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
+                    userInput = inputFiltering(inputScanner.nextLine());
+                    ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
+                    canvas.dispose();
+                }
+                else break;
+            } while(true);
+
+        } while(true);
+
         println("Configuration complete!");
     }
 
@@ -251,12 +404,26 @@ public class Cli
         iterationCount = input;
     }
 
-    /**TODO:
+    /**
      * Starts running tests in {@link OpenCVFacade}
      */
     private static void runTests()
     {
-        println("Running tests");
+        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+        Map<String, Double> resultMap = new HashMap<>();
+        for(int i = 0; i < iterationCount; i++)
+        {
+            List<File> fileList = OpenCVFacade.iteration();
+            for(File file : fileList)
+            {
+                Double result = TesseractFacade.imageToDouble(file);
+                String fileLocation = file.getAbsolutePath();
+                resultMap.put(fileLocation,result);
+            }
+            DataSaving.writeValues(i,resultMap);
+        }
+        println("=======================================");
+        println("Tests complete!");
     }
 
     /**
@@ -377,6 +544,7 @@ public class Cli
      */
     private static void invalidInput(String input)
     {
+        ErrorLogging.logError("Invalid User Input!!! - Message to user: '" + input + "'");
         println("");
         println("=================================================");
         println("Invalid input! - " + input);

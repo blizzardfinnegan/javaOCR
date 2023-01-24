@@ -15,15 +15,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.awt.image.BufferedImage;
 
 /**
  * Facade for the OpenCV package.
  * Performs image capture, as well as image manipulation.
- * Final product should only have one function publicly available;
- * takeImages().
  *
  * @author Blizzard Finnegan
- * @version 23 Jan. 2023
+ * @version 0.0.1, 24 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -33,11 +32,6 @@ public class OpenCVFacade
      * To get available camera names, getKeys.
      */
     private static final Map<String,FrameGrabber> cameraMap = new HashMap<>();
-
-    /**
-     * Object used to convert between BufferedImages and Frames
-     */
-    //private static final Java2DFrameConverter BUFF_CONVERTER = new Java2DFrameConverter();
 
     /**
      * Object used to convert between Mats and Frames
@@ -64,7 +58,7 @@ public class OpenCVFacade
     static
     {
         //Pis should already be configured to create this symlink.
-        newCamera("left", "/dev/video-cam1");
+        newCamera("left", "/dev/video0");
         newCamera("right","/dev/video-cam2");
         gammaCalibrate();
     }
@@ -184,7 +178,7 @@ public class OpenCVFacade
         }
     }
 
-    /** FIXME: Frame to Mat convert;
+    /** 
      * Wrapper function for native "take picture" function.
      * Image is immediately converted to greyscale to improve RAM footprint.
      *
@@ -215,6 +209,23 @@ public class OpenCVFacade
         cvtColor(in,output,CV_BGR2GRAY);
 
         return output;
+    }
+
+    /**
+     * Show current processed image to user.
+     *
+     * @param cameraName    The name of the camera to be previewed
+     *
+     * @return The {@link CanvasFrame} that is being opened. This is returned so it can be closed by the program.
+     */
+    public static CanvasFrame showImage(String cameraName)
+    {
+        Mat image = completeProcess(cameraName);
+        Frame outputImage = MAT_CONVERTER.convert(image);
+        String canvasTitle = "Camera " + cameraName + " Preview";
+        CanvasFrame canvas = new CanvasFrame(canvasTitle);
+        canvas.showImage(outputImage);
+        return canvas;
     }
 
     /** 
@@ -394,6 +405,30 @@ public class OpenCVFacade
     {
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
         return completeProcess(cameraName,true,true,compositeFrames,saveLocation);
+    }
+
+    /**
+     * Processes image from defined camera, using the config defaults.
+     * Assumes you want to crop and threshold, but not gamma adjust the image.
+     * (Gamma should be set on the camera by modifying the config.)
+     *
+     * @param cameraName        Name of the camera to take a picture from.
+     * @param saveLocation      Name of the outgoing file
+     *
+     * @return null if any error occurs; otherwise File of output image
+     */
+    private static Mat completeProcess(String cameraName)
+    {
+        Mat output = null;
+        int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
+        if(!getCameraNames().contains(cameraName))
+        {
+            ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
+            return output;
+        }
+        List<Mat> imageList = takeBurst(cameraName, compositeFrames);
+        output = compose(imageList, true, true, cameraName);
+        return output;
     }
 
     /**

@@ -175,6 +175,10 @@ public class ConfigFacade
         Double oldValue = cameraConfig.get(property);
         return cameraConfig.replace(property,oldValue,propertyValue);
     }
+
+    //**********************************************
+    //SAVE AND LOAD SETTINGS
+    //**********************************************
     /**
      * Save current config to a user-defined file location.
      *
