@@ -62,7 +62,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>org.baxter.disco.ocr.Cli</mainClass>
+              <mainClass>org.baxter.disco.ocr.MovementFacade</mainClass>
             </manifest>
           </archive>
         </configuration>

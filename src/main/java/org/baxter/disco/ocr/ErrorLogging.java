@@ -46,11 +46,10 @@ public class ErrorLogging
 
     static
     {
+        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
+        logFile = datetime.format(LocalDateTime.now()) + "-log.txt";
         try
         {
-            /*FIXME:
-             * New file per runtime
-             */
         fw = new FileWriter(logFile, true);
         bw = new BufferedWriter(fw);
         fileOut = new PrintWriter(bw);
@@ -59,7 +58,6 @@ public class ErrorLogging
         {
             System.err.println(e);
         }
-        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     }
 
     /**

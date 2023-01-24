@@ -44,8 +44,7 @@ public class Cli
             switch (userInput)
             {
                 case 1:
-                    println("Testing movement...");
-                    MovementFacade.testMotions();
+                    testMovement();
                     break;
                 case 2:
                     configureCamera();
@@ -146,6 +145,63 @@ public class Cli
         println("====================================");
     }
 
+    private static void testMovement()
+    {
+        int userInput = -1;
+        do
+        {
+        println("Testing movement...");
+        MovementFacade.testMotions();
+        printMovementMenu();
+        userInput = inputFiltering(inputScanner.nextLine());
+        switch (userInput)
+        {
+            /*
+             * Menu options:
+             * 1. Change Duty Cycle
+             * 2. Change Frequency
+             * 3. Change Motor Time-out
+             */
+            case 1:
+                prompt("Input the desired duty cycle value: ");
+                int newDutyCycle = inputFiltering(inputScanner.nextLine());
+                MovementFacade.setDutyCycle(newDutyCycle);
+                break;
+            case 2:
+                prompt("Input the desired frequency value: ");
+                int newFrequency = inputFiltering(inputScanner.nextLine());
+                MovementFacade.setFrequency(newFrequency);
+                break;
+            case 3:
+                prompt("Input the desired time-out (in seconds): ");
+                int newTimeout = inputFiltering(inputScanner.nextLine());
+                MovementFacade.setTimeout(newTimeout);
+                break;
+            case 4:
+                break;
+            default:
+                ErrorLogging.logError("User Input Error!!! - Invalid input.");
+        }
+        } while(userInput != 4);
+    }
+
+    private static void printMovementMenu()
+    {
+        println("\n\n");
+        println("====================================");
+        println("Movement Menu:");
+        println("------------------------------------");
+        println("Current Duty Cycle: " + MovementFacade.getDutyCycle());
+        println("Current Frequency: " + MovementFacade.getFrequency());
+        println("Current Motor Time-out: " + MovementFacade.getTimeout());
+        println("------------------------------------");
+        println("1. Change Duty Cycle");
+        println("2. Change Frequency");
+        println("3. Change Motor Time-out");
+        println("4. Exit");
+        println("====================================");
+    }
+
     /** TODO:
      * Sub-function used to configure cameras.
      */
@@ -154,6 +210,7 @@ public class Cli
         //might want to be a separate function in OpenCVFacade
         println("Configuration complete!");
     }
+
 
     /**
      * Setter for {@link #iterationCount}

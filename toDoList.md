@@ -32,12 +32,6 @@
 
 ### MovementFacade
 
-- [ x ] refactor with frequency as private
-	- [ x ] getter
-	- [ x ] setter, with bounds
-		- [ x ] no negatives
-		- [ ] ~~some upper bound (probably the RPi's upper bound of HW PWM)~~ According to Ed, this is not necessary.
-- [ x ] actually set PWM duty cycle in PWM creator
 - [ ] Implement multithreading for physical Run switch
 	- requires much documentation reading
 

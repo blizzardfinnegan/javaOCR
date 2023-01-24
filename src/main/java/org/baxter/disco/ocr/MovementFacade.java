@@ -15,17 +15,15 @@ import com.pi4j.io.pwm.PwmType;
 /**
  * Facade for all movement of the fixture.
  *
+ * Uses Pi4J to communicate with GPIO pins.
+ * Currently missing Run switch compatibility.
+ *
  * @author Blizzard Finnegan
- * @version 23 Jan. 2023
+ * @version 1.0.0, 24 Jan. 2023
  */
 public class MovementFacade
 {
     //Externally Available Variables
-    /**
-     * Number of times to test the Device Under Test
-     */
-    private static int CYCLES = 10000;
-
     /**
      * PWM Frequency
      */
@@ -57,7 +55,7 @@ public class MovementFacade
     /**
      * Output pin address for piston control.
      */
-    private static final int PISTON_ADDR = 15;
+    private static final int PISTON_ADDR = 25;
 
     /**
      * PWM pin address.
@@ -122,12 +120,18 @@ public class MovementFacade
     private static DigitalOutput motorDirection;
 
     /**
-     * Piston control pin.
+     * Piston control pin object.
      *
      * Status: High; Piston is extended.
      * Status: Low; Piston is retracted.
      */
     private static DigitalOutput pistonActivate;
+
+    /**
+     * PWM pin object.
+     * Never used, but needs to be initialised to get GPIO to work properly.
+     */
+    private static Pwm pwm;
 
     /**
      * {@link Pi4J} API interaction object.
@@ -151,7 +155,8 @@ public class MovementFacade
 
         //Initialise PWM object. This object is never used, 
         //as the PWM signal is simply a clock for the motor.
-        pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+        pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+        pwm.on(DUTY_CYCLE, FREQUENCY);
     }
 
     /**
@@ -186,7 +191,6 @@ public class MovementFacade
                                    .pwmType(PwmType.HARDWARE)
                                    .provider("pigpio-pwm")
                                    .frequency(FREQUENCY)
-                                   //Start PWM signal on initialisation
                                    .initial(1)
                                    //On program close, turn off PWM.
                                    .shutdown(0);
@@ -200,7 +204,6 @@ public class MovementFacade
                                    .pwmType(PwmType.SOFTWARE)
                                    .provider("pigpio-pwm")
                                    .frequency(FREQUENCY)
-                                   //Start PWM signal on initialisation
                                    .initial(1)
                                    //On program close, turn off PWM.
                                    .shutdown(0);
@@ -221,7 +224,7 @@ public class MovementFacade
     { 
         DigitalInputConfigBuilder configBuilder = DigitalInput.newConfigBuilder(pi4j)
                                                               .id(id)
-                                                              .name(name)
+                                                              //.name(name)
                                                               .address(address)
                                                               .pull(PullResistance.PULL_DOWN)
                                                               .debounce(3000L)
@@ -269,6 +272,7 @@ public class MovementFacade
         {
             DUTY_CYCLE = newDutyCycle;
             pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+            pwm.on(DUTY_CYCLE, FREQUENCY);
             output = true;
         }
         return output;
@@ -280,35 +284,6 @@ public class MovementFacade
      * @return The current DutyCycle.
      */
     public static int getDutyCycle() { return DUTY_CYCLE; }
-
-    /**
-     * Setter for the fixture's number of times to test the Device Under Test.
-     *
-     * @param newCycles  The new number of cycles to be set by the user.
-     *
-     * @return True if the value was set successfully; otherwise false.
-     */
-    public static boolean setCycles(int newCycles)
-    {
-        boolean output = false;
-        if(newCycles < 0)
-        {
-            ErrorLogging.logError("Movement error!!! - Invalid Cycles input.");
-        }
-        else
-        {
-            CYCLES = newCycles;
-            output = true;
-        }
-        return output;
-    }
-
-    /**
-     * Getter for the fixture's number of times to test the device under test.
-     *
-     * @return The current Cycles.
-     */
-    public static int getCycles() { return CYCLES; }
 
     /**
      * Setter for the fixture's time to give up on a movement.
@@ -357,6 +332,7 @@ public class MovementFacade
         {
             FREQUENCY = newFrequency;
             pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
+            pwm.on(DUTY_CYCLE, FREQUENCY);
             output = true;
         }
         return output;
@@ -384,11 +360,13 @@ public class MovementFacade
         {
             motorDirection.high();
             limitSense = upperLimit;
+            ErrorLogging.logError("Going up...");
         }
         else        
         {
             motorDirection.low();
             limitSense = lowerLimit;
+            ErrorLogging.logError("Going down...");
         }
 
         motorEnable.on();
@@ -439,8 +417,10 @@ public class MovementFacade
      */
     public static void pressButton()
     {
+        ErrorLogging.logError("Pressing button...");
         pistonActivate.on();
         try{ Thread.sleep(1000); } catch(Exception e) {ErrorLogging.logError(e);};
+        ErrorLogging.logError("Releasing button...");
         pistonActivate.off();
     }
 
@@ -469,6 +449,12 @@ public class MovementFacade
         pressButton();
         output = goUp();
         return output;
+    }
+
+    public static void main(String[] args)
+    {
+        testMotions();
+        closeGPIO();
     }
 
     //TODO: Multithreading, to allow for RunSwitch Interrupts.

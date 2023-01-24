@@ -25,3 +25,4 @@ hs_err_pid*
 **/tessdata
 **/*.lst
 target
+*log.txt
