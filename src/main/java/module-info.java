@@ -1,6 +1,4 @@
 module org.baxter.disco.ocr {
-    requires org.slf4j;             //slf4j-api-2.0.0-alpha1.jar
-    requires org.slf4j.simple;      //slf4j-simple-2.0.0-alpha1.jar & simplelogger.properties
     requires com.pi4j;
     requires com.pi4j.plugin.raspberrypi;
     requires com.pi4j.plugin.pigpio;
@@ -15,6 +13,8 @@ module org.baxter.disco.ocr {
     requires javafx.graphics;
     requires org.apache.poi.ooxml;
     requires org.apache.poi.ooxml.schemas;
+    requires org.apache.commons.io;
+    requires org.apache.commons.lang3;
 
     requires org.bytedeco.javacv.platform;
     requires java.desktop;

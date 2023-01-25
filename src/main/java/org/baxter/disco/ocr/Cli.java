@@ -2,7 +2,6 @@ package org.baxter.disco.ocr;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,7 @@ import org.bytedeco.javacv.CanvasFrame;
  * classes in this package (with the exception of {@link Gui} [for now]).
  *
  * @author Blizzard Finnegan
- * @version 0.3.0, 24 Jan. 2023
+ * @version 0.4.0, 25 Jan. 2023
  */
 public class Cli
 {
@@ -51,46 +50,52 @@ public class Cli
 
     public static void main(String[] args)
     {
-        inputScanner = new Scanner(System.in);
-        ErrorLogging.logError("Run program.");
+        try{
+            inputScanner = new Scanner(System.in);
+            ErrorLogging.logError("Start of program.");
 
-        int userInput = 0;
+            int userInput = 0;
 
-        do
-        {
-            printMainMenu();
-            userInput = inputFiltering(inputScanner.nextLine());
-            switch (userInput)
+            do
             {
-                case 1:
-                    testMovement();
-                    break;
-                case 2:
-                    println("Setting up cameras for the first time...");
-                    println("This may take a moment...");
-                    configureCameras();
-                    break;
-                case 3:
-                    setIterationCount();
-                    break;
-                case 4:
-                    runTests();
-                    println("Test complete!");
-                    break;
-                case 5:
-                    printHelp();
-                    break;
-                case 6:
-                    break;
-                default:
-                    //Input handling already done by inputFiltering()
-            }
+                printMainMenu();
+                userInput = inputFiltering(inputScanner.nextLine());
+                switch (userInput)
+                {
+                    case 1:
+                        testMovement();
+                        break;
+                    case 2:
+                        println("Setting up cameras...");
+                        println("This may take a moment...");
+                        configureCameras();
+                        break;
+                    case 3:
+                        setIterationCount();
+                        break;
+                    case 4:
+                        runTests();
+                        println("Test complete!");
+                        break;
+                    case 5:
+                        printHelp();
+                        break;
+                    case 6:
+                        break;
+                    default:
+                        //Input handling already done by inputFiltering()
+                }
 
         } while (userInput != 6);
 
-        inputScanner.close();
-        ErrorLogging.closeLogs();
-        MovementFacade.closeGPIO();
+        }
+        catch(Exception e) { ErrorLogging.logError(e); }
+        finally
+        {
+            inputScanner.close();
+            ErrorLogging.closeLogs();
+            MovementFacade.closeGPIO();
+        }
     }
 
     /**
@@ -222,7 +227,7 @@ public class Cli
                                                ConfigProperties.CROP_Y));
         print(" | Width: " + ConfigFacade.getValue(cameraName,
                                                    ConfigProperties.CROP_W));
-        print(" | Height: " + ConfigFacade.getValue(cameraName,
+        println(" | Height: " + ConfigFacade.getValue(cameraName,
                                                     ConfigProperties.CROP_H));
         println("************************************");
         println("Current Gamma value: " + ConfigFacade.getValue(cameraName,
@@ -298,7 +303,7 @@ public class Cli
     private static void configureCameras()
     {
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
-        println(cameraList.toString());
+        //println(cameraList.toString());
         
         //Open a single new thread, so the canvas 
         //used further down to display the temporary 
@@ -334,11 +339,12 @@ public class Cli
             {
                 prompt("Enter a camera number to configure: ");
                 userInput = inputFiltering(inputScanner.nextLine());
+                userInput--;
             } while (cameraList.size() < userInput);
 
             //Leave do-while loop if the user asks to
-            if(userInput == (cameraList.size()+1)) break;
-            else cameraName = cameraList.get((userInput-1));
+            if(userInput == (cameraList.size())) break;
+            else cameraName = cameraList.get((userInput));
 
             do
             {
@@ -346,13 +352,13 @@ public class Cli
                 CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
 
 
-                //list configurable settings
-                printCameraConfigMenu(cameraList.get(userInput));
-
                 //User input parsing
-                ConfigProperties modifiedProperty = ConfigProperties.PRIME;
+                ConfigProperties modifiedProperty = null;
                 do
                 {
+                    //list configurable settings
+                    printCameraConfigMenu(cameraName);
+
                     userInput = inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
                     switch (userInput)
                     {
@@ -378,14 +384,14 @@ public class Cli
                             modifiedProperty = ConfigProperties.PRIME;
                         default:
                     }
-                } while(userInput != -1);
+                } while(modifiedProperty == null);
                 
                 if(modifiedProperty != ConfigProperties.PRIME)
                 {
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
                     userInput = inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
-                    canvas.dispose();
+                    if(canvas != null) canvas.dispose();
                 }
                 else break;
             } while(true);

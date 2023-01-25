@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
- * @version 24 Jan. 2023
+ * @version 0.0.1, 25 Jan. 2023
  */
 public class ConfigFacade
 {
@@ -36,12 +36,12 @@ public class ConfigFacade
     /**
      * Location to save images to. 
      */
-    private static String imageSaveLocation;
+    private static String imageSaveLocation = "images";
 
     /**
      * Location to save output XLSX file to.
      */
-    private static String outputSaveLocation;
+    private static String outputSaveLocation = "outputData.xlsx";
 
     //For values that are ultimately ints, truncate.
     //For values that are ultimately booleans, anything that isn't 0 should be considered True.
@@ -71,14 +71,23 @@ public class ConfigFacade
 
     static
     {
+        CONFIG_STORE = null;
         File configFile = new File(configFileLocation);
         boolean newConfig = true;
         try{ newConfig = configFile.createNewFile(); }
         catch(Exception e){ ErrorLogging.logError(e); }
+        CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class)
+            .configure(new Parameters().fileBased().setFile(configFile));
+        try
+        { 
+            CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
+        }
+        catch(Exception e) { ErrorLogging.logError(e); }
+        finally { if(CONFIG_STORE == null) ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); }
         CONFIGURATIONS.iniBuilder(configFileLocation);
-        File imageLocation  = new File("images");
+        File imageLocation  = new File(imageSaveLocation);
         imageLocation.mkdir();
-        File outputFile = new File("output.xlsx");
+        File outputFile = new File(outputSaveLocation);
         try{ outputFile.createNewFile(); }
         catch(Exception e){ ErrorLogging.logError(e); }
         outputSaveLocation = "";
@@ -87,8 +96,8 @@ public class ConfigFacade
             boolean saveSuccessful = saveDefaultConfig();
             if(!saveSuccessful) ErrorLogging.logError("Save config failed!!!");
         }
-        loadConfig();
-        //CONFIG_BUILDER.setAutoSave(true);
+        else { loadConfig(); }
+        CONFIG_BUILDER.setAutoSave(true);
     }
     /**
      * Get a given config value. 
@@ -99,16 +108,19 @@ public class ConfigFacade
      * @param cameraName    Name of the camera (as defined in {@link #activeCameras})
      * @param property      name of the property ({@link ConfigProperties})
      *
-     * @return double of config value. Returns -1 if invalid input.
+     * @return double of config value. Returns 0 if invalid input.
+     * (Under normal circumstances, I would be returning -1, but because this 
+     *  function is fed into a function expecting all values to be positive, 
+     *  that practice has been set aside.)
      */
     public static double getValue(String cameraName, ConfigProperties property)
     {
-        double output = -1.0;
+        double output = 0.0;
         List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
-        if(cameraConfig == null) return output;
         output = cameraConfig.get(property);
+        ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName + "/" + property.getConfig() + " = " + output);
         return output;
     }
 
@@ -179,7 +191,7 @@ public class ConfigFacade
         List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
-        if(cameraConfig.equals(null)) return output;
+        if(cameraConfig == null) return output;
         Double oldValue = cameraConfig.get(property);
         return cameraConfig.replace(property,oldValue,propertyValue);
     }
@@ -197,35 +209,54 @@ public class ConfigFacade
     {
         boolean output = false;
         Set<String> cameraNames = OpenCVFacade.getCameraNames();
+        CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class).configure(new Parameters().fileBased().setFile(new File(filename)));
+        try
+        { 
+            CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
+        }
+        catch(Exception e) { ErrorLogging.logError(e); }
+        finally { if(CONFIG_STORE == null) ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); }
         for(String camera : cameraNames)
         {
+            Map<ConfigProperties,Double> cameraConfig = new HashMap<>();
             for(ConfigProperties property : ConfigProperties.values())
             {
-                String propertyName = camera + "/" + property.toString();
+                String propertyName = camera + "/" + property.getConfig();
                 String propertyValue = "-1.0";
                 switch(property)
                 {
                     case PRIME:
                         propertyValue = "true";
+                        cameraConfig.put(property,1.0);
                         break;
                     case GAMMA:
                         propertyValue = "1.0";
+                        cameraConfig.put(property,1.0);
                         break;
                     case CROP_Y:
                     case CROP_X:
                         propertyValue = "250.0";
+                        cameraConfig.put(property,250.0);
                         break;
                     case CROP_H:
                     case CROP_W:
                         propertyValue = "300.0";
+                        cameraConfig.put(property,300.0);
                         break;
                     case COMPOSITE_FRAMES:
                         propertyValue = "5.0";
+                        cameraConfig.put(property,5.0);
+                        break;
+                    default:
+                        ErrorLogging.logError("DEFAULT CONFIG INIT ERROR - Invalid property name.");
+                        ErrorLogging.logError("Property Name: " + propertyName);
+                        ErrorLogging.logError("Defined defined property: " + property.toString());
                 }
-                ErrorLogging.logError("DEBUG: Attempting to save to config: ");
-                ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
+                //ErrorLogging.logError("DEBUG: Attempting to save to config: ");
+                //ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
                 CONFIG_STORE.addProperty(propertyName,propertyValue);
             }
+            configMap.put(camera,cameraConfig);
         }
         try
         { 
@@ -296,26 +327,71 @@ public class ConfigFacade
     {
         boolean output = false;
         File file = new File(filename);
+        try
+        {
+        if(file.createNewFile())
+            saveDefaultConfig();
+        }
+        catch(Exception e)
+        {
+            ErrorLogging.logError(e);
+            saveDefaultConfig();
+        }
+        List<String> cameraNames = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(Files.isRegularFile(Path.of(file.toURI())))
         {
-            try{ CONFIG_STORE = CONFIGURATIONS.ini(filename); }
+            try
+            { 
+                CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class).configure(new Parameters().fileBased().setFile(file));
+                CONFIG_STORE = CONFIGURATIONS.ini(filename); 
+            }
             catch(Exception e){ ErrorLogging.logError(e); }
 
-            for(String sectionName : CONFIG_STORE.getSections())
+            Set<String> configSections = CONFIG_STORE.getSections();
+            ErrorLogging.logError("DEBUG: imported sections - " + configSections.toString());
+            ErrorLogging.logError("DEBUG: imported section size - " + configSections.size());
+            for(String sectionName : configSections)
             {
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
-                var section = CONFIG_STORE.getSection(sectionName);
+                SubnodeConfiguration subSection = CONFIG_STORE.getSection(sectionName);
+
+                String subSectionPrefix = "";
+                for(String cameraName : cameraNames)
+                {
+                    if(cameraName == null)
+                    {
+                        ErrorLogging.logError("CONFIG LOAD ERROR!!! - Empty camera name.");
+                        continue;
+                    }
+                    else if(sectionName == null)
+                    {
+                        ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid imported section name.");
+                        continue;
+                    }
+                    else if(sectionName.equals(cameraName))
+                    {
+                        subSectionPrefix = cameraName;
+                        break;
+                    }
+                }
+
+                if(subSectionPrefix.equals("")) 
+                {
+                    ErrorLogging.logError("CONFIG LOAD ERROR!!! - Failed import from file. Setting default config.");
+                    return saveDefaultConfig();
+                }
 
                 for(ConfigProperties configState : ConfigProperties.values())
                 {
-                    if(!section.containsKey(configState.toString()))
+                    String subSectionValueName = subSectionPrefix + "/" + configState.getConfig();
+                    if(!subSection.containsKey(subSectionValueName))
                     {
                         ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid config file.");
-                        return output;
+                        return saveDefaultConfig(file.getAbsolutePath());
                     }
                     else
                     {
-                        Double configValue = section.getDouble(configState.toString());
+                        Double configValue = subSection.getDouble(configState.toString());
                         savedSection.put(configState,configValue);
                     }
                 }

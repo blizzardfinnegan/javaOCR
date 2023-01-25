@@ -21,7 +21,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 0.0.2, 24 Jan. 2023
+ * @version 0.0.3, 25 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -72,9 +72,9 @@ public class OpenCVFacade
      * @return false if camera already exists, or if camera does not exist.
      *         Otherwise, returns true.
      */
-    private static boolean newCamera(String name, String location)
+    private static void newCamera(String name, String location)
     {
-        return newCamera(name, location, IMG_WIDTH, IMG_HEIGHT);
+        newCamera(name, location, IMG_WIDTH, IMG_HEIGHT);
     }
 
     /**
@@ -90,9 +90,9 @@ public class OpenCVFacade
      * @return false if camera already exists, or if camera does not exist.
      *         Otherwise, returns true.
      */
-    private static boolean newCamera(String name, String location, int width, int height)
+    private static void newCamera(String name, String location, int width, int height)
     {
-        return newCamera(name, location, width, height, CAMERA_CODEC);
+        newCamera(name, location, width, height, CAMERA_CODEC);
     }
 
     /**
@@ -108,24 +108,15 @@ public class OpenCVFacade
      * @return false if camera already exists, or if camera does not exist.
      *         Otherwise, returns true.
      */
-    private static boolean newCamera(String name, String location, int width, int height, String codec)
+    private static void newCamera(String name, String location, int width, int height, String codec)
     {
-        boolean output = true;
         FrameGrabber camera = new OpenCVFrameGrabber(location);
         try{ camera.start(); }
         catch(Exception e) { ErrorLogging.logError(e); }
         camera.setFormat(codec);
         camera.setImageWidth(width);
         camera.setImageHeight(height);
-        FrameGrabber oldCamera = cameraMap.putIfAbsent(name, camera);
-
-        //debug removal of below statement
-        if(false) 
-        {
-            ErrorLogging.logError("Camera Initialisation Error!!! - Illegal camera location.");
-            output = false;
-        }
-        return output;
+        cameraMap.put(name, camera);
     }
 
     /**
@@ -226,10 +217,11 @@ public class OpenCVFacade
      */
     public static CanvasFrame showImage(String cameraName)
     {
-        ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
-        ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
+        //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
+        //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
         Mat image = completeProcess(cameraName);
-        ErrorLogging.logError("DEBUG: image processed successfully.");
+        if(image == null) return null;
+        ErrorLogging.logError("DEBUG: Image processed successfully.");
         Frame outputImage = MAT_CONVERTER.convert(image);
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
@@ -248,6 +240,8 @@ public class OpenCVFacade
     public static List<Mat> takeBurst(String cameraName, int frameCount)
     {
         List<Mat> output = null;
+        ErrorLogging.logError("DEBUG: takeBurst - Camera Name: " + cameraName);
+        ErrorLogging.logError("DEBUG: takeBurst - Possible camera names: " + getCameraNames().toString());
         if(getCameraNames().contains(cameraName))
         {
             output = new LinkedList<>();
@@ -274,8 +268,17 @@ public class OpenCVFacade
         int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
         int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
         int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
+        ErrorLogging.logError("DEBUG: Crop dimensions:");
+        ErrorLogging.logError("DEBUG: X = " + x);
+        ErrorLogging.logError("DEBUG: Y = " + y);
+        ErrorLogging.logError("DEBUG: Width = " + width);
+        ErrorLogging.logError("DEBUG: Height = " + height);
         var cropRectangle = new Rect(x,y,width,height);
-        output = new Mat(image,cropRectangle);
+        ErrorLogging.logError("DEBUG: Original image size: ");
+        ErrorLogging.logError("DEBUG: Width: " + image.cols());
+        ErrorLogging.logError("DEBUG: Height: " + image.rows());
+        output = image.apply(cropRectangle);
+        //output = new Mat(image,cropRectangle);
         return output;
     }
 
@@ -403,7 +406,10 @@ public class OpenCVFacade
             ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
             return output;
         }
+        ErrorLogging.logError("DEBUG: Camera to take picture from: " + cameraName);
+        ErrorLogging.logError("DEBUG: Composite frame count: " + compositeFrames);
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
+        ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
         Mat finalImage = compose(imageList, threshold, crop, cameraName);
         output = saveImage(finalImage, saveLocation);
         return output;
@@ -437,10 +443,7 @@ public class OpenCVFacade
      */
     private static Mat completeProcess(String cameraName)
     {
-        double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-        double cameraGamma = cameraMap.get(cameraName).getGamma();
-        if(configGamma != cameraGamma)
-            gammaCalibrate(cameraName,configGamma);
+        gammaCalibrate(cameraName);
 
         Mat output = null;
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
@@ -493,10 +496,7 @@ public class OpenCVFacade
         List<File> output = new ArrayList<>();
         for(String cameraName : getCameraNames())
         {
-            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-            double cameraGamma = cameraMap.get(cameraName).getGamma();
-            if(configGamma != cameraGamma)
-                gammaCalibrate(cameraName,configGamma);
+            gammaCalibrate(cameraName);
 
             output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
         }
@@ -509,13 +509,7 @@ public class OpenCVFacade
     public static List<List<File>> multipleIterations(int iterationCount)
     {
         List<List<File>> output = new ArrayList<>();
-        for(String cameraName : getCameraNames())
-        {
-            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-            double cameraGamma = cameraMap.get(cameraName).getGamma();
-            if(configGamma != cameraGamma)
-                gammaCalibrate(cameraName,configGamma);
-        }
+        gammaCalibrate();
 
         for(int i = 0; i < iterationCount; i++)
         {

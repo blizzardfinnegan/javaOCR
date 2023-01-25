@@ -23,7 +23,6 @@
         <jvmargs.run></jvmargs.run>
         <jvmargs.debug></jvmargs.debug>
 
-        <slf4j.version>1.7.32</slf4j.version>
         <pi4j.version>2.1.0</pi4j.version>
         <javafx.version>19</javafx.version>
         <poi.version>5.2.3</poi.version>
@@ -68,18 +67,6 @@
             <version>${poi.version}</version>
         </dependency>
 
-        <!-- Simple Logging Facade for Java -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
         <!-- include Pi4J Core -->
         <dependency>
             <groupId>com.pi4j</groupId>
@@ -108,7 +95,7 @@
     </dependencies>
         
     <build>
-        <finalName>discoTesting</finalName>
+        <finalName>discoTesting-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
