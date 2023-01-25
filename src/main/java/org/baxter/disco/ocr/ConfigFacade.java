@@ -10,7 +10,6 @@ import org.apache.commons.configuration2.builder.fluent.*;
 
 import java.util.List;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -83,8 +82,13 @@ public class ConfigFacade
         try{ outputFile.createNewFile(); }
         catch(Exception e){ ErrorLogging.logError(e); }
         outputSaveLocation = "";
-        if(newConfig) saveDefaultConfig();
+        if(newConfig) 
+        {
+            boolean saveSuccessful = saveDefaultConfig();
+            if(!saveSuccessful) ErrorLogging.logError("Save config failed!!!");
+        }
         loadConfig();
+        //CONFIG_BUILDER.setAutoSave(true);
     }
     /**
      * Get a given config value. 
@@ -103,7 +107,7 @@ public class ConfigFacade
         List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
-        if(cameraConfig.equals(null)) return output;
+        if(cameraConfig == null) return output;
         output = cameraConfig.get(property);
         return output;
     }
@@ -218,6 +222,8 @@ public class ConfigFacade
                     case COMPOSITE_FRAMES:
                         propertyValue = "5.0";
                 }
+                ErrorLogging.logError("DEBUG: Attempting to save to config: ");
+                ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
                 CONFIG_STORE.addProperty(propertyName,propertyValue);
             }
         }

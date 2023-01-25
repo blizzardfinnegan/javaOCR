@@ -2,6 +2,7 @@ package org.baxter.disco.ocr;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,8 @@ public class Cli
                     testMovement();
                     break;
                 case 2:
+                    println("Setting up cameras for the first time...");
+                    println("This may take a moment...");
                     configureCameras();
                     break;
                 case 3:
@@ -201,7 +204,7 @@ public class Cli
             String cameraName = (String)cameraList.get(index);
             println(humanIndex + " - " + cameraName);
         }
-        println(cameraList.size() + " - Exit to Main Menu");
+        println( (cameraList.size() + 1) + " - Exit to Main Menu");
         println("------------------------------------");
     }
 
@@ -295,6 +298,7 @@ public class Cli
     private static void configureCameras()
     {
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+        println(cameraList.toString());
         
         //Open a single new thread, so the canvas 
         //used further down to display the temporary 
@@ -316,6 +320,7 @@ public class Cli
         Thread t = new Thread(r);
         t.setDaemon(false);
         t.start();
+
         do
         {
             //Main menu
@@ -332,8 +337,8 @@ public class Cli
             } while (cameraList.size() < userInput);
 
             //Leave do-while loop if the user asks to
-            if(userInput == cameraList.size()) break;
-            else cameraName = cameraList.get(userInput);
+            if(userInput == (cameraList.size()+1)) break;
+            else cameraName = cameraList.get((userInput-1));
 
             do
             {

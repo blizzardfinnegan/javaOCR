@@ -90,6 +90,7 @@ public class ErrorLogging
     {
         String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error;
         fileOut.println(errorMessage);
+        fileOut.flush();
         System.err.println(errorMessage);
     }
 

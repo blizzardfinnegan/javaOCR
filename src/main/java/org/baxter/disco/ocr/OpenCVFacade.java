@@ -226,7 +226,10 @@ public class OpenCVFacade
      */
     public static CanvasFrame showImage(String cameraName)
     {
+        ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
+        ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
         Mat image = completeProcess(cameraName);
+        ErrorLogging.logError("DEBUG: image processed successfully.");
         Frame outputImage = MAT_CONVERTER.convert(image);
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
@@ -349,8 +352,14 @@ public class OpenCVFacade
         Mat output = null;
         for(Mat image : images)
         {
-            if(crop) crop(image,cameraName);
-            if(threshold) thresholdImage(image);
+            if(crop) 
+            {
+                image = crop(image,cameraName);
+            }
+            if(threshold) 
+            {
+                image = thresholdImage(image);
+            }
         }
 
         //Composite images
@@ -364,7 +373,10 @@ public class OpenCVFacade
         }
         else
         {
-            output = images.get(0);
+            if(images.size() != 1)
+                ErrorLogging.logError("OpenCV Error!!! - Invalid input image list size!");
+            else
+                output = images.get(0);
         }
         return output;
     }
@@ -439,6 +451,10 @@ public class OpenCVFacade
         }
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
         output = compose(imageList, true, true, cameraName);
+        if(output != null)
+            saveImage(output,ConfigFacade.getImgSaveLocation());
+        else
+            ErrorLogging.logError("DEBUG: Final processed image is null!");
         return output;
     }
 
