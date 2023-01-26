@@ -94,7 +94,7 @@ public class Cli
         {
             inputScanner.close();
             ErrorLogging.closeLogs();
-            MovementFacade.closeGPIO();
+            //MovementFacade.closeGPIO();
         }
     }
 

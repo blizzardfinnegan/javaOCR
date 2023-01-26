@@ -9,16 +9,16 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 	- Camera config menu
 		- [ x ] Takes in inputs
 		- [ x ] Sets config values
-		- [ ] Saves config values
-		- [ ] Shows camera preview
+		- [ ] Saves config values (Implemented - Untested)
+		- [ x ] Shows camera preview
 	- [ x ] GPIO test interactions
 	- Test suite
-		- [ ] OpenCV image capture
-		- [ ] OpenCV image processing
-		- [ ] Tesseract OCR processing
-		- [ ] Data storage in defined XLSX file
+		- [ x ] OpenCV image capture
+		- [ x ] OpenCV image processing
+		- [ ] Tesseract OCR processing (Implemented, untested)
+		- [ ] Data storage in defined XLSX file (Implemented, untested)
 	- [ x ] modify number of iterations for test suite
-- [ ] JavaFX GUI
+- [ ] JavaFX GUI (Designed, yet to be implemented)
 
 ## Dependencies
 To install this project, and use it fully, you must have the following:

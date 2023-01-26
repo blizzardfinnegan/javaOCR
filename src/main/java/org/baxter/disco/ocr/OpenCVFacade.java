@@ -11,6 +11,7 @@ import org.bytedeco.javacv.*;
 import org.bytedeco.opencv.opencv_core.*;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -110,13 +111,27 @@ public class OpenCVFacade
      */
     private static void newCamera(String name, String location, int width, int height, String codec)
     {
-        FrameGrabber camera = new OpenCVFrameGrabber(location);
-        try{ camera.start(); }
-        catch(Exception e) { ErrorLogging.logError(e); }
-        camera.setFormat(codec);
-        camera.setImageWidth(width);
-        camera.setImageHeight(height);
-        cameraMap.put(name, camera);
+        ErrorLogging.logError("DEBUG: Attempting to create new camera " + name + " from location " + location + "...");
+        File cameraLocation = new File(location);
+        if (cameraLocation.exists())
+        {
+            FrameGrabber camera = new OpenCVFrameGrabber(location);
+            try{ camera.start(); }
+            catch(Exception e) 
+            { 
+                ErrorLogging.logError(e); 
+                ErrorLogging.logError("CAMERA INIT ERROR!!! - Camera failed to initialise. Use of camera " + name + " will fail.");
+                return;
+            }
+            camera.setFormat(codec);
+            camera.setImageWidth(width);
+            camera.setImageHeight(height);
+            cameraMap.put(name, camera);
+        }
+        else
+        {
+            ErrorLogging.logError("CAMERA INIT ERROR!!! - Illegal camera location.");
+        }
     }
 
     /**
@@ -273,12 +288,21 @@ public class OpenCVFacade
         ErrorLogging.logError("DEBUG: Y = " + y);
         ErrorLogging.logError("DEBUG: Width = " + width);
         ErrorLogging.logError("DEBUG: Height = " + height);
-        var cropRectangle = new Rect(x,y,width,height);
         ErrorLogging.logError("DEBUG: Original image size: ");
         ErrorLogging.logError("DEBUG: Width: " + image.cols());
         ErrorLogging.logError("DEBUG: Height: " + image.rows());
-        output = image.apply(cropRectangle);
-        //output = new Mat(image,cropRectangle);
+
+        IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
+        CvRect crop = new CvRect();
+        crop.x(x); crop.y(y); crop.width(width); crop.height(height);
+        cvSetImageROI(temp,crop);
+        IplImage croppedImage = cvCreateImage(cvGetSize(temp), temp.depth(),temp.nChannels());
+        cvCopy(temp,croppedImage);
+        output = MAT_CONVERTER.convert(MAT_CONVERTER.convert(croppedImage));
+        //Old code; Throws runtime exception - Failed assertion that all inputs are safe. Not entirely sure why though.
+        //var cropRectangle = new Rect(x,y,width,height);
+        //output = image.apply(cropRectangle);
+        ////output = new Mat(image,cropRectangle);
         return output;
     }
 
@@ -329,6 +353,7 @@ public class OpenCVFacade
     {
         File output = null;
         IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
+        fileLocation = fileLocation + "/" + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + ".jpg";
         cvSaveImage(fileLocation,temp);
         output = new File(fileLocation);
         return output;
@@ -352,20 +377,29 @@ public class OpenCVFacade
     public static Mat compose(List<Mat> images, boolean threshold, 
                                 boolean crop, String cameraName)
     {
+        ErrorLogging.logError("DEBUG: Attempting to compose " + images.size() + " images...");
         Mat output = null;
+        int iterationCount = 1;
         for(Mat image : images)
         {
             if(crop) 
             {
+                ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
                 image = crop(image,cameraName);
             }
             if(threshold) 
             {
+                ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
                 image = thresholdImage(image);
             }
+            ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
+            ErrorLogging.logError("DEBUG: -----------------");
+            iterationCount++;
         }
 
+
         //Composite images
+        ErrorLogging.logError("DEBUG: Compositing images...");
         if(images.size() > 1)
         {
             output = images.get(0);
@@ -381,6 +415,7 @@ public class OpenCVFacade
             else
                 output = images.get(0);
         }
+        ErrorLogging.logError("DEBUG: Compositing successful!");
         return output;
     }
 

@@ -47,10 +47,16 @@ public class ErrorLogging
      */
     private static DateTimeFormatter datetime;
 
+    /**
+     * Object used to format UNIX timestamps into human-readable values.
+     */
+    public static final DateTimeFormatter fileDatetime;
+
     static
     {
-        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
-        logFile = datetime.format(LocalDateTime.now()) + "-log.txt";
+        fileDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
+        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        logFile = fileDatetime.format(LocalDateTime.now()) + "-log.txt";
         File outFile = new File(logFile);
         try
         {
@@ -63,7 +69,6 @@ public class ErrorLogging
         {
             System.err.println(e);
         }
-        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     }
 
     /**
