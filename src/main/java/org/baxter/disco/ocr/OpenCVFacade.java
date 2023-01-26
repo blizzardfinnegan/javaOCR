@@ -234,10 +234,10 @@ public class OpenCVFacade
     {
         //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
         //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
-        Mat image = completeProcess(cameraName);
-        if(image == null) return null;
+        File imageLocation = completeProcess(cameraName);
+        if(imageLocation == null) return null;
         ErrorLogging.logError("DEBUG: Image processed successfully.");
-        Frame outputImage = MAT_CONVERTER.convert(image);
+        Frame outputImage = MAT_CONVERTER.convert(imread(imageLocation.getAbsolutePath()));
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
@@ -476,11 +476,12 @@ public class OpenCVFacade
      *
      * @return null if any error occurs; otherwise File of output image
      */
-    private static Mat completeProcess(String cameraName)
+    private static File completeProcess(String cameraName)
     {
         gammaCalibrate(cameraName);
 
-        Mat output = null;
+        File output = null;
+        Mat outputImage = null;
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
         if(!getCameraNames().contains(cameraName))
         {
@@ -488,9 +489,9 @@ public class OpenCVFacade
             return output;
         }
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
-        output = compose(imageList, true, true, cameraName);
-        if(output != null)
-            saveImage(output,ConfigFacade.getImgSaveLocation());
+        outputImage = compose(imageList, true, true, cameraName);
+        if(outputImage != null)
+            output = saveImage(outputImage,ConfigFacade.getImgSaveLocation() + "/config");
         else
             ErrorLogging.logError("DEBUG: Final processed image is null!");
         return output;

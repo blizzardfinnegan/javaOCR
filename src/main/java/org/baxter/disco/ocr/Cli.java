@@ -23,7 +23,7 @@ public class Cli
     /**
      * Currently saved iteration count.
      */
-    private static int iterationCount = 5;
+    private static int iterationCount = 3;
 
     /**
      * Scanner used for monitoring user input.
@@ -94,7 +94,7 @@ public class Cli
         {
             inputScanner.close();
             ErrorLogging.closeLogs();
-            //MovementFacade.closeGPIO();
+            MovementFacade.closeGPIO();
         }
     }
 
@@ -326,10 +326,7 @@ public class Cli
         t.setDaemon(false);
         t.start();
 
-        MovementFacade.goUp();
-        MovementFacade.pressButton();
-        MovementFacade.goDown();
-        MovementFacade.pressButton();
+        MovementFacade.iterationMovement(true);
 
         do
         {
@@ -354,12 +351,14 @@ public class Cli
             do
             {
                 MovementFacade.pressButton();
+                try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
                 //Show image 
                 CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
 
 
                 //User input parsing
                 ConfigProperties modifiedProperty = null;
+                boolean gamma = false;
                 do
                 {
                     //list configurable settings
@@ -382,6 +381,7 @@ public class Cli
                             break;
                         case 5:
                             modifiedProperty = ConfigProperties.GAMMA;
+                            gamma = true;
                             break;
                         case 6:
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
@@ -395,8 +395,16 @@ public class Cli
                 if(modifiedProperty != ConfigProperties.PRIME)
                 {
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
-                    userInput = inputFiltering(inputScanner.nextLine());
-                    ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
+                    if(!gamma) 
+                    {
+                        userInput = inputFiltering(inputScanner.nextLine());
+                        ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
+                    }
+                    else 
+                    {
+                        double doubleUserInput = gammaInputFiltering(inputScanner.nextLine());
+                        ConfigFacade.setValue(cameraName,modifiedProperty,doubleUserInput);
+                    }
                     if(canvas != null) canvas.dispose();
                 }
                 else break;
@@ -454,6 +462,35 @@ public class Cli
      */
     private static int inputFiltering(String input) 
     { return inputFiltering(input, Menus.OTHER); }
+
+    /**
+     * Parse the user's input, and check it for errors.
+     *
+     * @param input     The unparsed user input, directly from the {@link Scanner}
+     * @param mainMenu  Whether or not the parsed input is a main menu value
+     * 
+     * @return The parsed value from the user. Returns -1 upon any error.
+     */
+    private static double gammaInputFiltering(String input)
+    {
+        double output = -1;
+        input.trim();
+        try(Scanner sc = new Scanner(input))
+        {
+            if(!sc.hasNextDouble()) 
+            { 
+                invalidInput();
+                return output; 
+            }
+            output = sc.nextDouble();
+            if(output < 0)
+            {
+                negativeInput();
+                output = -1;
+            }
+        }
+        return output;
+    }
 
     /**
      * Parse the user's input, and check it for errors.

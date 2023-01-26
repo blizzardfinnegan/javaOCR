@@ -87,6 +87,10 @@ public class ConfigFacade
         CONFIGURATIONS.iniBuilder(configFileLocation);
         File imageLocation  = new File(imageSaveLocation);
         imageLocation.mkdir();
+        File debugImageLocation  = new File(imageSaveLocation + "/debug");
+        debugImageLocation.mkdir();
+        File configImageLocation  = new File(imageSaveLocation + "/config");
+        configImageLocation.mkdir();
         File outputFile = new File(outputSaveLocation);
         try{ outputFile.createNewFile(); }
         catch(Exception e){ ErrorLogging.logError(e); }
@@ -226,36 +230,8 @@ public class ConfigFacade
             for(ConfigProperties property : ConfigProperties.values())
             {
                 String propertyName = camera + "/" + property.getConfig();
-                String propertyValue = "-1.0";
-                switch(property)
-                {
-                    case PRIME:
-                        propertyValue = "true";
-                        cameraConfig.put(property,1.0);
-                        break;
-                    case GAMMA:
-                        propertyValue = "1.0";
-                        cameraConfig.put(property,1.0);
-                        break;
-                    case CROP_Y:
-                    case CROP_X:
-                        propertyValue = "250.0";
-                        cameraConfig.put(property,250.0);
-                        break;
-                    case CROP_H:
-                    case CROP_W:
-                        propertyValue = "300.0";
-                        cameraConfig.put(property,300.0);
-                        break;
-                    case COMPOSITE_FRAMES:
-                        propertyValue = "5.0";
-                        cameraConfig.put(property,5.0);
-                        break;
-                    default:
-                        ErrorLogging.logError("DEFAULT CONFIG INIT ERROR - Invalid property name.");
-                        ErrorLogging.logError("Property Name: " + propertyName);
-                        ErrorLogging.logError("Defined defined property: " + property.toString());
-                }
+                double propertyValue = property.getDefaultValue();
+                cameraConfig.put(property,propertyValue);
                 //ErrorLogging.logError("DEBUG: Attempting to save to config: ");
                 //ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
                 CONFIG_STORE.addProperty(propertyName,propertyValue);

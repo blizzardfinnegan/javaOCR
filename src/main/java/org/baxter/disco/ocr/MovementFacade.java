@@ -451,6 +451,14 @@ public class MovementFacade
         return output;
     }
 
+    public static void iterationMovement(boolean prime)
+    {
+        goUp();
+        if(prime) pressButton();
+        goDown();
+        pressButton();
+    }
+
     public static void main(String[] args)
     {
         testMotions();

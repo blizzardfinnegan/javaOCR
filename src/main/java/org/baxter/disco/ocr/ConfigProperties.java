@@ -11,31 +11,31 @@ public enum ConfigProperties
     /**
      *X coordinate of the top-left coordinate for the newly cropped image.
      */
-    CROP_X("Crop X","cropX"),
+    CROP_X("Crop X","cropX",275.0),
     /**
      *Y coordinate of the top-left coordinate for the newly cropped image.
      */
-    CROP_Y("Crop Y","cropY"),
+    CROP_Y("Crop Y","cropY",205.0),
     /**
      *Width of the newly cropped image.
      */
-    CROP_W("Crop Width","cropW"),
+    CROP_W("Crop Width","cropW",80.0),
     /**
      *Height of the newly cropped image.
      */
-    CROP_H("Crop Height","cropH"),
+    CROP_H("Crop Height","cropH",50.0),
     /**
      * Gamma value set to the camera.
      */
-    GAMMA("Gamma value","gamma"),
+    GAMMA("Gamma value","gamma",2.0),
     /**
      *How many frames to composite together while processing this camera's image.
      */
-    COMPOSITE_FRAMES("Composite frame count","compositeCount"),
+    COMPOSITE_FRAMES("Composite frame count","compositeCount",5.0),
     /**
      * Whether or not to press the button on the device twice, when under test.
      */
-    PRIME("Prime device?","prime");
+    PRIME("Prime device?","prime",0.0);
 
     /**
      * Internal storage of human-readable name/meaning
@@ -47,8 +47,26 @@ public enum ConfigProperties
      */
     private final String config;
 
-    private ConfigProperties(String print, String config) { this.print = print; this.config = config; }
+    /**
+     * Internal storage of config-readable name
+     */
+    private final double defaultValue;
 
+    private ConfigProperties(String print, String config, double defaultValue) { this.print = print; this.config = config; this.defaultValue = defaultValue; }
+
+    /**
+     * Getter for the config-readable name of the value.
+     *
+     * @return String of the name of the value.
+     */
+    public double getDefaultValue()
+    { return defaultValue; }
+
+    /**
+     * Getter for the config-readable name of the value.
+     *
+     * @return String of the name of the value.
+     */
     public String getConfig()
     { return config; }
 
