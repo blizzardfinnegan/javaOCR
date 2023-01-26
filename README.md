@@ -9,7 +9,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 	- Camera config menu
 		- [ x ] Takes in inputs
 		- [ x ] Sets config values
-		- [ ] Saves config values (Implemented - Untested)
+		- [ ] Saves config values (Implemented, untested)
 		- [ x ] Shows camera preview
 	- [ x ] GPIO test interactions
 	- Test suite

@@ -326,6 +326,11 @@ public class Cli
         t.setDaemon(false);
         t.start();
 
+        MovementFacade.goUp();
+        MovementFacade.pressButton();
+        MovementFacade.goDown();
+        MovementFacade.pressButton();
+
         do
         {
             //Main menu
@@ -348,7 +353,8 @@ public class Cli
 
             do
             {
-                //Show image (need to implement in OpenCVFacade)
+                MovementFacade.pressButton();
+                //Show image 
                 CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
 
 

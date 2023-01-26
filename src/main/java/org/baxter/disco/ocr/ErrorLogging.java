@@ -15,7 +15,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * as well as stderr.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 25 Jan. 2023
+ * @version 1.1.0, 25 Jan. 2023
  */
 
 public class ErrorLogging

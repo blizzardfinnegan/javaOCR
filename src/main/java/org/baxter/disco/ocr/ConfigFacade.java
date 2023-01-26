@@ -120,7 +120,9 @@ public class ConfigFacade
         if(!activeCameras.contains(cameraName)) return output;
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         output = cameraConfig.get(property);
-        ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName + "/" + property.getConfig() + " = " + output);
+        //Debug logger. 
+        //NOTE THAT THIS BREAKS TUI MENUS, AS OF ErrorLogging 1.1.0
+        //ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName + "/" + property.getConfig() + " = " + output);
         return output;
     }
 
@@ -193,7 +195,9 @@ public class ConfigFacade
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         if(cameraConfig == null) return output;
         Double oldValue = cameraConfig.get(property);
-        return cameraConfig.replace(property,oldValue,propertyValue);
+        output = cameraConfig.replace(property,oldValue,propertyValue);
+        saveCurrentConfig();
+        return output;
     }
 
     //**********************************************
