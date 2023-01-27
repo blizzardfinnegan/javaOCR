@@ -19,7 +19,7 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 24 Jan. 2023
+ * @version 1.1.0, 27 Jan. 2023
  */
 public class MovementFacade
 {
@@ -428,13 +428,11 @@ public class MovementFacade
 
     /**
      * Closes connections to all GPIO pins.
-     * Also closes logs.
      */
     public static void closeGPIO()
     {
         goUp();
         pi4j.shutdown();
-        ErrorLogging.closeLogs();
     }
 
     /**

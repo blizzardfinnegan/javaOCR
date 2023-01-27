@@ -52,7 +52,7 @@ public class Cli
     {
         try{
             inputScanner = new Scanner(System.in);
-            ErrorLogging.logError("Start of program.");
+            ErrorLogging.logError("DEBUG: START OF PROGRAM");
 
             int userInput = 0;
 
@@ -93,8 +93,9 @@ public class Cli
         finally
         {
             inputScanner.close();
-            ErrorLogging.closeLogs();
             MovementFacade.closeGPIO();
+            ErrorLogging.logError("DEBUG: END OF PROGRAM.");
+            ErrorLogging.closeLogs();
         }
     }
 
@@ -234,9 +235,9 @@ public class Cli
                                                                 ConfigProperties.GAMMA));
         println("Current composite frame count: " + 
                 ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
-        String cropValue = ((ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1) ? "yes" : "no");
+        String cropValue = ((ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0) ? "yes" : "no");
         println("Will the image be cropped? " + cropValue);
-        String thresholdImage = ((ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1) ? "yes" : "no");
+        String thresholdImage = ((ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0) ? "yes" : "no");
         println("Will the image be thresholded? " + thresholdImage);
         println("------------------------------------");
         println("1. Change Crop X");
@@ -454,7 +455,7 @@ public class Cli
      */
     private static void runTests()
     {
-        //DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
         Map<String, Double> resultMap = new HashMap<>();
         boolean prime = false;
         for(String cameraName : OpenCVFacade.getCameraNames())
@@ -476,7 +477,7 @@ public class Cli
                 resultMap.put(fileLocation,result);
                 ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
             }
-            //DataSaving.writeValues(i,resultMap);
+            DataSaving.writeValues(i,resultMap);
         }
         println("=======================================");
         println("Tests complete!");

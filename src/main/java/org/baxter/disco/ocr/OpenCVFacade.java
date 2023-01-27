@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 0.0.3, 25 Jan. 2023
+ * @version 0.1.1, 27 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -148,51 +148,6 @@ public class OpenCVFacade
         return cameraMap.keySet();
     }
 
-    /**
-     * Modify all cameras Gamma value, based on config data.
-     */
-    private static void gammaCalibrate()
-    {
-        for(String cameraName : getCameraNames())
-        {
-            gammaCalibrate(cameraName);
-        }
-    }
-
-    /**
-     * Modify a single camera's Gamma value, based on config data.
-     *
-     * @param cameraName    The name of the camera you would like to modify
-     *
-     * @return false if illegal camera name, otherwise true
-     */
-    public static boolean gammaCalibrate(String cameraName)
-    {
-        double gamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-        return gammaCalibrate(cameraName,gamma);
-    }
-
-    /**
-     * Modify a single camera's Gamma value, based on a given value.
-     *
-     * @param cameraName    The name of the camera you would like to modify
-     * @param gamma         The new gamma value for the camera
-     *
-     * @return false if illegal camera name, otherwise true
-     */
-    public static boolean gammaCalibrate(String cameraName, double gamma)
-    {
-        if(getCameraNames().contains(cameraName))
-        {
-            cameraMap.get(cameraName).setGamma(gamma);
-            return true;
-        }
-        else
-        {
-            ErrorLogging.logError("CAMERA ERROR!!! - Given camera name not initialised.");
-            return false;
-        }
-    }
 
     /** 
      * Wrapper function for native "take picture" function.
@@ -210,11 +165,6 @@ public class OpenCVFacade
 
         if(getCameraNames().contains(cameraName))
         {
-            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-            if(configGamma != cameraMap.get(cameraName).getGamma())
-            {
-                gammaCalibrate(cameraName, configGamma);
-            }
             try{ temp = cameraMap.get(cameraName).grab(); }
             catch(Exception e) { ErrorLogging.logError(e); }
         }
@@ -323,7 +273,7 @@ public class OpenCVFacade
     {
         Mat output = image;
         Mat in = image;
-        threshold(in,output,127,255,THRESH_BINARY);
+        threshold(in,output,50,255,THRESH_BINARY);
         return output;
     }
 
@@ -347,7 +297,7 @@ public class OpenCVFacade
 
     /**
      * Compose several images together.
-     * This will also perform thresholding, gamma adjustment, and cropping,
+     * This will also perform thresholding, and cropping,
      * based on boolean toggles.
      *
      * @param images        List of images to be composed
@@ -365,28 +315,41 @@ public class OpenCVFacade
     {
         ErrorLogging.logError("DEBUG: Attempting to compose " + images.size() + " images...");
         Mat output = null;
+        List<Mat> processedImages = new ArrayList<>();
         int iterationCount = 1;
         for(Mat image : images)
         { //crop and threshold, based on booleans
+          Mat processedImage = image;
             if(crop) 
             {
                 ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
-                image = crop(image,cameraName);
+                processedImage = crop(processedImage,cameraName);
+                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                                      "." + iterationCount + "-post-crop.jpg";
+                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                        MAT_CONVERTER.convert(processedImage)));
             }
             if(threshold) 
             {
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
-                image = thresholdImage(image);
+                processedImage = thresholdImage(processedImage);
+                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                                      "." + iterationCount + "-post-threshold.jpg";
+                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                        MAT_CONVERTER.convert(processedImage)));
             }
             String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
                                   + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                                  iterationCount + "-pre.compose.jpg";
+                                  "." + iterationCount + "-pre.compose.jpg";
             cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                     MAT_CONVERTER.convert(image)));
+                                     MAT_CONVERTER.convert(processedImage)));
             ErrorLogging.logError("DEBUG: Pre-compose image: " + fileLocation);
             ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
             ErrorLogging.logError("DEBUG: -----------------");
             iterationCount++;
+            processedImages.add(processedImage);
         }
 
 
@@ -394,8 +357,8 @@ public class OpenCVFacade
         ErrorLogging.logError("DEBUG: Compositing images...");
         if(images.size() > 1)
         { //progressive bitwise and-ing image into output
-            output = images.get(0);
-            for(Mat image : images)
+            output = processedImages.get(0);
+            for(Mat image : processedImages)
             {
                 bitwise_and(output,image,output);
             }
@@ -449,8 +412,7 @@ public class OpenCVFacade
 
     /**
      * Processes image from defined camera, using the config defaults.
-     * Assumes you want to crop and threshold, but not gamma adjust the image.
-     * (Gamma should be set on the camera by modifying the config.)
+     * Assumes you want to crop and threshold.
      *
      * @param cameraName        Name of the camera to take a picture from.
      * @param saveLocation      Name of the outgoing file
@@ -477,10 +439,8 @@ public class OpenCVFacade
     }
 
     /**
-     * Internal function to process image without saving to file.
-     * Runs the same function as {@link #completeProcess(String, String)},
-     * without file I/O, and ensuring to set the gamma for the camera according
-     * to the config.
+     * Process an image from a defined camera, using config defaults 
+     * and saving to [defaultImageLocation]/config/
      *
      * @param cameraName        Name of the camera to take a picture from.
      *
@@ -488,13 +448,11 @@ public class OpenCVFacade
      */
     private static File completeProcess(String cameraName)
     {
-        gammaCalibrate();
         return completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
     }
 
     /**
      * Collect images from all cameras and save them, using the config defaults.
-     * Configures the camera's gamma before running process.
      *
      * @return List of Files, as defined by {@code #completeProcess(String, String)}
      */
@@ -503,50 +461,8 @@ public class OpenCVFacade
         List<File> output = new ArrayList<>();
         for(String cameraName : getCameraNames())
         {
-            double configGamma = ConfigFacade.getValue(cameraName,ConfigProperties.GAMMA);
-            double cameraGamma = cameraMap.get(cameraName).getGamma();
-            if(configGamma != cameraGamma)
-                gammaCalibrate(cameraName,configGamma);
-
             output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
         }
-        return output;
-    }
-
-    /**
-     * Collect images from all cameras and save them, using the config defaults.
-     * Does NOT configure camera's gamma before running process.
-     *
-     * @param filler    Not used for anything, just exists so we can use the same function name 
-     *                  without setting the camera's gamma level on every iteration.
-     *
-     * @return List of Files, as defined by {@code #completeProcess(String, String)}
-     */
-    private static List<File> singleIteration(Object filler)
-    {
-        List<File> output = new ArrayList<>();
-        for(String cameraName : getCameraNames())
-        {
-            gammaCalibrate(cameraName);
-
-            output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
-        }
-        return output;
-    }
-
-    /**
-     *
-     */
-    public static List<List<File>> multipleIterations(int iterationCount)
-    {
-        List<List<File>> output = new ArrayList<>();
-        gammaCalibrate();
-
-        for(int i = 0; i < iterationCount; i++)
-        {
-            output.add(singleIteration(new Object()));
-        }
-
         return output;
     }
 }

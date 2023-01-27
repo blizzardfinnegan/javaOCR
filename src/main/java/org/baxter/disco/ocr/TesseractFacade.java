@@ -14,7 +14,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 23 Jan. 2023
+ * @version 1.0.0, 27 Jan. 2023
  */
 public class TesseractFacade
 {
