@@ -373,10 +373,9 @@ public class OpenCVFacade
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
                 image = thresholdImage(image);
                 String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + ".jpg";
+                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + "-post.threshold.jpg";
                 cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
                                          MAT_CONVERTER.convert(image)));
-                saveImage(image,ConfigFacade.getImgSaveLocation() + "/debug");
             }
             ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
             ErrorLogging.logError("DEBUG: -----------------");
@@ -455,7 +454,7 @@ public class OpenCVFacade
     {
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
         boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1.0);
-        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.crop) == 1.0);
+        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1.0);
         return completeProcess(cameraName,threshold,crop,compositeFrames,saveLocation);
     }
 
