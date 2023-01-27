@@ -360,13 +360,13 @@ public class MovementFacade
         {
             motorDirection.high();
             limitSense = upperLimit;
-            ErrorLogging.logError("Going up...");
+            ErrorLogging.logError("DEBUG: Sending fixture up...");
         }
         else        
         {
             motorDirection.low();
             limitSense = lowerLimit;
-            ErrorLogging.logError("Going down...");
+            ErrorLogging.logError("DEBUG: Sending fixture down...");
         }
 
         motorEnable.on();
@@ -376,6 +376,8 @@ public class MovementFacade
             output = limitSense.isHigh();
             if(output) break;
         }
+        if(output == false) 
+            ErrorLogging.logError("FIXTURE MOVEMENT ERROR! - Motor movement timed out!");
         motorEnable.off();
         return output;
     }
@@ -417,10 +419,10 @@ public class MovementFacade
      */
     public static void pressButton()
     {
-        ErrorLogging.logError("Pressing button...");
+        ErrorLogging.logError("DEBUG: Pressing button...");
         pistonActivate.on();
         try{ Thread.sleep(1000); } catch(Exception e) {ErrorLogging.logError(e);};
-        ErrorLogging.logError("Releasing button...");
+        ErrorLogging.logError("DEBUG: Releasing button...");
         pistonActivate.off();
     }
 
@@ -430,6 +432,7 @@ public class MovementFacade
      */
     public static void closeGPIO()
     {
+        goUp();
         pi4j.shutdown();
         ErrorLogging.closeLogs();
     }

@@ -42,12 +42,16 @@ public class OpenCVFacade
      * Width of the image created by the camera.
      * !!See camera documentation before modifying!!
      */
-    private static final int IMG_WIDTH = 800;
+    private static final int IMG_WIDTH = 3264;
+    //Previously used code:
+    //private static final int IMG_WIDTH = 800;
     /**
      * Height of the image created by the camera.
      * !!See camera documentation before modifying!!
      */
-    private static final int IMG_HEIGHT = 600;
+    private static final int IMG_HEIGHT = 2448;
+    //Previously used code:
+    //private static final int IMG_HEIGHT = 600;
     /**
      * FourCC code of the image created by the camera.
      * !!See camera documentation before modifying!!
@@ -237,6 +241,7 @@ public class OpenCVFacade
         File imageLocation = completeProcess(cameraName);
         if(imageLocation == null) return null;
         ErrorLogging.logError("DEBUG: Image processed successfully.");
+        ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
         Frame outputImage = MAT_CONVERTER.convert(imread(imageLocation.getAbsolutePath()));
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
@@ -255,8 +260,8 @@ public class OpenCVFacade
     public static List<Mat> takeBurst(String cameraName, int frameCount)
     {
         List<Mat> output = null;
-        ErrorLogging.logError("DEBUG: takeBurst - Camera Name: " + cameraName);
-        ErrorLogging.logError("DEBUG: takeBurst - Possible camera names: " + getCameraNames().toString());
+        //ErrorLogging.logError("DEBUG: takeBurst - Camera Name: " + cameraName);
+        //ErrorLogging.logError("DEBUG: takeBurst - Possible camera names: " + getCameraNames().toString());
         if(getCameraNames().contains(cameraName))
         {
             output = new LinkedList<>();
@@ -372,11 +377,13 @@ public class OpenCVFacade
             {
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
                 image = thresholdImage(image);
-                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + "-post.threshold.jpg";
-                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                         MAT_CONVERTER.convert(image)));
             }
+            String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                                  + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                                  iterationCount + "-pre.compose.jpg";
+            cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                     MAT_CONVERTER.convert(image)));
+            ErrorLogging.logError("DEBUG: Pre-compose image: " + fileLocation);
             ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
             ErrorLogging.logError("DEBUG: -----------------");
             iterationCount++;
@@ -452,10 +459,21 @@ public class OpenCVFacade
      */
     public static File completeProcess(String cameraName, String saveLocation)
     {
+        File output = null;
+        if(!getCameraNames().contains(cameraName))
+        {
+            ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
+            return output;
+        }
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1.0);
-        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1.0);
-        return completeProcess(cameraName,threshold,crop,compositeFrames,saveLocation);
+        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
+        ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
+        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
+        ErrorLogging.logError("DEBUG: Crop config value: " + crop);
+        output = completeProcess(cameraName,crop,threshold,compositeFrames,saveLocation);
+        if(output == null)
+            ErrorLogging.logError("DEBUG: Final processed image is null!");
+        return output;
     }
 
     /**
@@ -470,25 +488,8 @@ public class OpenCVFacade
      */
     private static File completeProcess(String cameraName)
     {
-        gammaCalibrate(cameraName);
-
-        File output = null;
-        Mat outputImage = null;
-        int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1.0);
-        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1.0);
-        if(!getCameraNames().contains(cameraName))
-        {
-            ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
-            return output;
-        }
-        List<Mat> imageList = takeBurst(cameraName, compositeFrames);
-        outputImage = compose(imageList, threshold, crop, cameraName);
-        if(outputImage != null)
-            output = saveImage(outputImage,ConfigFacade.getImgSaveLocation() + "/config");
-        else
-            ErrorLogging.logError("DEBUG: Final processed image is null!");
-        return output;
+        gammaCalibrate();
+        return completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
     }
 
     /**
