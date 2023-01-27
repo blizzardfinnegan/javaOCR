@@ -283,14 +283,14 @@ public class OpenCVFacade
         int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
         int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
         int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
-        ErrorLogging.logError("DEBUG: Crop dimensions:");
-        ErrorLogging.logError("DEBUG: X = " + x);
-        ErrorLogging.logError("DEBUG: Y = " + y);
-        ErrorLogging.logError("DEBUG: Width = " + width);
-        ErrorLogging.logError("DEBUG: Height = " + height);
-        ErrorLogging.logError("DEBUG: Original image size: ");
-        ErrorLogging.logError("DEBUG: Width: " + image.cols());
-        ErrorLogging.logError("DEBUG: Height: " + image.rows());
+        //ErrorLogging.logError("DEBUG: Crop dimensions:");
+        //ErrorLogging.logError("DEBUG: X = " + x);
+        //ErrorLogging.logError("DEBUG: Y = " + y);
+        //ErrorLogging.logError("DEBUG: Width = " + width);
+        //ErrorLogging.logError("DEBUG: Height = " + height);
+        //ErrorLogging.logError("DEBUG: Original image size: ");
+        //ErrorLogging.logError("DEBUG: Width: " + image.cols());
+        //ErrorLogging.logError("DEBUG: Height: " + image.rows());
 
         IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
         CvRect crop = new CvRect();
@@ -303,25 +303,6 @@ public class OpenCVFacade
         //var cropRectangle = new Rect(x,y,width,height);
         //output = image.apply(cropRectangle);
         ////output = new Mat(image,cropRectangle);
-        return output;
-    }
-
-    /**
-     * Crop the given image to the given dimensions.
-     *
-     * @param image     Frame taken from the camera.
-     * @param x         X-coordinate of the top-left of the cropped portion of the image.
-     * @param y         y-coordinate of the top-left of the cropped portion of the image.
-     * @param width     width of the the cropped portion of the image.
-     * @param height    height of the the cropped portion of the image.
-     *
-     * @return Frame of the cropped image
-     */
-    public static Mat crop(Mat image, int x, int y, int width, int height)
-    {
-        Mat output = null;
-        var cropRectangle = new Rect(x,y,width,height);
-        output = new Mat(image,cropRectangle);
         return output;
     }
 
@@ -381,7 +362,7 @@ public class OpenCVFacade
         Mat output = null;
         int iterationCount = 1;
         for(Mat image : images)
-        {
+        { //crop and threshold, based on booleans
             if(crop) 
             {
                 ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
@@ -391,6 +372,11 @@ public class OpenCVFacade
             {
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
                 image = thresholdImage(image);
+                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + ".jpg";
+                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                         MAT_CONVERTER.convert(image)));
+                saveImage(image,ConfigFacade.getImgSaveLocation() + "/debug");
             }
             ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
             ErrorLogging.logError("DEBUG: -----------------");
@@ -401,7 +387,7 @@ public class OpenCVFacade
         //Composite images
         ErrorLogging.logError("DEBUG: Compositing images...");
         if(images.size() > 1)
-        {
+        { //progressive bitwise and-ing image into output
             output = images.get(0);
             for(Mat image : images)
             {
@@ -409,11 +395,16 @@ public class OpenCVFacade
             }
         }
         else
-        {
+        { //setting the output to a single part of the image
             if(images.size() != 1)
                 ErrorLogging.logError("OpenCV Error!!! - Invalid input image list size!");
             else
+            {
+                ErrorLogging.logError("DEBUG: Array size = 1");
+                ErrorLogging.logError("DEBUG: COMPOSITE_FRAME value for this camera: " + 
+                                      ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
                 output = images.get(0);
+            }
         }
         ErrorLogging.logError("DEBUG: Compositing successful!");
         return output;
@@ -463,7 +454,9 @@ public class OpenCVFacade
     public static File completeProcess(String cameraName, String saveLocation)
     {
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        return completeProcess(cameraName,true,true,compositeFrames,saveLocation);
+        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1.0);
+        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.crop) == 1.0);
+        return completeProcess(cameraName,threshold,crop,compositeFrames,saveLocation);
     }
 
     /**
@@ -483,13 +476,15 @@ public class OpenCVFacade
         File output = null;
         Mat outputImage = null;
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
+        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1.0);
+        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1.0);
         if(!getCameraNames().contains(cameraName))
         {
             ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
             return output;
         }
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
-        outputImage = compose(imageList, true, true, cameraName);
+        outputImage = compose(imageList, threshold, crop, cameraName);
         if(outputImage != null)
             output = saveImage(outputImage,ConfigFacade.getImgSaveLocation() + "/config");
         else

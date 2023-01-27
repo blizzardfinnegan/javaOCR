@@ -38,7 +38,7 @@ public class TesseractFacade
         //files, and declares the language as "Pro6_temp_test".
         //Considering changing this to be more understandable, 
         //but potential consequences are unclear.
-        api.Init("etc/resources/tessdata", "Pro6_temp_test", 3);
+        api.Init("tessdata", "Pro6_temp_test", 3);
     }
 
     /** 

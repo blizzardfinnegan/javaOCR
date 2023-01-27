@@ -15,8 +15,8 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 	- Test suite
 		- [ x ] OpenCV image capture
 		- [ x ] OpenCV image processing
-		- [ ] Tesseract OCR processing (Implemented, untested)
-		- [ ] Data storage in defined XLSX file (Implemented, untested)
+		- [ x ] Tesseract OCR processing 
+		- [ ] Data storage in defined XLSX file (implemented, non-functional)
 	- [ x ] modify number of iterations for test suite
 - [ ] JavaFX GUI (Designed, yet to be implemented)
 

@@ -46,7 +46,7 @@ public class Cli
     /**
      * Number of options currently available in the camera configuration sub-menu.
      */
-    private static final int cameraMenuOptionCount = 7;
+    private static final int cameraMenuOptionCount = 9;
 
     public static void main(String[] args)
     {
@@ -168,18 +168,18 @@ public class Cli
     private static void printMainMenu()
     {
         println("\n\n");
-        println("====================================");
+        println("======================================");
         println("Main Menu:");
-        println("------------------------------------");
+        println("--------------------------------------");
         println("Current iteration count: " + iterationCount);
-        println("------------------------------------");
-        println("1. Test fixture movement");
+        println("--------------------------------------");
+        println("1. Test and configure fixture movement");
         println("2. Configure camera");
         println("3. Change test iteration count");
         println("4. Run tests");
         println("5. Help");
         println("6. Exit");
-        println("====================================");
+        println("======================================");
     }
 
     private static void printMovementMenu()
@@ -234,6 +234,10 @@ public class Cli
                                                                 ConfigProperties.GAMMA));
         println("Current composite frame count: " + 
                 ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
+        String cropValue = ((ConfigFacade.getValue(cameraName,ConfigProperties.CROP) == 1) ? "yes" : "no");
+        println("Will the image be cropped? " + cropValue);
+        String thresholdImage = ((ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) == 1) ? "yes" : "no");
+        println("Will the image be thresholded? " + thresholdImage);
         println("------------------------------------");
         println("1. Change Crop X");
         println("2. Change Crop Y");
@@ -241,7 +245,9 @@ public class Cli
         println("4. Change Crop Height");
         println("5. Change Gamma Value");
         println("6. Change Composite Frame Count");
-        println("7. Exit");
+        println("7. Toggle crop");
+        println("8. Toggle threshold");
+        println("9. Exit");
         println("====================================");
     }
 
@@ -387,12 +393,25 @@ public class Cli
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
                             break;
                         case 7:
+                            modifiedProperty = ConfigProperties.CROP;
+                            break;
+                        case 8:
+                            modifiedProperty = ConfigProperties.THRESHOLD;
+                            break;
+                        case 9:
                             modifiedProperty = ConfigProperties.PRIME;
+                            break;
                         default:
                     }
                 } while(modifiedProperty == null);
                 
-                if(modifiedProperty != ConfigProperties.PRIME)
+                if(modifiedProperty == ConfigProperties.THRESHOLD || modifiedProperty == ConfigProperties.CROP)
+                {
+                    double newValue = ConfigFacade.getValue(cameraName,modifiedProperty);
+                    newValue = Math.abs(newValue - 1);
+                    ConfigFacade.setValue(cameraName,modifiedProperty,newValue);
+                }
+                else if(modifiedProperty != ConfigProperties.PRIME)
                 {
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
                     if(!gamma) 
@@ -431,25 +450,33 @@ public class Cli
     }
 
     /**
-     * Starts running tests in {@link OpenCVFacade}
+     * Starts running tests
      */
     private static void runTests()
     {
-        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+        //DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
         Map<String, Double> resultMap = new HashMap<>();
+        boolean prime = false;
+        for(String cameraName : OpenCVFacade.getCameraNames())
+        {
+            OpenCVFacade.gammaCalibrate(cameraName);
+            if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
+            {
+                prime = true;
+            }
+        }
         for(int i = 0; i < iterationCount; i++)
         {
-            List<List<File>> iterationList = OpenCVFacade.multipleIterations(iterationCount);
-            for(List<File> iteration : iterationList)
+            MovementFacade.iterationMovement(prime);
+            List<File> iteration = OpenCVFacade.singleIteration();
+            for(File file : iteration)
             {
-                for(File file : iteration)
-                {
-                    Double result = TesseractFacade.imageToDouble(file);
-                    String fileLocation = file.getAbsolutePath();
-                    resultMap.put(fileLocation,result);
-                }
-                DataSaving.writeValues(i,resultMap);
+                Double result = TesseractFacade.imageToDouble(file);
+                String fileLocation = file.getAbsolutePath();
+                resultMap.put(fileLocation,result);
+                ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
             }
+            //DataSaving.writeValues(i,resultMap);
         }
         println("=======================================");
         println("Tests complete!");

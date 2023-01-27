@@ -27,7 +27,15 @@ public enum ConfigProperties
     /**
      * Gamma value set to the camera.
      */
-    GAMMA("Gamma value","gamma",2.0),
+    GAMMA("Gamma value","gamma",6.0),
+    /**
+     * Whether or not to threshold the image during processing.
+     */
+    THRESHOLD("Toggle threshold","threshold",1.0),
+    /**
+     * Whether or not to threshold the image during processing.
+     */
+    CROP("Toggle crop","crop",1.0),
     /**
      *How many frames to composite together while processing this camera's image.
      */
