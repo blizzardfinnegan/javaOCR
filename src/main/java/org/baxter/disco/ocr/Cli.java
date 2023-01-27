@@ -16,7 +16,7 @@ import org.bytedeco.javacv.CanvasFrame;
  * classes in this package (with the exception of {@link Gui} [for now]).
  *
  * @author Blizzard Finnegan
- * @version 0.4.0, 25 Jan. 2023
+ * @version 1.0.0, 27 Jan. 2023
  */
 public class Cli
 {
@@ -89,9 +89,14 @@ public class Cli
         } while (userInput != 6);
 
         }
-        catch(Exception e) { ErrorLogging.logError(e); }
+        catch(Exception e) 
+        { 
+            ErrorLogging.logError(e); 
+            ErrorLogging.logError("ERROR CAUGHT - CLOSING PROGRAM.");
+        }
         finally
         {
+            ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
             inputScanner.close();
             MovementFacade.closeGPIO();
             ErrorLogging.logError("DEBUG: END OF PROGRAM.");
@@ -143,8 +148,7 @@ public class Cli
                     "\n\tfor use in OCR. Can modify"+
                     "\n\tconfig file, if requested." +
                     "\n\tAvailable variables to change:"+
-                    "\n\t\tCrop dimensions"+
-                    "\n\t\tGamma");
+                    "\n\t\tCrop dimensions");
         println("----------------------------------------");
         println("3. Change test iteration count:"+
                     "\n\tChange the number of times to"+
@@ -231,8 +235,6 @@ public class Cli
         println(" | Height: " + ConfigFacade.getValue(cameraName,
                                                     ConfigProperties.CROP_H));
         println("************************************");
-        println("Current Gamma value: " + ConfigFacade.getValue(cameraName,
-                                                                ConfigProperties.GAMMA));
         println("Current composite frame count: " + 
                 ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
         String cropValue = ((ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0) ? "yes" : "no");
@@ -244,11 +246,10 @@ public class Cli
         println("2. Change Crop Y");
         println("3. Change Crop Width");
         println("4. Change Crop Height");
-        println("5. Change Gamma Value");
-        println("6. Change Composite Frame Count");
-        println("7. Toggle crop");
-        println("8. Toggle threshold");
-        println("9. Exit");
+        println("5. Change Composite Frame Count");
+        println("6. Toggle crop");
+        println("7. Toggle threshold");
+        println("8. Exit");
         println("====================================");
     }
 
@@ -365,7 +366,6 @@ public class Cli
 
                 //User input parsing
                 ConfigProperties modifiedProperty = null;
-                boolean gamma = false;
                 do
                 {
                     //list configurable settings
@@ -387,19 +387,15 @@ public class Cli
                             modifiedProperty = ConfigProperties.CROP_H;
                             break;
                         case 5:
-                            modifiedProperty = ConfigProperties.GAMMA;
-                            gamma = true;
-                            break;
-                        case 6:
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
                             break;
-                        case 7:
+                        case 6:
                             modifiedProperty = ConfigProperties.CROP;
                             break;
-                        case 8:
+                        case 7:
                             modifiedProperty = ConfigProperties.THRESHOLD;
                             break;
-                        case 9:
+                        case 8:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
@@ -415,16 +411,8 @@ public class Cli
                 else if(modifiedProperty != ConfigProperties.PRIME)
                 {
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
-                    if(!gamma) 
-                    {
-                        userInput = inputFiltering(inputScanner.nextLine());
-                        ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
-                    }
-                    else 
-                    {
-                        double doubleUserInput = gammaInputFiltering(inputScanner.nextLine());
-                        ConfigFacade.setValue(cameraName,modifiedProperty,doubleUserInput);
-                    }
+                    userInput = inputFiltering(inputScanner.nextLine());
+                    ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
                     if(canvas != null) canvas.dispose();
                 }
                 else break;
@@ -456,11 +444,9 @@ public class Cli
     private static void runTests()
     {
         DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
-        Map<String, Double> resultMap = new HashMap<>();
         boolean prime = false;
         for(String cameraName : OpenCVFacade.getCameraNames())
         {
-            OpenCVFacade.gammaCalibrate(cameraName);
             if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
             {
                 prime = true;
@@ -468,6 +454,7 @@ public class Cli
         }
         for(int i = 0; i < iterationCount; i++)
         {
+            Map<String, Double> resultMap = new HashMap<>();
             MovementFacade.iterationMovement(prime);
             List<File> iteration = OpenCVFacade.singleIteration();
             for(File file : iteration)
@@ -490,35 +477,6 @@ public class Cli
      */
     private static int inputFiltering(String input) 
     { return inputFiltering(input, Menus.OTHER); }
-
-    /**
-     * Parse the user's input, and check it for errors.
-     *
-     * @param input     The unparsed user input, directly from the {@link Scanner}
-     * @param mainMenu  Whether or not the parsed input is a main menu value
-     * 
-     * @return The parsed value from the user. Returns -1 upon any error.
-     */
-    private static double gammaInputFiltering(String input)
-    {
-        double output = -1;
-        input.trim();
-        try(Scanner sc = new Scanner(input))
-        {
-            if(!sc.hasNextDouble()) 
-            { 
-                invalidInput();
-                return output; 
-            }
-            output = sc.nextDouble();
-            if(output < 0)
-            {
-                negativeInput();
-                output = -1;
-            }
-        }
-        return output;
-    }
 
     /**
      * Parse the user's input, and check it for errors.

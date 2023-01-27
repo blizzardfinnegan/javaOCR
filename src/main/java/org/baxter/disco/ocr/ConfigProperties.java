@@ -4,7 +4,7 @@ package org.baxter.disco.ocr;
  * Enum of possible config properties.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 25 Jan. 2023
+ * @version 2.1.0, 27 Jan. 2023
  */
 public enum ConfigProperties
 {
@@ -24,10 +24,6 @@ public enum ConfigProperties
      *Height of the newly cropped image.
      */
     CROP_H("Crop Height","cropH",50.0),
-    /**
-     * Gamma value set to the camera.
-     */
-    GAMMA("Gamma value","gamma",6.0),
     /**
      * Whether or not to threshold the image during processing.
      */

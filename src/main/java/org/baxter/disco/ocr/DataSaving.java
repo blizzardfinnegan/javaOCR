@@ -1,7 +1,6 @@
 package org.baxter.disco.ocr;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,11 +12,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**To be implemented:
+/**
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 0.0.1, 27 Jan. 2023
+ * @version 1.0.0, 27 Jan. 2023
  */
 public class DataSaving
 {
@@ -44,18 +43,14 @@ public class DataSaving
         outputFile = new File(filename);
         try
         {
-            FileInputStream outputStream = new FileInputStream(outputFile);
-            outputWorkbook = new XSSFWorkbook(outputStream);
-            outputSheet = outputWorkbook.getSheetAt(0);
+            outputWorkbook = new XSSFWorkbook();
+            outputSheet = outputWorkbook.createSheet();
         }
         catch(Exception e) { ErrorLogging.logError(e); }
         return output;
     }
-    /** TODO: Test;
+    /** 
      * Writes line to XLSX file.
-     *
-     * For backwards compatibility, this requires 
-     * a system call for the current date and time.
      *
      * @param cycle         What test cycle is being saved to the file 
      * @param inputMap      Map[String,Double] list of inputs
@@ -66,7 +61,7 @@ public class DataSaving
     {
         boolean output = false;
         int startingRow = outputSheet.getLastRowNum();
-        Row row = outputSheet.createRow(startingRow++);
+        Row row = outputSheet.createRow(++startingRow);
         Set<String> imageLocations = inputMap.keySet();
         List<Object> objectArray = new LinkedList<>();
         objectArray.add((double)cycle);
@@ -92,12 +87,5 @@ public class DataSaving
         }
         catch(Exception e) {ErrorLogging.logError(e);}
         return output;
-    }
-
-    /**
-     * Main function; used for testing of individual functions.
-     */
-    public static void main(String[] args)
-    {
     }
 }

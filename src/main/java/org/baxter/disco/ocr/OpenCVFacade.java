@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 0.1.1, 27 Jan. 2023
+ * @version 1.0.0, 27 Jan. 2023
  */
 public class OpenCVFacade
 {
@@ -115,7 +115,8 @@ public class OpenCVFacade
      */
     private static void newCamera(String name, String location, int width, int height, String codec)
     {
-        ErrorLogging.logError("DEBUG: Attempting to create new camera " + name + " from location " + location + "...");
+        //ErrorLogging.logError("DEBUG: Attempting to create new camera " + name + " from location " + location + "...");
+        ErrorLogging.logError("Initialising camera : " + name + "...");
         File cameraLocation = new File(location);
         if (cameraLocation.exists())
         {
@@ -190,8 +191,8 @@ public class OpenCVFacade
         //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
         File imageLocation = completeProcess(cameraName);
         if(imageLocation == null) return null;
-        ErrorLogging.logError("DEBUG: Image processed successfully.");
-        ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
+        //ErrorLogging.logError("DEBUG: Image processed successfully.");
+        //ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
         Frame outputImage = MAT_CONVERTER.convert(imread(imageLocation.getAbsolutePath()));
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
@@ -285,11 +286,11 @@ public class OpenCVFacade
      *
      * @return File if save was successful, otherwise null
      */
-    public static File saveImage(Mat image, String fileLocation)
+    public static File saveImage(Mat image, String fileLocation, String cameraName)
     {
         File output = null;
         IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
-        fileLocation = fileLocation + "/" + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + ".jpg";
+        fileLocation = fileLocation + "/" + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + "-" + cameraName + ".jpg";
         cvSaveImage(fileLocation,temp);
         output = new File(fileLocation);
         return output;
@@ -315,67 +316,55 @@ public class OpenCVFacade
     {
         ErrorLogging.logError("DEBUG: Attempting to compose " + images.size() + " images...");
         Mat output = null;
-        List<Mat> processedImages = new ArrayList<>();
         int iterationCount = 1;
         for(Mat image : images)
         { //crop and threshold, based on booleans
-          Mat processedImage = image;
+          Mat processedImage = image.clone();
+          image.copyTo(processedImage);
             if(crop) 
             {
                 ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
                 processedImage = crop(processedImage,cameraName);
-                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                                      "." + iterationCount + "-post-crop.jpg";
-                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                        MAT_CONVERTER.convert(processedImage)));
+                //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                //                      "." + iterationCount + "-post-crop.jpg";
+                //cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                //                        MAT_CONVERTER.convert(processedImage)));
             }
             if(threshold) 
             {
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
                 processedImage = thresholdImage(processedImage);
-                String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                                      "." + iterationCount + "-post-threshold.jpg";
-                cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                        MAT_CONVERTER.convert(processedImage)));
+                //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                //                      "." + iterationCount + "-post-threshold.jpg";
+                //cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                //                        MAT_CONVERTER.convert(processedImage)));
             }
-            String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                                  + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                                  "." + iterationCount + "-pre.compose.jpg";
-            cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                     MAT_CONVERTER.convert(processedImage)));
-            ErrorLogging.logError("DEBUG: Pre-compose image: " + fileLocation);
-            ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
-            ErrorLogging.logError("DEBUG: -----------------");
+            //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+            //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+            //                      "." + iterationCount + "-pre.compose.jpg";
+            //cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+            //                         MAT_CONVERTER.convert(processedImage)));
+            //ErrorLogging.logError("DEBUG: Post-threshold/crop image: " + fileLocation);
+            //ErrorLogging.logError("DEBUG: Image " + iterationCount + " complete!");
+            //ErrorLogging.logError("DEBUG: -----------------");
+            //ErrorLogging.logError("DEBUG: Post-threshold/crop width: " + processedImage.cols());
+
+            if(iterationCount == 1) 
+            {
+                output = processedImage.clone();
+            }
+            ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
+            bitwise_and((iterationCount == 1 ? processedImage : output),processedImage, output);
+
             iterationCount++;
-            processedImages.add(processedImage);
         }
 
-
-        //Composite images
-        ErrorLogging.logError("DEBUG: Compositing images...");
-        if(images.size() > 1)
-        { //progressive bitwise and-ing image into output
-            output = processedImages.get(0);
-            for(Mat image : processedImages)
-            {
-                bitwise_and(output,image,output);
-            }
-        }
+        if(output != null) 
+            ErrorLogging.logError("DEBUG: Compositing successful!");
         else
-        { //setting the output to a single part of the image
-            if(images.size() != 1)
-                ErrorLogging.logError("OpenCV Error!!! - Invalid input image list size!");
-            else
-            {
-                ErrorLogging.logError("DEBUG: Array size = 1");
-                ErrorLogging.logError("DEBUG: COMPOSITE_FRAME value for this camera: " + 
-                                      ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
-                output = images.get(0);
-            }
-        }
-        ErrorLogging.logError("DEBUG: Compositing successful!");
+            ErrorLogging.logError("ERROR: Final output image is null!");
         return output;
     }
 
@@ -401,12 +390,12 @@ public class OpenCVFacade
             ErrorLogging.logError("OPENCV ERROR!!! - Invalid camera name.");
             return output;
         }
-        ErrorLogging.logError("DEBUG: Camera to take picture from: " + cameraName);
-        ErrorLogging.logError("DEBUG: Composite frame count: " + compositeFrames);
+        //ErrorLogging.logError("DEBUG: Camera to take picture from: " + cameraName);
+        //ErrorLogging.logError("DEBUG: Composite frame count: " + compositeFrames);
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
-        ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
+        //ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
         Mat finalImage = compose(imageList, threshold, crop, cameraName);
-        output = saveImage(finalImage, saveLocation);
+        output = saveImage(finalImage, saveLocation,cameraName);
         return output;
     }
 
@@ -429,12 +418,12 @@ public class OpenCVFacade
         }
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
         boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
-        ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
+        //ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
         boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
-        ErrorLogging.logError("DEBUG: Crop config value: " + crop);
+        //ErrorLogging.logError("DEBUG: Crop config value: " + crop);
         output = completeProcess(cameraName,crop,threshold,compositeFrames,saveLocation);
         if(output == null)
-            ErrorLogging.logError("DEBUG: Final processed image is null!");
+            ErrorLogging.logError("OPENCV ERROR!!!: Final processed image is null!");
         return output;
     }
 

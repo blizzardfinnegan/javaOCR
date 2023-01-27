@@ -14,7 +14,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.1.0, 27 Jan. 2023
  */
 public class TesseractFacade
 {
@@ -68,8 +68,15 @@ public class TesseractFacade
                 if(sc.hasNextDouble()) 
                 {
                     output = sc.nextDouble();
-                    if(output >= 200) ErrorLogging.logError("OCR ERROR!!! - OCR output is too high for DUT, potential misread.");
-                    if(output <= -10) ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
+                    if(output >= 200) 
+                    {
+                        ErrorLogging.logError("OCR ERROR!!! - OCR output is too high for DUT, attempting to adjust...");
+                        output = output / 10;
+                        if(output >= 200)
+                            ErrorLogging.logError("OCR ERROR!!! - OCR output is too high for DUT, potential misread.");
+                    }
+                    if(output <= -10) 
+                        ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
                 }
                 else ErrorLogging.logError("OCR ERROR!!! - OCR output is not a Double.");
             }
