@@ -4,6 +4,7 @@ module org.baxter.disco.ocr {
     requires com.pi4j.plugin.pigpio;
     requires com.pi4j.library.pigpio;
     requires javafx.fxml;
+    requires javafx.controls;
     requires org.apache.poi.poi;
     requires org.apache.commons.configuration2;
     requires org.apache.xmlbeans;

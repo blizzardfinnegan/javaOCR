@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.baxter.disco</groupId>
     <artifactId>ocr</artifactId>
-    <version>4.0.0-rc1</version>
+    <version>4.0.0-rc2</version>
     <packaging>jar</packaging>
     <name>Disco OCR Accuracy Over Life Testing</name>
     <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>
@@ -86,7 +86,7 @@
             <version>${pi4j.version}</version>
         </dependency>
 
-        <!-- JavaFX Import; Only one is necessary, as Maven grabs dependencies automatically -->
+        <!-- JavaFX Import -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
@@ -155,7 +155,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.baxter.disco.ocr.Cli</mainClass>
+                            <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -178,7 +178,7 @@
                 </execution>
             </executions>
         </plugin>
-            <!--plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
@@ -191,8 +191,8 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <addDefaultImplementationEntries/>
-                                    <mainClass>it.lb.rasp.rasp01.Rasp01</mainClass>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
@@ -201,7 +201,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin-->
+            </plugin>
         </plugins>
     </build>
     <reporting>

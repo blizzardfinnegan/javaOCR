@@ -4,7 +4,7 @@
   <groupId>org.baxter.disco</groupId>
   <artifactId>ocr</artifactId>
   <name>Disco OCR Accuracy Over Life Testing</name>
-  <version>4.0.0-rc1</version>
+  <version>4.0.0-rc2</version>
   <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>
   <organization>
     <name>Baxter International</name>
@@ -62,7 +62,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>org.baxter.disco.ocr.Cli</mainClass>
+              <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -83,6 +83,29 @@
             <transformer />
           </transformers>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <addClasspath>true</addClasspath>
+                  <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
+                </manifest>
+              </archive>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

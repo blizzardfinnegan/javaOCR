@@ -96,11 +96,7 @@ public class Cli
         }
         finally
         {
-            ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
-            inputScanner.close();
-            MovementFacade.closeGPIO();
-            ErrorLogging.logError("DEBUG: END OF PROGRAM.");
-            ErrorLogging.closeLogs();
+            close();
         }
     }
 
@@ -441,7 +437,7 @@ public class Cli
     /**
      * Starts running tests
      */
-    private static void runTests()
+    public static void runTests()
     {
         DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
         boolean prime = false;
@@ -468,6 +464,15 @@ public class Cli
         }
         println("=======================================");
         println("Tests complete!");
+    }
+
+    public static void close()
+    {
+        ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
+        inputScanner.close();
+        MovementFacade.closeGPIO();
+        ErrorLogging.logError("DEBUG: END OF PROGRAM.");
+        ErrorLogging.closeLogs();
     }
 
     /**
