@@ -39,7 +39,11 @@ public enum ConfigProperties
     /**
      * Whether or not to press the button on the device twice, when under test.
      */
-    PRIME("Prime device?","prime",0.0);
+    PRIME("Prime device?","prime",0.0),
+    /**
+     * Where the threshold point should land.
+     */
+    THRESHOLD_VALUE("Threshold value","thresholdValue",50.0);
 
     /**
      * Internal storage of human-readable name/meaning

@@ -243,9 +243,10 @@ public class Cli
         println("3. Change Crop Width");
         println("4. Change Crop Height");
         println("5. Change Composite Frame Count");
-        println("6. Toggle crop");
-        println("7. Toggle threshold");
-        println("8. Exit");
+        println("6. Change Threshold Value");
+        println("7. Toggle crop");
+        println("8. Toggle threshold");
+        println("9. Exit");
         println("====================================");
     }
 
@@ -386,12 +387,15 @@ public class Cli
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
                             break;
                         case 6:
-                            modifiedProperty = ConfigProperties.CROP;
+                            modifiedProperty = ConfigProperties.THRESHOLD_VALUE;
                             break;
                         case 7:
-                            modifiedProperty = ConfigProperties.THRESHOLD;
+                            modifiedProperty = ConfigProperties.CROP;
                             break;
                         case 8:
+                            modifiedProperty = ConfigProperties.THRESHOLD;
+                            break;
+                        case 9:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
@@ -469,7 +473,7 @@ public class Cli
     public static void close()
     {
         ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
-        inputScanner.close();
+        if(inputScanner != null) inputScanner.close();
         MovementFacade.closeGPIO();
         ErrorLogging.logError("DEBUG: END OF PROGRAM.");
         ErrorLogging.closeLogs();

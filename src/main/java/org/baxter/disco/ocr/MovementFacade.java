@@ -37,7 +37,7 @@ public class MovementFacade
     /**
      * Number of seconds to wait before timing out a fixture movement.
      */
-    private static int TIME_OUT = 20;
+    private static int TIME_OUT = 3;
 
     //PWM Addresses
     //All addresses are in BCM format.

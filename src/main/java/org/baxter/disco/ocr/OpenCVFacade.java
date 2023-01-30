@@ -270,11 +270,12 @@ public class OpenCVFacade
      *
      * @return Frame of the thresholded image
      */
-    public static Mat thresholdImage(Mat image)
+    public static Mat thresholdImage(Mat image,String cameraName)
     {
         Mat output = image;
         Mat in = image;
-        threshold(in,output,50,255,THRESH_BINARY);
+        double thresholdValue = ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE);
+        threshold(in,output,thresholdValue,255,THRESH_BINARY);
         return output;
     }
 
@@ -334,7 +335,7 @@ public class OpenCVFacade
             if(threshold) 
             {
                 ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
-                processedImage = thresholdImage(processedImage);
+                processedImage = thresholdImage(processedImage,cameraName);
                 //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
                 //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
                 //                      "." + iterationCount + "-post-threshold.jpg";
