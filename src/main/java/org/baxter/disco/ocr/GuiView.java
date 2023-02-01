@@ -1,5 +1,7 @@
 package org.baxter.disco.ocr;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import javafx.application.Application;
@@ -11,21 +13,13 @@ import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 
-/**DEPRECATED
- * GUI for the underlying functions.
- *
- * This has been deprecated in favour of an MVC design model.
- * This has been implemented in {@link GuiModel}, {@link GuiView},
- * and {@link GuiController}. 
- * This class will be removed from this repo in the near future, 
- * for clarity.
+/**
+ * View portion of MVC for the Accuracy Over Life test fixture.
  *
  * @author Blizzard Finnegan
- * @deprecated
- * @version 0.2.0, 01 Feb, 2023
- * 
+ * @version 0.0.1, 01 Feb, 2023
  */
-public class Gui extends Application
+public class GuiView extends Application
 {
     public static final Scene MAIN_MENU; 
     private static final AnchorPane MAIN_ANCHOR;
@@ -34,6 +28,14 @@ public class Gui extends Application
     public static final Scene CAMERA_MENU; 
     private static final AnchorPane CAMERA_ANCHOR;
     private static final Pane CAMERA_PANE;
+
+    private static final Map<String,Map<ConfigProperties,TextField>> uiFields = new HashMap<>();
+
+    private static Text userFeedback;
+
+    private static TextField iterationField;
+
+    private static Button startButton;
 
     private static Stage STAGE;
 
@@ -65,6 +67,9 @@ public class Gui extends Application
         AnchorPane.setBottomAnchor(CAMERA_PANE,10.0);
         CAMERA_ANCHOR.getChildren().add(CAMERA_PANE);
         CAMERA_MENU = new Scene(CAMERA_ANCHOR);
+
+        for(String camera : GuiModel.getCameras())
+            uiFields.put(camera, new HashMap<>());
     }
 
     @Override
@@ -86,7 +91,7 @@ public class Gui extends Application
         layout.setAlignment(Pos.CENTER_LEFT);
 
         int index = 0;
-        for(String cameraName : OpenCVFacade.getCameraNames())
+        for(String cameraName : GuiModel.getCameras())
         {
             if(index != 0) layout.getChildren().add(new Separator(Orientation.HORIZONTAL));
             layout.getChildren().add(cameraSetup(cameraName));
@@ -126,11 +131,7 @@ public class Gui extends Application
         output.selectedProperty().addListener(
                 (obeservableValue, oldValue, newValue) ->
                 {
-                    for(String cameraName : OpenCVFacade.getCameraNames())
-                    {
-                        ConfigFacade.setValue(cameraName,ConfigProperties.PRIME,
-                                (newValue ? 1 : 0) );
-                    }
+                    GuiController.updatePrime();
                 });
         return output;
     }
@@ -141,6 +142,7 @@ public class Gui extends Application
         output.setSpacing(5.0);
         Label textboxLabel = new Label("Test feedback: ");
         Text textbox = new Text("Awaiting input...");
+        userFeedback = textbox;
         textbox.setId("testOutputToUser");
 
         output.getChildren().addAll(textboxLabel,textbox);
@@ -149,7 +151,7 @@ public class Gui extends Application
 
     private static HBox setupSection()
     {
-        HBox output = userTextField("Cycles:",Integer.toString(Cli.getIterationCount()), "Enter the number of times to test the devices in the fixture.");
+        HBox output = userTextField("Cycles:",GuiController.getIterationCount(), "Enter the number of times to test the devices in the fixture.");
         TextField field = null;
         for(Node child : output.getChildren())
         {
@@ -162,20 +164,23 @@ public class Gui extends Application
         if(field == null)
         {
             ErrorLogging.logError("GUI INIT ERROR!!! - Failed text field setup.");
-            Cli.close();
+            GuiController.closeModel();
         }
-        TextField textField = (TextField)(output.lookup("#cycles"));
-        textField.textProperty().addListener( 
+
+        iterationField = field;
+        //TextField textField = (TextField)(output.lookup("#cycles"));
+        field.textProperty().addListener( 
             (observable, oldValue, newValue) -> 
             { 
                 try(Scanner sc = new Scanner(newValue);)
-                { Cli.setIterationCount(sc.nextInt()); }
+                { GuiController.setIterationCount(sc.nextInt()); }
                 catch(Exception e)
                 {
                     ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
                     newValue = oldValue;
                 }
             });
+
         return output;
     }
 
@@ -188,20 +193,19 @@ public class Gui extends Application
         topButtons.setMinHeight(Region.USE_COMPUTED_SIZE);
 
         final Button START = buttonBuilder("Start",true);
+        startButton = START;
         final Button STOP = buttonBuilder("Stop",true);
         START.setOnAction( (event) -> 
             {
                 START.setDisable(true);
                 STOP.setDisable(false);
-                Cli.runTests();
+                GuiController.runTests();
             });
         START.setTooltip(new Tooltip("Configure cameras to start the program."));
 
-        buttonBuilder("Stop",true,STOP);
         STOP.setOnAction( (event) -> 
             {
-                Cli.LOCK.lock();
-                Cli.interruptTest();
+                GuiController.interruptTests();
                 START.setDisable(false);
                 STOP.setDisable(true);
             });
@@ -212,12 +216,12 @@ public class Gui extends Application
         calibrateCamera.setOnAction( (event) -> STAGE.setScene(CAMERA_MENU) );
 
         Button testMovement = buttonBuilder("Test Movement",false);
-        testMovement.setOnAction( (event) -> MovementFacade.testMotions() );
+        testMovement.setOnAction( (event) -> GuiController.testMotions() );
 
         Button cancel = buttonBuilder("Close",false);
         cancel.setOnAction( (event) -> 
             {
-                Cli.close();
+                GuiController.closeModel();
                 STAGE.close();
             });
 
@@ -237,7 +241,7 @@ public class Gui extends Application
         output.setSpacing(5.0);
 
         int index = 0;
-        for(String camera : OpenCVFacade.getCameraNames())
+        for(String camera : GuiModel.getCameras())
         {
             if(index != 0) output.getChildren().add(new Separator(Orientation.VERTICAL));
             output.getChildren().add(camera(camera));
@@ -320,29 +324,19 @@ public class Gui extends Application
         preview.setId("previewButton-" + cameraName);
         preview.setOnAction( (event) -> 
             {
-                MovementFacade.pressButton();
+                GuiController.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
-                OpenCVFacade.showImage(cameraName);
+                GuiController.showImage(cameraName);
             });
 
         CheckBox cropPreview = new CheckBox("Crop preview");
         cropPreview.setId("cropToggle-" + cameraName);
-        cropPreview.selectedProperty().addListener(
-                (obeservableValue, oldValue, newValue) ->
-                {
-                    double configValue = ConfigFacade.getValue(cameraName,ConfigProperties.CROP);
-                    configValue = Math.abs(configValue - 1);
-                    ConfigFacade.setValue(cameraName,ConfigProperties.CROP,configValue);
-                });
+        cropPreview.selectedProperty().addListener((obeservableValue, oldValue, newValue) -> 
+            GuiController.toggleCrop(cameraName));
 
         CheckBox thresholdPreview = new CheckBox("Threshold preview");
-        thresholdPreview.selectedProperty().addListener(
-                (obeservableValue, oldValue, newValue) ->
-                {
-                    double configValue = ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD);
-                    configValue = Math.abs(configValue - 1);
-                    ConfigFacade.setValue(cameraName,ConfigProperties.THRESHOLD,configValue);
-                });
+        thresholdPreview.selectedProperty().addListener((obeservableValue, oldValue, newValue) ->
+                    GuiController.toggleThreshold(cameraName));
         cropPreview.setId("thresholdToggle-" + cameraName);
 
         output.getChildren().addAll(preview,
@@ -358,22 +352,22 @@ public class Gui extends Application
         output.setAlignment(Pos.CENTER_LEFT);
 
         HBox cropX = userTextField("X:",
-                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_X),
                                    "X-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropX,ConfigProperties.CROP_X,cameraName,"X");
 
         HBox cropY = userTextField("Y:",
-                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y)),
+                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_Y),
                                    "Y-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropY,ConfigProperties.CROP_Y,cameraName,"Y");
         
         HBox cropW = userTextField("Width:",
-                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W)),
+                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_W),
                                    "Width, in pixels, of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropW,ConfigProperties.CROP_W,cameraName,"Width");
 
         HBox cropH = userTextField("Height:",
-                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H)),
+                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_H),
                                    "Height, in pixels, of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropH, ConfigProperties.CROP_H, cameraName, "Height");
 
@@ -391,13 +385,13 @@ public class Gui extends Application
         output.setAlignment(Pos.CENTER_LEFT);
 
         HBox thresholdValue = userTextField("Threshold Value:",
-                                            Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE)),
+                                            GuiController.getConfigValue(cameraName,ConfigProperties.THRESHOLD),
                                             "This value can be set from 0 to 255. Higher values mean more black in "+
                                             "the thresholded image. For more information, see the documentation.");
         textFieldSetup(thresholdValue,ConfigProperties.THRESHOLD_VALUE,cameraName,"Threshold Value");
 
         HBox compositeFrames = userTextField("Composite Frames:",
-                                            Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES)),
+                                            GuiController.getConfigValue(cameraName,ConfigProperties.COMPOSITE_FRAMES),
                                              "Number of frames to bitwise-and together.");
         textFieldSetup(compositeFrames,ConfigProperties.COMPOSITE_FRAMES,cameraName,"Composite Frames");
 
@@ -415,29 +409,25 @@ public class Gui extends Application
         Button defaults = buttonBuilder("Save Defaults");
         defaults.setOnAction( (event) ->
             {
-                ConfigFacade.saveDefaultConfig();
-                ConfigFacade.loadConfig();
+                GuiController.saveDefaults();
             });
 
         Button save = buttonBuilder("Save");
         save.setOnAction( (event) ->
             {
-                ConfigFacade.saveCurrentConfig();
+                GuiController.save();
             });
 
         Button saveClose = buttonBuilder("Save and Close");
         saveClose.setOnAction( (event) -> 
             {
-                ConfigFacade.saveCurrentConfig();
-                ConfigFacade.loadConfig();
+                GuiController.saveClose();
                 STAGE.setScene(MAIN_MENU);
-                START.setDisable(false);
             });
 
         Button close = buttonBuilder("Close without Saving");
         close.setOnAction( (event) -> 
             {
-                ConfigFacade.loadConfig();
                 STAGE.setScene(MAIN_MENU);
             });
 
@@ -462,16 +452,21 @@ public class Gui extends Application
         if(field == null)
         {
             ErrorLogging.logError("GUI INIT ERROR!!! - Failed text field setup.");
-            Cli.close();
+            GuiController.closeModel();
         }
-        //String[] id = oldId.strip().substring(0, oldId.length() - 1).toLowerCase().strip().split(" ");
-        //TextField field = (TextField)(hbox.lookup("#" + id[0]));
+
+        //GuiController.addToMap(cameraName,property,field);
+        Map<ConfigProperties,TextField> cameraFields = uiFields.get(cameraName);
+        if(cameraFields.containsKey(property))
+        { ErrorLogging.logError("GUI Setup Error!!! - Duplicate field: " + cameraName + " " + property.getConfig()); }
+        cameraFields.put(property,field);
+        uiFields.replace(cameraName,cameraFields);
         field.setId(property.getConfig() + cameraName);
         field.textProperty().addListener( 
             (observable, oldValue, newValue) -> 
             { 
                 try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,property,sc.nextInt()); }
+                { GuiController.setConfigValue(cameraName,property,sc.nextInt()); }
                 catch(Exception e)
                 {
                     ErrorLogging.logError("USER INPUT ERROR: Illegal input in " + property.getConfig() + " for " + cameraName +  ".");
@@ -479,6 +474,7 @@ public class Gui extends Application
                 }
             });
     }
+
     private static Button buttonBuilder(String name,boolean disabled)
     {
         String[] id = name.strip().substring(0, name.length() - 1).toLowerCase().strip().split(" ");
@@ -486,13 +482,6 @@ public class Gui extends Application
         button.setId(id[0]);
         button.setDisable(disabled);
         return button;
-    }
-
-    private static void buttonBuilder(String name,boolean disabled, Button premadeButton)
-    {
-        String[] id = name.strip().substring(0, name.length() - 1).toLowerCase().strip().split(" ");
-        premadeButton.setId(id[0]);
-        premadeButton.setDisable(disabled);
     }
 
     private static Button buttonBuilder(String name)
@@ -515,4 +504,16 @@ public class Gui extends Application
         output.getChildren().addAll(label,field);
         return output;
     }
+
+    public static TextField getField(String cameraName, ConfigProperties property)
+    { return uiFields.get(cameraName).get(property); }
+
+    public static Button getStart()
+    { return startButton; }
+
+    public static Text getFeedbackText()
+    { return userFeedback; }
+
+    public static TextField getIterationField()
+    { return iterationField; }
 }

@@ -1,5 +1,7 @@
 package org.baxter.disco.ocr;
 
+import java.util.concurrent.locks.Lock;
+
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
 import com.pi4j.io.gpio.digital.DigitalInput;
@@ -19,10 +21,30 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 1.1.0, 27 Jan. 2023
+ * @version 2.0.0, 01 Feb. 2023
  */
 public class MovementFacade
 {
+    /**
+     * Constructor for MovementFacade.
+     *
+     * @param LOCK  A Lock object, used for interactions with
+     *              the physical lock switch on the fixture.
+     */
+    public MovementFacade(Lock LOCK)
+    {
+        new Thread(() -> 
+                {
+                    while(true)
+                    {
+                        if(runSwitch.isOff())
+                            LOCK.lock();
+                        else
+                            LOCK.unlock();
+                    }
+                }, "Run switch monitor.").run();
+    }
+
     //Externally Available Variables
     /**
      * PWM Frequency
@@ -37,7 +59,7 @@ public class MovementFacade
     /**
      * Number of seconds to wait before timing out a fixture movement.
      */
-    private static int TIME_OUT = 3;
+    private static int TIME_OUT = 10;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -95,7 +117,7 @@ public class MovementFacade
      */
     private static DigitalInput lowerLimit;
 
-    /**TODO: Multithreading;
+    /**
      * Lower limit switch object.
      *
      * Status: High; Test may continue.
@@ -157,6 +179,7 @@ public class MovementFacade
         //as the PWM signal is simply a clock for the motor.
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
         pwm.on(DUTY_CYCLE, FREQUENCY);
+
     }
 
     /**
@@ -173,7 +196,6 @@ public class MovementFacade
         PwmConfigBuilder configBuilder;
         switch (address)
         {
-            //TODO: Set PWM duty cycle
             //The following pins allow for hardware PWM support.
             case 12:
             case 13:
@@ -261,7 +283,7 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public static boolean setDutyCycle(int newDutyCycle)
+    public boolean setDutyCycle(int newDutyCycle)
     {
         boolean output = false;
         if(newDutyCycle < 0)
@@ -283,7 +305,7 @@ public class MovementFacade
      *
      * @return The current DutyCycle.
      */
-    public static int getDutyCycle() { return DUTY_CYCLE; }
+    public int getDutyCycle() { return DUTY_CYCLE; }
 
     /**
      * Setter for the fixture's time to give up on a movement.
@@ -292,7 +314,7 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public static boolean setTimeout(int newTimeout)
+    public boolean setTimeout(int newTimeout)
     {
         boolean output = false;
         if(newTimeout < 0)
@@ -312,7 +334,7 @@ public class MovementFacade
      *
      * @return The current timeout.
      */
-    public static int getTimeout() { return TIME_OUT; }
+    public int getTimeout() { return TIME_OUT; }
 
     /**
      * Setter for the fixture's PWM frequency.
@@ -321,7 +343,7 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public static boolean setFrequency(int newFrequency)
+    public boolean setFrequency(int newFrequency)
     {
         boolean output = false;
         if(newFrequency < 0)
@@ -343,7 +365,7 @@ public class MovementFacade
      *
      * @return The current PWM frequency.
      */
-    public static int getFrequency() { return FREQUENCY; }
+    public int getFrequency() { return FREQUENCY; }
 
     /**
      * Internal function to send the fixture to one limit switch or another.
@@ -352,7 +374,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    private static boolean gotoLimit(boolean moveUp, int timeout)
+    private boolean gotoLimit(boolean moveUp, int timeout)
     {
         boolean output = false;
         DigitalInput limitSense;
@@ -388,7 +410,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public static boolean goDown(int timeout) { return gotoLimit(false, timeout); }
+    public boolean goDown(int timeout) { return gotoLimit(false, timeout); }
 
     /**
      * Send the fixture to the upper limit switch.
@@ -396,7 +418,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public static boolean goUp(int timeout) { return gotoLimit(true, timeout); }
+    public boolean goUp(int timeout) { return gotoLimit(true, timeout); }
 
     /**
      * Send the fixture to the lower limit switch.
@@ -404,7 +426,7 @@ public class MovementFacade
      *
      * @return true if movement was successful; otherwise false
      */
-    public static boolean goDown() { return goDown(TIME_OUT); }
+    public boolean goDown() { return goDown(TIME_OUT); }
 
     /**
      * Send the fixture to the upper limit switch.
@@ -412,12 +434,12 @@ public class MovementFacade
      *
      * @return true if movement was successful; otherwise false
      */
-    public static boolean goUp() { return goUp(TIME_OUT); }
+    public boolean goUp() { return goUp(TIME_OUT); }
 
     /**
      * Extends the piston for 1 second, pushing the button on the DUT.
      */
-    public static void pressButton()
+    public void pressButton()
     {
         ErrorLogging.logError("DEBUG: Pressing button...");
         pistonActivate.on();
@@ -429,7 +451,7 @@ public class MovementFacade
     /**
      * Closes connections to all GPIO pins.
      */
-    public static void closeGPIO()
+    public void closeGPIO()
     {
         goUp();
         pi4j.shutdown();
@@ -440,7 +462,7 @@ public class MovementFacade
      *
      * @return True if all movements worked properly; otherwise False
      */
-    public static boolean testMotions()
+    public boolean testMotions()
     {
         boolean output = goUp();
         if(!output) return output;
@@ -452,7 +474,7 @@ public class MovementFacade
         return output;
     }
 
-    public static void iterationMovement(boolean prime)
+    public void iterationMovement(boolean prime)
     {
         goUp();
         if(prime) pressButton();
@@ -460,17 +482,9 @@ public class MovementFacade
         pressButton();
     }
 
-    public static void main(String[] args)
+    public void main(String[] args)
     {
         testMotions();
         closeGPIO();
     }
-
-    //TODO: Multithreading, to allow for RunSwitch Interrupts.
-//    protected class RunSwitchInterrupt implements Runnable
-//    {
-//        public void run()
-//        {
-//        }
-//    }
 }

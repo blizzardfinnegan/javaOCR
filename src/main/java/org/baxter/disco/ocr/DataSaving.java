@@ -16,7 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.0.1, 01 Feb. 2023
  */
 public class DataSaving
 {
@@ -84,6 +84,7 @@ public class DataSaving
             FileOutputStream outputStream = new FileOutputStream(outputFile);
             outputWorkbook.write(outputStream);
             output = true;
+            outputStream.close();
         }
         catch(Exception e) {ErrorLogging.logError(e);}
         return output;

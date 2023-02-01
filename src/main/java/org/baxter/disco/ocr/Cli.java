@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.bytedeco.javacv.CanvasFrame;
 
@@ -13,10 +15,11 @@ import org.bytedeco.javacv.CanvasFrame;
  * CLI for the Fixture.
  *
  * Creates a terminal-based user interface for the other 
- * classes in this package (with the exception of {@link Gui} [for now]).
+ * classes in this package (with the exception of Gui-related 
+ * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.1.0, 01 Feb. 2023
  */
 public class Cli
 {
@@ -47,6 +50,13 @@ public class Cli
      * Number of options currently available in the camera configuration sub-menu.
      */
     private static final int cameraMenuOptionCount = 9;
+
+    public static final Lock LOCK = new ReentrantLock();
+
+    private static Thread testingThread = new Thread();
+
+    private static final MovementFacade fixture = new MovementFacade(LOCK);
+
 
     public static void main(String[] args)
     {
@@ -189,9 +199,9 @@ public class Cli
         println("====================================");
         println("Movement Menu:");
         println("------------------------------------");
-        println("Current Duty Cycle: " + MovementFacade.getDutyCycle());
-        println("Current Frequency: " + MovementFacade.getFrequency());
-        println("Current Motor Time-out: " + MovementFacade.getTimeout());
+        println("Current Duty Cycle: " + fixture.getDutyCycle());
+        println("Current Frequency: " + fixture.getFrequency());
+        println("Current Motor Time-out: " + fixture.getTimeout());
         println("------------------------------------");
         println("1. Change Duty Cycle");
         println("2. Change Frequency");
@@ -257,7 +267,7 @@ public class Cli
         do
         {
             println("Testing movement...");
-            MovementFacade.testMotions();
+            fixture.testMotions();
             printMovementMenu();
             userInput = inputFiltering(inputScanner.nextLine());
             switch (userInput)
@@ -274,7 +284,7 @@ public class Cli
                     int newDutyCycle = inputFiltering(inputScanner.nextLine());
                     if (newDutyCycle != -1)
                     {
-                        MovementFacade.setDutyCycle(newDutyCycle);
+                        fixture.setDutyCycle(newDutyCycle);
                         break;
                     }
                 case 2:
@@ -282,7 +292,7 @@ public class Cli
                     int newFrequency = inputFiltering(inputScanner.nextLine());
                     if (newFrequency != -1) 
                     {
-                        MovementFacade.setFrequency(newFrequency);
+                        fixture.setFrequency(newFrequency);
                         break;
                     }
                 case 3:
@@ -290,7 +300,7 @@ public class Cli
                     int newTimeout = inputFiltering(inputScanner.nextLine());
                     if (newTimeout != -1) 
                     {
-                        MovementFacade.setTimeout(newTimeout);
+                        fixture.setTimeout(newTimeout);
                         break;
                     }
                 case 4:
@@ -331,7 +341,7 @@ public class Cli
         t.setDaemon(false);
         t.start();
 
-        MovementFacade.iterationMovement(true);
+        fixture.iterationMovement(true);
 
         do
         {
@@ -355,7 +365,7 @@ public class Cli
 
             do
             {
-                MovementFacade.pressButton();
+                fixture.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
                 //Show image 
                 CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
@@ -425,7 +435,7 @@ public class Cli
 
 
     /**
-     * Setter for {@link #iterationCount}
+     * CLI-level setter for {@link #iterationCount}
      */
     private static void setIterationCount() 
     { 
@@ -443,38 +453,61 @@ public class Cli
      */
     public static void runTests()
     {
-        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
-        boolean prime = false;
-        for(String cameraName : OpenCVFacade.getCameraNames())
+        testingThread = new Thread(() ->
         {
-            if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
+            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+            boolean prime = false;
+            for(String cameraName : OpenCVFacade.getCameraNames())
             {
-                prime = true;
+                if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
+                {
+                    prime = true;
+                }
             }
-        }
-        for(int i = 0; i < iterationCount; i++)
-        {
-            Map<String, Double> resultMap = new HashMap<>();
-            MovementFacade.iterationMovement(prime);
-            List<File> iteration = OpenCVFacade.singleIteration();
-            for(File file : iteration)
+            for(int i = 0; i < iterationCount; i++)
             {
-                Double result = TesseractFacade.imageToDouble(file);
-                String fileLocation = file.getAbsolutePath();
-                resultMap.put(fileLocation,result);
-                ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                Map<String, Double> resultMap = new HashMap<>();
+                LOCK.lock();
+                fixture.iterationMovement(prime);
+                LOCK.unlock();
+                LOCK.lock();
+                List<File> iteration = OpenCVFacade.singleIteration();
+                LOCK.unlock();
+                for(File file : iteration)
+                {
+                    LOCK.lock();
+                    Double result = TesseractFacade.imageToDouble(file);
+                    LOCK.unlock();
+                    LOCK.lock();
+                    String fileLocation = file.getAbsolutePath();
+                    LOCK.unlock();
+                    LOCK.lock();
+                    resultMap.put(fileLocation,result);
+                    LOCK.unlock();
+                    LOCK.lock();
+                    ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                    LOCK.unlock();
+                }
+                LOCK.lock();
+                DataSaving.writeValues(i,resultMap);
+                LOCK.unlock();
             }
-            DataSaving.writeValues(i,resultMap);
-        }
-        println("=======================================");
-        println("Tests complete!");
+            println("=======================================");
+            println("Testing complete!");
+        });
+        testingThread.run();
     }
+
+    /**
+     * Public way to interrupt currently-running tests.
+     */
+    public static void interruptTest() { testingThread.interrupt(); }
 
     public static void close()
     {
         ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
         if(inputScanner != null) inputScanner.close();
-        MovementFacade.closeGPIO();
+        fixture.closeGPIO();
         ErrorLogging.logError("DEBUG: END OF PROGRAM.");
         ErrorLogging.closeLogs();
     }
