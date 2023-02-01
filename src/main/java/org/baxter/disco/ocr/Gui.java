@@ -1,6 +1,5 @@
 package org.baxter.disco.ocr;
 
-import java.util.List;
 import java.util.Scanner;
 
 import javafx.application.Application;
@@ -112,8 +111,18 @@ public class Gui extends Application
 
     private static CheckBox primeCheckbox()
     {
-        CheckBox output = new CheckBox("Prime devices (pushes button twice)");
+        CheckBox output = new CheckBox("Prime devices");
+        output.setTooltip(new Tooltip("This presses the button on the device under test twice for every iteration."));
         output.setId("primeCheckbox");
+        output.selectedProperty().addListener(
+                (obeservableValue, oldValue, newValue) ->
+                {
+                    for(String cameraName : OpenCVFacade.getCameraNames())
+                    {
+                        ConfigFacade.setValue(cameraName,ConfigProperties.PRIME,
+                                (newValue ? 1 : 0) );
+                    }
+                });
         return output;
     }
 
@@ -131,33 +140,30 @@ public class Gui extends Application
 
     private static HBox setupSection()
     {
-        HBox output = userTextbox("Cycles",Integer.toString(iterationCount), "Enter the number of times to test the devices in the fixture.");
+        HBox output = userTextField("Cycles",Integer.toString(iterationCount), "Enter the number of times to test the devices in the fixture.");
         TextField textField = (TextField)output.lookup("#cycles");
         textField.textProperty().addListener( 
             (observable, oldValue, newValue) -> 
             { 
-                if(!newValue.matches("\\d*")) textField.setText(oldValue);
-                else 
+                try(Scanner sc = new Scanner(newValue);)
+                { iterationCount = sc.nextInt(); }
+                catch(Exception e)
                 {
-                    try(Scanner sc = new Scanner(newValue);)
-                    { iterationCount = sc.nextInt(); }
-                    catch(Exception e)
-                    {
-                        ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-                        textField.setText(oldValue);
-                    }
+                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
+                    newValue = oldValue;
                 }
             });
         return output;
     }
 
-    private static HBox userTextbox(String prompt, String baseValue, String description)
+    private static HBox userTextField(String prompt, String baseValue, String description)
     {
         HBox output = new HBox();
         output.setSpacing(5.0);
         Label label = new Label(prompt);
         TextField field = new TextField();
-        field.setId(prompt.toLowerCase());
+        String[] id = prompt.toLowerCase().strip().split(" ");
+        field.setId(id[0]);
         field.setPromptText(baseValue);
         Tooltip tooltip = new Tooltip(description);
         field.setTooltip(tooltip);
@@ -176,58 +182,25 @@ public class Gui extends Application
 
         Button start = buttonBuilder("Start",true);
         buttonBuilder("Start",true);
-        start.setOnAction(
-            new EventHandler<ActionEvent>() 
-            {
-                @Override
-                public void handle(ActionEvent event)
-                {
-                    Cli.runTests();
-                }
-            });
+        start.setOnAction( (event) -> Cli.runTests() );
 
         Button stop = buttonBuilder("Stop",true);
-        stop.setOnAction(
-                new EventHandler<ActionEvent>() 
-                {
-                    @Override
-                    public void handle(ActionEvent event)
-                    {
-                        //Interupt testing process. (Unsure how to implement rn)
-                    }
-                });
+        stop.setOnAction( (event) ->
+            {
+                //TODO: Implement multithreading
+            });
         Button calibrateCamera = buttonBuilder("Calibrate Cameras",false);
-        calibrateCamera.setOnAction(
-                new EventHandler<ActionEvent>() 
-                {
-                    @Override
-                    public void handle(ActionEvent event)
-                    {
-                        STAGE.setScene(CAMERA_MENU);
-                    }
-                });
+        calibrateCamera.setOnAction( (event) -> STAGE.setScene(CAMERA_MENU) );
+
         Button testMovement = buttonBuilder("Test Movement",false);
-        testMovement.setOnAction(
-                new EventHandler<ActionEvent>() 
-                {
-                    @Override
-                    public void handle(ActionEvent event)
-                    {
-                        MovementFacade.testMotions();
-                    }
-                });
+        testMovement.setOnAction( (event) -> MovementFacade.testMotions() );
 
         Button cancel = buttonBuilder("Close",false);
-        cancel.setOnAction(
-                new EventHandler<ActionEvent>() 
-                {
-                    @Override
-                    public void handle(ActionEvent event)
-                    {
-                        Cli.close();
-                        STAGE.close();
-                    }
-                });
+        cancel.setOnAction( (event) -> 
+            {
+                Cli.close();
+                STAGE.close();
+            });
 
 
         topButtons.getChildren().addAll(start,
@@ -256,7 +229,7 @@ public class Gui extends Application
         VBox output = new VBox();
         output.setAlignment(Pos.CENTER_LEFT);
         output.setSpacing(5.0);
-        //HBox serialNumber = userTextbox("DUT Serial Number:","","Enter the serial number for the device under test.");
+        //HBox serialNumber = userTextField("DUT Serial Number:","","Enter the serial number for the device under test.");
         output.getChildren().addAll(cameraHeader(cameraName),
                                     //serialNumber,
                                     cameraView(cameraName));
@@ -319,15 +292,7 @@ public class Gui extends Application
         HBox output = new HBox();
         Button preview = buttonBuilder("Preview");
         preview.setId("previewButton-" + cameraName);
-        preview.setOnAction(
-            new EventHandler<ActionEvent>() 
-            {
-                @Override
-                public void handle(ActionEvent event)
-                {
-                    OpenCVFacade.showImage(cameraName);
-                }
-            });
+        preview.setOnAction( (event) -> OpenCVFacade.showImage(cameraName));
 
         CheckBox cropPreview = new CheckBox("Crop preview");
         cropPreview.setId("cropToggle-" + cameraName);
@@ -358,93 +323,25 @@ public class Gui extends Application
     private static HBox cropInputs(String cameraName)
     {
         HBox output = new HBox();
-        //How to handle text inputs:
-        //textField.textProperty().addListener( 
-        //    (observable, oldValue, newValue) -> 
-        //    { 
-        //        if(!newValue.matches("\\d*")) textField.setText(oldValue);
-        //        else 
-        //        {
-        //            try(Scanner sc = new Scanner(newValue);)
-        //            { iterationCount = sc.nextInt(); }
-        //            catch(Exception e)
-        //            {
-        //                ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-        //                textField.setText(oldValue);
-        //            }
-        //        }
-        //    });
-        HBox cropX = userTextbox("X",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "X-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
-        TextField xField = (TextField)cropX.lookup("#x");
-        xField.setId("cropX-" + cameraName);
-        xField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.CROP_X,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-                    xField.setText(oldValue);
-                }
-            });
+        HBox cropX = userTextField("X",
+                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                   "X-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
+        textFieldSetup(cropX,ConfigProperties.CROP_X,cameraName,"X");
 
-        HBox cropY = userTextbox("Y",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "Y-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
-        TextField yField = (TextField)cropY.lookup("#y");
-        yField.setId("cropY-" + cameraName);
-        yField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.CROP_Y,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-                    yField.setText(oldValue);
-                }
-            });
+        HBox cropY = userTextField("Y",
+                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                   "Y-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
+        textFieldSetup(cropY,ConfigProperties.CROP_Y,cameraName,"Y");
         
-        HBox cropW = userTextbox("Width",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "Width, in pixels, of the newly cropped image. Only accepts whole numbers.");
-        TextField wField = (TextField)cropW.lookup("#width");
-        wField.setId("cropW-" + cameraName);
-        wField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.CROP_W,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-                    wField.setText(oldValue);
-                }
-            });
+        HBox cropW = userTextField("Width",
+                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                   "Width, in pixels, of the newly cropped image. Only accepts whole numbers.");
+        textFieldSetup(cropW,ConfigProperties.CROP_W,cameraName,"Width");
 
-        HBox cropH = userTextbox("Height",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "Height, in pixels, of the newly cropped image. Only accepts whole numbers.");
-        TextField hField = (TextField)cropH.lookup("#height");
-        hField.setId("cropH-" + cameraName);
-        hField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.CROP_H,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in Crop Height for " + cameraName +  ".");
-                    hField.setText(oldValue);
-                }
-            });
+        HBox cropH = userTextField("Height",
+                                    Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                   "Height, in pixels, of the newly cropped image. Only accepts whole numbers.");
+        textFieldSetup(cropH, ConfigProperties.CROP_H, cameraName, "Height");
 
         output.getChildren().addAll(cropX,
                                     cropY,
@@ -457,41 +354,16 @@ public class Gui extends Application
     {
         HBox output = new HBox();
 
-        HBox thresholdValue = userTextbox("Threshold Value",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "This value can be set from 0 to 255. Higher values mean more black in the thresholded image. For more information, see the documentation.");
-        TextField thresholdField = (TextField)thresholdValue.lookup("#w");
-        thresholdField.setId("threshold-" + cameraName);
-        thresholdField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.THRESHOLD_VALUE,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in cycles count.");
-                    thresholdField.setText(oldValue);
-                }
-            });
+        HBox thresholdValue = userTextField("Threshold Value",
+                                            Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                            "This value can be set from 0 to 255. Higher values mean more black in "+
+                                            "the thresholded image. For more information, see the documentation.");
+        textFieldSetup(thresholdValue,ConfigProperties.THRESHOLD_VALUE,cameraName,"Threshold Value");
 
-        HBox cropH = userTextbox("Height",
-                Double.toString(ConfigFacade.getValue(cameraName,
-                                                      ConfigProperties.CROP_X)),
-                                "Height, in pixels, of the newly cropped image. Only accepts whole numbers.");
-        TextField hField = (TextField)cropH.lookup("#h");
-        hField.setId("cropH-" + cameraName);
-        hField.textProperty().addListener( 
-            (observable, oldValue, newValue) -> 
-            { 
-                try(Scanner sc = new Scanner(newValue);)
-                { ConfigFacade.setValue(cameraName,ConfigProperties.CROP_H,sc.nextInt()); }
-                catch(Exception e)
-                {
-                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in Crop Height for " + cameraName +  ".");
-                    hField.setText(oldValue);
-                }
-            });
+        HBox compositeFrames = userTextField("Composite Frames",
+                                            Double.toString(ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X)),
+                                             "Number of frames to bitwise-and together.");
+        textFieldSetup(compositeFrames,ConfigProperties.COMPOSITE_FRAMES,cameraName,"Composite Frames");
 
         output.getChildren().addAll(thresholdValue,
                                     compositeFrames);
@@ -501,13 +373,44 @@ public class Gui extends Application
     private static HBox cameraMenuButtons()
     {
         HBox output = new HBox();
+
+        Button defaults = buttonBuilder("Set to Defaults");
+
+        Button save = buttonBuilder("Save");
+
+        Button saveClose = buttonBuilder("Save and Close");
+
+        Button close = buttonBuilder("Close without Saving");
+
+        output.getChildren().addAll(defaults,
+                                    save,
+                                    saveClose,
+                                    close);
         return output;
     }
 
+    private static void textFieldSetup(HBox hbox, ConfigProperties property, String cameraName, String oldId)
+    {
+        String[] id = oldId.toLowerCase().strip().split(" ");
+        TextField field = (TextField)hbox.lookup("#" + id[0]);
+        field.setId(property.getConfig() + cameraName);
+        field.textProperty().addListener( 
+            (observable, oldValue, newValue) -> 
+            { 
+                try(Scanner sc = new Scanner(newValue);)
+                { ConfigFacade.setValue(cameraName,property,sc.nextInt()); }
+                catch(Exception e)
+                {
+                    ErrorLogging.logError("USER INPUT ERROR: Illegal input in " + property.getConfig() + " for " + cameraName +  ".");
+                    newValue = oldValue;
+                }
+            });
+    }
     private static Button buttonBuilder(String name,boolean disabled)
     {
+        String[] id = name.toLowerCase().strip().split(" ");
         Button button = new Button(name);
-        button.setId(name.toLowerCase());
+        button.setId(id[0]);
         button.setFont(Font.getDefault());
         if (disabled) button.disableProperty();
         return button;
