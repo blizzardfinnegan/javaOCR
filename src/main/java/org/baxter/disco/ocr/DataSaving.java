@@ -16,7 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 1.0.1, 01 Feb. 2023
+ * @version 1.1.0, 02 Feb. 2023
  */
 public class DataSaving
 {
@@ -64,11 +64,17 @@ public class DataSaving
         Row row = outputSheet.createRow(++startingRow);
         Set<String> imageLocations = inputMap.keySet();
         List<Object> objectArray = new LinkedList<>();
+
         objectArray.add((double)cycle);
         for(String imageLocation : imageLocations)
         {
+            String[] temp = imageLocation.split("-");
+            String cameraName = (temp[temp.length - 1].split("."))[0];
+            String serialNumber = ConfigFacade.getSerial(cameraName);
+            objectArray.add(serialNumber);
             objectArray.add(imageLocation);
             objectArray.add(inputMap.get(imageLocation));
+            objectArray.add(" ");
         }
         int cellnum = 0;
         for(Object cellObject : objectArray)

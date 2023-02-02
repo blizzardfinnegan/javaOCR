@@ -33,17 +33,32 @@ public class MovementFacade
      */
     public MovementFacade(Lock LOCK)
     {
-        new Thread(() -> 
+        //ErrorLogging.logError("DEBUG: Starting lock thread...");
+        runSwitchThread = new Thread(() -> 
                 {
+                    boolean unlock = false;
                     while(true)
                     {
-                        if(runSwitch.isOff())
-                            LOCK.lock();
+                        if(runSwitch.isOn())
+                        {
+                            //ErrorLogging.logError("Run switch turned off!");
+                            while(!LOCK.tryLock())
+                            { unlock = true; }
+                        }
                         else
-                            LOCK.unlock();
+                        {
+                            //ErrorLogging.logError("Run switch on!");
+                            if(unlock) 
+                            { LOCK.unlock(); unlock = false; }
+                        }
+                        //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
                     }
-                }, "Run switch monitor.").run();
+                }, "Run switch monitor.");
+        runSwitchThread.start();
+        //ErrorLogging.logError("DEBUG: Lock thread started!");
     }
+
+    private static Thread runSwitchThread;
 
     //Externally Available Variables
     /**
@@ -293,7 +308,6 @@ public class MovementFacade
         else
         {
             DUTY_CYCLE = newDutyCycle;
-            pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
             pwm.on(DUTY_CYCLE, FREQUENCY);
             output = true;
         }
@@ -353,7 +367,6 @@ public class MovementFacade
         else
         {
             FREQUENCY = newFrequency;
-            pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
             pwm.on(DUTY_CYCLE, FREQUENCY);
             output = true;
         }
@@ -454,6 +467,8 @@ public class MovementFacade
     public void closeGPIO()
     {
         goUp();
+        if(runSwitchThread.isAlive())
+            runSwitchThread.interrupt();
         pi4j.shutdown();
     }
 

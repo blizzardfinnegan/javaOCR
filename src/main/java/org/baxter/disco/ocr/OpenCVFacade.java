@@ -452,6 +452,7 @@ public class OpenCVFacade
         for(String cameraName : getCameraNames())
         {
             output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
+            ErrorLogging.logError("DEBUG: ---------------------------------");
         }
         return output;
     }
