@@ -26,6 +26,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 	- As of CLI build 1.2.0, the external run switch bricks the system.
 - Currently, all images are parsed on a per-iteration level. This means that we cannot guarantee the output columns are correct. As a temporary solution, image location, serial number, and parsed reading are placed in groups. Intention is to ultimately have them be column-wise written.
 - As of CLI build 1.3.0, the first reading row must be discarded, due to one side of the fixture producing a consistent failed reading. This has yet to be debugged, or fully understood.
+
 ## Dependencies
 To install this project, and use it fully, you must have the following:
 - a Raspberry Pi 4 or 400 (other Pis may work properly, but has not been tested)
