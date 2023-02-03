@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.2.0, 03 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -73,9 +73,6 @@ public class OpenCVFacade
      *
      * @param name      Name of the new camera
      * @param location  Location of the new camera
-     *
-     * @return false if camera already exists, or if camera does not exist.
-     *         Otherwise, returns true.
      */
     private static void newCamera(String name, String location)
     {
@@ -91,9 +88,6 @@ public class OpenCVFacade
      * @param location  Location of the new camera
      * @param width     Width of the camera's image, in pixels.
      * @param height    height of the camera's image, in pixels.
-     *
-     * @return false if camera already exists, or if camera does not exist.
-     *         Otherwise, returns true.
      */
     private static void newCamera(String name, String location, int width, int height)
     {
@@ -109,9 +103,6 @@ public class OpenCVFacade
      * @param width     Width of the camera's image, in pixels.
      * @param height    height of the camera's image, in pixels.
      * @param codec     Codec to use for the new camera.
-     *
-     * @return false if camera already exists, or if camera does not exist.
-     *         Otherwise, returns true.
      */
     private static void newCamera(String name, String location, int width, int height, String codec)
     {
@@ -270,11 +261,12 @@ public class OpenCVFacade
      *
      * @return Frame of the thresholded image
      */
-    public static Mat thresholdImage(Mat image)
+    public static Mat thresholdImage(Mat image,String cameraName)
     {
         Mat output = image;
         Mat in = image;
-        threshold(in,output,50,255,THRESH_BINARY);
+        double thresholdValue = ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE);
+        threshold(in,output,thresholdValue,255,THRESH_BINARY);
         return output;
     }
 
@@ -299,15 +291,12 @@ public class OpenCVFacade
     /**
      * Compose several images together.
      * This will also perform thresholding, and cropping,
-     * based on boolean toggles.
+     * based on boolean toggles. Crop information is collected 
+     * from {@link ConfigFacade}.
      *
      * @param images        List of images to be composed
      * @param threshold     Whether to put the image through a binary threshold
      * @param crop          Whether to crop the image
-     * @param x             X-coordinate of the top-left of the cropped portion of the image.
-     * @param y             y-coordinate of the top-left of the cropped portion of the image.
-     * @param width         width of the the cropped portion of the image.
-     * @param height        height of the the cropped portion of the image.
      *
      * @return A single image, found by boolean AND-ing together all parsed images.
      */
@@ -323,7 +312,7 @@ public class OpenCVFacade
           image.copyTo(processedImage);
             if(crop) 
             {
-                ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
+                //ErrorLogging.logError("DEBUG: Cropping image " + iterationCount +  "...");
                 processedImage = crop(processedImage,cameraName);
                 //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
                 //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
@@ -333,8 +322,8 @@ public class OpenCVFacade
             }
             if(threshold) 
             {
-                ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
-                processedImage = thresholdImage(processedImage);
+                //ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
+                processedImage = thresholdImage(processedImage,cameraName);
                 //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
                 //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
                 //                      "." + iterationCount + "-post-threshold.jpg";
@@ -355,7 +344,7 @@ public class OpenCVFacade
             {
                 output = processedImage.clone();
             }
-            ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
+            //ErrorLogging.logError("DEBUG: Thresholding image " + iterationCount + "...");
             bitwise_and((iterationCount == 1 ? processedImage : output),processedImage, output);
 
             iterationCount++;
@@ -451,6 +440,7 @@ public class OpenCVFacade
         for(String cameraName : getCameraNames())
         {
             output.add(completeProcess(cameraName, ConfigFacade.getImgSaveLocation()));
+            ErrorLogging.logError("DEBUG: ---------------------------------");
         }
         return output;
     }
