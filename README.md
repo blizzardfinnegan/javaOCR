@@ -10,8 +10,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 		- [ x ] Takes in inputs
 		- [ x ] Sets config values
 		- [ x ] Saves config values 
-		- [ x ] Shows camera preview*
-			- currently broken, for unknown reasons. In process of parsing...
+		- [ x ] Shows camera preview
 	- [ x ] GPIO test interactions
 	- Test suite
 		- [ x ] OpenCV image capture
