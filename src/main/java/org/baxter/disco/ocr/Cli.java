@@ -19,7 +19,7 @@ import org.bytedeco.javacv.CanvasFrame;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.1.0, 01 Feb. 2023
+ * @version 1.3.0, 03 Feb. 2023
  */
 public class Cli
 {

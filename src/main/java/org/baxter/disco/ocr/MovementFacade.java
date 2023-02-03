@@ -21,7 +21,7 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 2.0.0, 01 Feb. 2023
+ * @version 2.1.0, 03 Feb. 2023
  */
 public class MovementFacade
 {

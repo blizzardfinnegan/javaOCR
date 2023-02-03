@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.2.0, 03 Feb. 2023
  */
 public class OpenCVFacade
 {
