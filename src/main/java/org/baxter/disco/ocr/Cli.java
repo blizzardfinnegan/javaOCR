@@ -1,11 +1,14 @@
 package org.baxter.disco.ocr;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.bytedeco.javacv.CanvasFrame;
 
@@ -13,17 +16,18 @@ import org.bytedeco.javacv.CanvasFrame;
  * CLI for the Fixture.
  *
  * Creates a terminal-based user interface for the other 
- * classes in this package (with the exception of {@link Gui} [for now]).
+ * classes in this package (with the exception of Gui-related 
+ * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.0.0, 27 Jan. 2023
+ * @version 1.3.0, 03 Feb. 2023
  */
 public class Cli
 {
     /**
      * Currently saved iteration count.
      */
-    private static int iterationCount = 3;
+    private static int iterationCount = 10;
 
     /**
      * Scanner used for monitoring user input.
@@ -34,9 +38,19 @@ public class Cli
     private static Scanner inputScanner;
 
     /**
+     * Whether the user has set the serial numbers yet.
+     */
+    private static boolean serialsSet = false;
+
+    /**
+     * Whether the user has successfully configured the cameras.
+     */
+    private static boolean camerasConfigured = false;
+
+    /**
      * Number of options currently available in the main menu.
      */
-    private static final int mainMenuOptionCount = 6;
+    private static final int mainMenuOptionCount = 7;
 
     /**
      * Number of options currently available in the movement sub-menu.
@@ -48,11 +62,33 @@ public class Cli
      */
     private static final int cameraMenuOptionCount = 9;
 
+    /**
+     * Lock object, used for temporary interruption of {@link #runTests()}
+     */
+    private static Lock LOCK = new ReentrantLock();
+
+    /**
+     * Instance of {@link MovementFacade} for controlling the fixture.
+     */
+    private static MovementFacade fixture;
+
+    static
+    {
+        ErrorLogging.logError("DEBUG: START OF PROGRAM");
+    }
+
     public static void main(String[] args)
     {
         try{
             inputScanner = new Scanner(System.in);
-            ErrorLogging.logError("DEBUG: START OF PROGRAM");
+
+            //ErrorLogging.logError("DEBUG: Setting up multithreading...");
+            fixture = new MovementFacade(LOCK);
+            //ErrorLogging.logError("DEBUG: Multithreading complete!");
+            
+            //ErrorLogging.logError("DEBUG: Importing config...");
+            ConfigFacade.init();
+            //ErrorLogging.logError("DEBUG: Config imported!");
 
             int userInput = 0;
 
@@ -69,24 +105,62 @@ public class Cli
                         println("Setting up cameras...");
                         println("This may take a moment...");
                         configureCameras();
+                        camerasConfigured = true;
                         break;
                     case 3:
-                        setIterationCount();
+                        setDUTSerials();
+                        serialsSet = true;
                         break;
                     case 4:
-                        runTests();
-                        println("Test complete!");
+                        setIterationCount();
                         break;
                     case 5:
-                        printHelp();
+                        if(!camerasConfigured)
+                        {
+                            prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
+                            String input = inputScanner.nextLine().toLowerCase();
+                            if( input.isBlank())
+                            {
+                                break;
+                            }
+                            else if (input.charAt(0) != 'y' ) 
+                            {
+                                break;
+                            }
+                            else 
+                            {
+                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised cameras.");
+                            }
+                        }
+                        if(!serialsSet)
+                        {
+                            prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
+                            String input = inputScanner.nextLine().toLowerCase();
+                            if( input.isBlank())
+                            {
+                                break;
+                            }
+                            else if (input.charAt(0) != 'y' ) 
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised DUT Serial numbers.");
+                            }
+                        }
+                        runTests();
                         break;
                     case 6:
+                        printHelp();
+                        break;
+                    case 7:
                         break;
                     default:
                         //Input handling already done by inputFiltering()
                 }
 
-        } while (userInput != 6);
+        } while (userInput != mainMenuOptionCount);
 
         }
         catch(Exception e) 
@@ -96,11 +170,7 @@ public class Cli
         }
         finally
         {
-            ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
-            inputScanner.close();
-            MovementFacade.closeGPIO();
-            ErrorLogging.logError("DEBUG: END OF PROGRAM.");
-            ErrorLogging.closeLogs();
+            close();
         }
     }
 
@@ -150,18 +220,22 @@ public class Cli
                     "\n\tAvailable variables to change:"+
                     "\n\t\tCrop dimensions");
         println("----------------------------------------");
-        println("3. Change test iteration count:"+
+        println("3. Set serial numbers: Set the serial " +
+                "\n\tnumber for the device under test." +
+                "\n\tThis is used in final data saving.");
+        println("----------------------------------------");
+        println("4. Change test iteration count:"+
                     "\n\tChange the number of times to"+
                     "\n\trun the tests of the device(s)"+
                     "\n\tunder test.");
         println("----------------------------------------");
-        println("4. Run tests: Run tests, with defined"+
+        println("5. Run tests: Run tests, with defined"+
                     "\n\tnumber of iterations. Uses"+
                     "\n\tvalues defined in config file.");
         println("----------------------------------------");
-        println("5. Help: Show this help page.");
+        println("6. Help: Show this help page.");
         println("----------------------------------------");
-        println("6. Exit: Close the program.");
+        println("7. Exit: Close the program.");
         println("========================================");
         println("Press Enter to continue...");
         inputScanner.nextLine();
@@ -180,22 +254,26 @@ public class Cli
         println("--------------------------------------");
         println("1. Test and configure fixture movement");
         println("2. Configure camera");
-        println("3. Change test iteration count");
-        println("4. Run tests");
-        println("5. Help");
-        println("6. Exit");
+        println("3. Set serial numbers");
+        println("4. Change test iteration count");
+        println("5. Run tests");
+        println("6. Help");
+        println("7. Exit");
         println("======================================");
     }
 
+    /**
+     * Predefined print statements for the movement submenu.
+     */
     private static void printMovementMenu()
     {
         println("\n\n");
         println("====================================");
         println("Movement Menu:");
         println("------------------------------------");
-        println("Current Duty Cycle: " + MovementFacade.getDutyCycle());
-        println("Current Frequency: " + MovementFacade.getFrequency());
-        println("Current Motor Time-out: " + MovementFacade.getTimeout());
+        println("Current Duty Cycle: " + fixture.getDutyCycle());
+        println("Current Frequency: " + fixture.getFrequency());
+        println("Current Motor Time-out: " + fixture.getTimeout());
         println("------------------------------------");
         println("1. Change Duty Cycle");
         println("2. Change Frequency");
@@ -204,6 +282,9 @@ public class Cli
         println("====================================");
     }
 
+    /**
+     * Pre-defined method for printing all available cameras in a menu
+     */
     private static void printCameraMenu(List<String> cameraList)
     {
         println("Available cameras to configure:");
@@ -218,6 +299,30 @@ public class Cli
         println("------------------------------------");
     }
 
+    /**
+     * Pre-defined method for printing all available cameras and the associated serials in a menu
+     */
+    private static void printSerialMenu(List<String> cameraList)
+    {
+        println("Available serial numbers to set:");
+        println("------------------------------------");
+        for(int index = 0; index < cameraList.size(); index++)
+        {
+            int humanIndex = index+1;
+            String cameraName = (String)cameraList.get(index);
+            print(humanIndex + " - " + cameraName + " : ");
+            if(ConfigFacade.getSerial(cameraName) != null) 
+                println(ConfigFacade.getSerial(cameraName));
+            else
+                println("");
+        }
+        println( (cameraList.size() + 1) + " - Exit to Main Menu");
+        println("------------------------------------");
+    }
+
+    /**
+     * Pre-defined menu for printing camera configuration options
+     */
     private static void printCameraConfigMenu(String cameraName)
     {
         println("\n\n");
@@ -247,20 +352,24 @@ public class Cli
         println("3. Change Crop Width");
         println("4. Change Crop Height");
         println("5. Change Composite Frame Count");
-        println("6. Toggle crop");
-        println("7. Toggle threshold");
-        println("8. Exit");
+        println("6. Change Threshold Value");
+        println("7. Toggle crop");
+        println("8. Toggle threshold");
+        println("9. Exit");
         println("====================================");
     }
 
 
+    /**
+     * Function for testing movement, and modifying hardware values
+     */
     private static void testMovement()
     {
         int userInput = -1;
         do
         {
             println("Testing movement...");
-            MovementFacade.testMotions();
+            fixture.testMotions();
             printMovementMenu();
             userInput = inputFiltering(inputScanner.nextLine());
             switch (userInput)
@@ -277,7 +386,7 @@ public class Cli
                     int newDutyCycle = inputFiltering(inputScanner.nextLine());
                     if (newDutyCycle != -1)
                     {
-                        MovementFacade.setDutyCycle(newDutyCycle);
+                        fixture.setDutyCycle(newDutyCycle);
                         break;
                     }
                 case 2:
@@ -285,7 +394,7 @@ public class Cli
                     int newFrequency = inputFiltering(inputScanner.nextLine());
                     if (newFrequency != -1) 
                     {
-                        MovementFacade.setFrequency(newFrequency);
+                        fixture.setFrequency(newFrequency);
                         break;
                     }
                 case 3:
@@ -293,7 +402,7 @@ public class Cli
                     int newTimeout = inputFiltering(inputScanner.nextLine());
                     if (newTimeout != -1) 
                     {
-                        MovementFacade.setTimeout(newTimeout);
+                        fixture.setTimeout(newTimeout);
                         break;
                     }
                 case 4:
@@ -313,28 +422,29 @@ public class Cli
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
         //println(cameraList.toString());
         
-        //Open a single new thread, so the canvas 
-        //used further down to display the temporary 
-        //image doesn't accidentally kill the program.
-        //Created at beginning of function call to reduce 
-        //thread spawn count.
-        //See also: https://docs.oracle.com/javase/8/docs/api/java/awt/doc-files/AWTThreadIssues.html#Autoshutdown
-        Runnable r = new Runnable() {
-            public void run() {
-                Object o = new Object();
-                try {
-                    synchronized (o) {
-                        o.wait();
-                    }
-                } catch (InterruptedException ie) {
-                }
-            }
-        };
-        Thread t = new Thread(r);
-        t.setDaemon(false);
-        t.start();
+        // The below code should be unnecessary now. Leaving in for now to ensure things work properly.
+        ////Open a single new thread, so the canvas 
+        ////used further down to display the temporary 
+        ////image doesn't accidentally kill the program.
+        ////Created at beginning of function call to reduce 
+        ////thread spawn count.
+        ////See also: https://docs.oracle.com/javase/8/docs/api/java/awt/doc-files/AWTThreadIssues.html#Autoshutdown
+        //Runnable r = new Runnable() {
+        //    public void run() {
+        //        Object o = new Object();
+        //        try {
+        //            synchronized (o) {
+        //                o.wait();
+        //            }
+        //        } catch (InterruptedException ie) {
+        //        }
+        //    }
+        //};
+        //Thread t = new Thread(r);
+        //t.setDaemon(false);
+        //t.start();
 
-        MovementFacade.iterationMovement(true);
+        fixture.iterationMovement(true);
 
         do
         {
@@ -354,11 +464,13 @@ public class Cli
 
             //Leave do-while loop if the user asks to
             if(userInput == (cameraList.size())) break;
+            else if(userInput < 0)
+            {}
             else cameraName = cameraList.get((userInput));
 
             do
             {
-                MovementFacade.pressButton();
+                fixture.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
                 //Show image 
                 CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
@@ -390,12 +502,15 @@ public class Cli
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
                             break;
                         case 6:
-                            modifiedProperty = ConfigProperties.CROP;
+                            modifiedProperty = ConfigProperties.THRESHOLD_VALUE;
                             break;
                         case 7:
-                            modifiedProperty = ConfigProperties.THRESHOLD;
+                            modifiedProperty = ConfigProperties.CROP;
                             break;
                         case 8:
+                            modifiedProperty = ConfigProperties.THRESHOLD;
+                            break;
+                        case 9:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
@@ -420,12 +535,45 @@ public class Cli
 
         } while(true);
 
+        ConfigFacade.saveCurrentConfig();
         println("Configuration complete!");
+    }
+
+    /**
+     * Sub-function used for defining the serial numbers of the devices under test
+     */
+    private static void setDUTSerials()
+    {
+        List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+        do
+        {
+            //Main menu
+            printSerialMenu(cameraList);
+
+            //Pick a camera to configure
+            int userInput;
+
+            String cameraName = "";
+            do
+            {
+                prompt("Enter the camera you wish to set the serial of: ");
+                userInput = inputFiltering(inputScanner.nextLine());
+                userInput--;
+            } while (cameraList.size() < userInput || userInput < 0);
+
+            //Leave do-while loop if the user asks to
+            if(userInput == (cameraList.size())) break;
+            else cameraName = cameraList.get((userInput));
+
+            prompt("Enter the serial number you wish to use for this camera: ");
+            ConfigFacade.setSerial(cameraName,inputScanner.nextLine());
+
+        } while(true);
     }
 
 
     /**
-     * Setter for {@link #iterationCount}
+     * CLI-level setter for {@link #iterationCount}
      */
     private static void setIterationCount() 
     { 
@@ -443,31 +591,72 @@ public class Cli
      */
     private static void runTests()
     {
-        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
-        boolean prime = false;
-        for(String cameraName : OpenCVFacade.getCameraNames())
-        {
-            if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
+        final int localIterations = iterationCount;
+        //testingThread = new Thread(() ->
+        //{
+            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
+            boolean prime = false;
+            for(String cameraName : OpenCVFacade.getCameraNames())
             {
-                prime = true;
+                if(cameraName != null) { /*println(cameraName);*/ }
+                else ErrorLogging.logError("Null camera!");
+                if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
+                {
+                    prime = true;
+                }
             }
-        }
-        for(int i = 0; i < iterationCount; i++)
-        {
-            Map<String, Double> resultMap = new HashMap<>();
-            MovementFacade.iterationMovement(prime);
-            List<File> iteration = OpenCVFacade.singleIteration();
-            for(File file : iteration)
+            ErrorLogging.logError("DEBUG: Waking devices.");
+            fixture.iterationMovement(prime);
+            fixture.pressButton();
+            fixture.iterationMovement(prime);
+            ErrorLogging.logError("DEBUG: Starting tests...");
+            for(int i = 0; i < localIterations; i++)
             {
-                Double result = TesseractFacade.imageToDouble(file);
-                String fileLocation = file.getAbsolutePath();
-                resultMap.put(fileLocation,result);
-                ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                Map<String, Double> resultMap = new HashMap<>();
+                while(!LOCK.tryLock()) {}
+                fixture.iterationMovement(prime);
+                LOCK.unlock();
+                while(!LOCK.tryLock()) {}
+                List<File> iteration = OpenCVFacade.singleIteration();
+                LOCK.unlock();
+                for(File file : iteration)
+                {
+                    while(!LOCK.tryLock()) {}
+                    //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
+                    Double result = TesseractFacade.imageToDouble(file);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
+                    resultMap.put(file.getPath(),result);
+                    ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                    LOCK.unlock();
+                }
+                while(!LOCK.tryLock()) {}
+                DataSaving.writeValues(i,resultMap);
+                LOCK.unlock();
             }
-            DataSaving.writeValues(i,resultMap);
-        }
-        println("=======================================");
-        println("Tests complete!");
+            println("=======================================");
+            println("Testing complete!");
+        //});
+        //testingThread.start();
+    }
+
+
+    /**
+     * Function used if a config file was successfully imported.
+     */
+    public static void configImported()
+    { camerasConfigured = true; }
+
+    /**
+     * Function that closes GPIO and logging.
+     */
+    private static void close()
+    {
+        ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
+        if(inputScanner != null) inputScanner.close();
+        fixture.closeGPIO();
+        ErrorLogging.logError("DEBUG: END OF PROGRAM.");
+        ErrorLogging.closeLogs();
     }
 
     /**
@@ -482,7 +671,7 @@ public class Cli
      * Parse the user's input, and check it for errors.
      *
      * @param input     The unparsed user input, directly from the {@link Scanner}
-     * @param mainMenu  Whether or not the parsed input is a main menu value
+     * @param menu      Which menu is being parsed
      * 
      * @return The parsed value from the user. Returns -1 upon any error.
      */
@@ -578,7 +767,7 @@ public class Cli
      */
     private static void invalidInput()
     {
-        invalidInput("");
+        invalidInput("Please input a valid number.");
     }
     
     /**
@@ -596,5 +785,8 @@ public class Cli
         println("");
     }
 
+    /**
+     * Enum of possible menus available
+     */
     private enum Menus { MAIN,MOVEMENT,CAMERA,OTHER; }
 }

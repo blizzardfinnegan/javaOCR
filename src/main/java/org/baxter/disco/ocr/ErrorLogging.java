@@ -2,8 +2,10 @@ package org.baxter.disco.ocr;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +17,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * as well as stderr.
  *
  * @author Blizzard Finnegan
- * @version 1.2.0, 27 Jan. 2023
+ * @version 1.3.0, 03 Feb. 2023
  */
 
 public class ErrorLogging
@@ -55,7 +57,7 @@ public class ErrorLogging
     static
     {
         fileDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
-        datetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        datetime = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         logFile = fileDatetime.format(LocalDateTime.now()) + "-log.txt";
         File outFile = new File(logFile);
         try
@@ -64,6 +66,7 @@ public class ErrorLogging
             fw = new FileWriter(logFile, true);
             bw = new BufferedWriter(fw);
             fileOut = new PrintWriter(bw);
+            System.setErr(new PrintStream(new FileOutputStream(logFile,true)));
         }
         catch (IOException e)
         {
@@ -100,7 +103,7 @@ public class ErrorLogging
         String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error;
         fileOut.println(errorMessage);
         fileOut.flush();
-        System.err.println(errorMessage);
+        System.out.println(errorMessage);
     }
 
     /**
