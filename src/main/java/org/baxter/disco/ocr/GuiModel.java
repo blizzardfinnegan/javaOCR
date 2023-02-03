@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Primarily a wrapper around other classes, but does store some information.
  *
  * @author Blizzard Finnegan
- * @version 0.0.1, 01 Feb, 2023
+ * @version 0.0.2, 03 Feb, 2023
  */
 public class GuiModel
 {
@@ -104,7 +104,7 @@ public class GuiModel
     {
         testingThread = new Thread(() ->
         {
-            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
             boolean prime = false;
             for(String cameraName : OpenCVFacade.getCameraNames())
             {

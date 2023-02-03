@@ -41,9 +41,10 @@ public class MovementFacade
                     {
                         if(runSwitch.isOn())
                         {
-                            //ErrorLogging.logError("Run switch turned off!");
+                            ErrorLogging.logError("Run switch turned off!");
                             while(!LOCK.tryLock())
-                            { unlock = true; }
+                            {}
+                            unlock = true;
                         }
                         else
                         {
@@ -468,7 +469,9 @@ public class MovementFacade
     {
         goUp();
         if(runSwitchThread.isAlive())
+        {
             runSwitchThread.interrupt();
+        }
         pi4j.shutdown();
     }
 

@@ -13,6 +13,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 /**
@@ -41,12 +43,13 @@ public class ConfigFacade
     /**
      * Location to save output XLSX file to.
      */
-    private static String outputSaveLocation = "outputData.xlsx";
+    public static String outputSaveLocation = "outputData-" + 
+        (LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)) + ".xlsx";
 
-    //For values that are ultimately ints, truncate.
-    //For values that are ultimately booleans, anything that isn't 0 should be considered True.
     /**
      * Map of all config values relating to the camera.
+     * For values that are ultimately ints, truncate.
+     * For values that are ultimately booleans, anything that isn't 0 should be considered True.    
      */
     private static final Map<String, Map<ConfigProperties, Double>> configMap = new HashMap<>();
 
@@ -121,7 +124,7 @@ public class ConfigFacade
      * Ints should be truncated.
      * Any boolean that should be false should be stored as 0.
      *
-     * @param cameraName    Name of the camera (as defined in {@link #activeCameras})
+     * @param cameraName    Name of the camera (defined in {@link OpenCVFacade})
      * @param property      name of the property ({@link ConfigProperties})
      *
      * @return double of config value. Returns 0 if invalid input.
@@ -148,10 +151,12 @@ public class ConfigFacade
     }
 
     /**
-     * Empty function; used to force the run of the static block.
+     * Initialises local list of available cameras
      */
     public static void init()
-    {}
+    {
+        //ErrorLogging.logError("Starting import...");
+    }
 
     /**
      * Getter for the location of the output XLSX file.
@@ -244,6 +249,9 @@ public class ConfigFacade
         if(!DUT_SERIALS.keySet().contains(cameraName)) return null;
         return DUT_SERIALS.get(cameraName); 
     }
+
+    public static Map<String,String> getSerials()
+    { return DUT_SERIALS; }
 
     //**********************************************
     //SAVE AND LOAD SETTINGS
@@ -346,6 +354,7 @@ public class ConfigFacade
      */
     public static boolean loadConfig(String filename)
     {
+        boolean emptyMap = configMap.keySet().size() == 0;
         boolean output = false;
         File file = new File(filename);
         try
@@ -369,8 +378,8 @@ public class ConfigFacade
             catch(Exception e){ ErrorLogging.logError(e); }
 
             Set<String> configSections = CONFIG_STORE.getSections();
-            ErrorLogging.logError("DEBUG: imported sections - " + configSections.toString());
-            ErrorLogging.logError("DEBUG: map sections - " + configMap.keySet().toString());
+            //ErrorLogging.logError("DEBUG: imported sections - " + configSections.toString());
+            //ErrorLogging.logError("DEBUG: empty map? : " + (configMap.keySet().size() == 0));
             //ErrorLogging.logError("DEBUG: imported section size - " + configSections.size());
             for(String sectionName : configSections)
             {
@@ -407,12 +416,14 @@ public class ConfigFacade
                     //ErrorLogging.logError("DEBUG: Imported config value: " + Double.toString(configValue));
                     savedSection.put(configState,configValue);
                 }
-                for(String key : configMap.keySet())
+                if(emptyMap) configMap.put(sectionName,savedSection);
+                else
                 {
-                    ErrorLogging.logError("DEBUG: configMap Key: " + key + " ?= " + sectionName);
-                    if(key.equals(sectionName))
+                    for(String key : configMap.keySet())
                     {
-                        configMap.put(key,savedSection);
+                        //ErrorLogging.logError("DEBUG: configMap Key: " + key + " ?= " + sectionName);
+                        if( key.equals(sectionName))
+                        { configMap.put(key,savedSection); }
                     }
                 }
             }

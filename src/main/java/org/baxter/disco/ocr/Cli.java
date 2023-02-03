@@ -1,6 +1,7 @@
 package org.baxter.disco.ocr;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Cli
     /**
      * Currently saved iteration count.
      */
-    private static int iterationCount = 3;
+    private static int iterationCount = 10;
 
     /**
      * Scanner used for monitoring user input.
@@ -61,10 +62,14 @@ public class Cli
      */
     private static final int cameraMenuOptionCount = 9;
 
+    /**
+     * Lock object, used for temporary interruption of {@link #runTests()}
+     */
     private static Lock LOCK = new ReentrantLock();
 
-    private static Thread testingThread = new Thread();
-
+    /**
+     * Instance of {@link MovementFacade} for controlling the fixture.
+     */
     private static MovementFacade fixture;
 
     static
@@ -81,7 +86,9 @@ public class Cli
             fixture = new MovementFacade(LOCK);
             //ErrorLogging.logError("DEBUG: Multithreading complete!");
             
+            //ErrorLogging.logError("DEBUG: Importing config...");
             ConfigFacade.init();
+            //ErrorLogging.logError("DEBUG: Config imported!");
 
             int userInput = 0;
 
@@ -111,12 +118,36 @@ public class Cli
                         if(!camerasConfigured)
                         {
                             prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
-                            if( Character.toLowerCase(inputScanner.nextLine().charAt(0)) != 'y' ) break;
+                            String input = inputScanner.nextLine().toLowerCase();
+                            if( input.isBlank())
+                            {
+                                break;
+                            }
+                            else if (input.charAt(0) != 'y' ) 
+                            {
+                                break;
+                            }
+                            else 
+                            {
+                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised cameras.");
+                            }
                         }
                         if(!serialsSet)
                         {
                             prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
-                            if( Character.toLowerCase(inputScanner.nextLine().charAt(0)) != 'y' ) break;
+                            String input = inputScanner.nextLine().toLowerCase();
+                            if( input.isBlank())
+                            {
+                                break;
+                            }
+                            else if (input.charAt(0) != 'y' ) 
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised DUT Serial numbers.");
+                            }
                         }
                         runTests();
                         break;
@@ -231,6 +262,9 @@ public class Cli
         println("======================================");
     }
 
+    /**
+     * Predefined print statements for the movement submenu.
+     */
     private static void printMovementMenu()
     {
         println("\n\n");
@@ -248,6 +282,9 @@ public class Cli
         println("====================================");
     }
 
+    /**
+     * Pre-defined method for printing all available cameras in a menu
+     */
     private static void printCameraMenu(List<String> cameraList)
     {
         println("Available cameras to configure:");
@@ -262,6 +299,9 @@ public class Cli
         println("------------------------------------");
     }
 
+    /**
+     * Pre-defined method for printing all available cameras and the associated serials in a menu
+     */
     private static void printSerialMenu(List<String> cameraList)
     {
         println("Available serial numbers to set:");
@@ -280,6 +320,9 @@ public class Cli
         println("------------------------------------");
     }
 
+    /**
+     * Pre-defined menu for printing camera configuration options
+     */
     private static void printCameraConfigMenu(String cameraName)
     {
         println("\n\n");
@@ -317,6 +360,9 @@ public class Cli
     }
 
 
+    /**
+     * Function for testing movement, and modifying hardware values
+     */
     private static void testMovement()
     {
         int userInput = -1;
@@ -493,6 +539,9 @@ public class Cli
         println("Configuration complete!");
     }
 
+    /**
+     * Sub-function used for defining the serial numbers of the devices under test
+     */
     private static void setDUTSerials()
     {
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
@@ -545,8 +594,7 @@ public class Cli
         final int localIterations = iterationCount;
         //testingThread = new Thread(() ->
         //{
-            ErrorLogging.logError("DEBUG: Starting tests...");
-            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation());
+            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
             boolean prime = false;
             for(String cameraName : OpenCVFacade.getCameraNames())
             {
@@ -557,29 +605,32 @@ public class Cli
                     prime = true;
                 }
             }
+            ErrorLogging.logError("DEBUG: Waking devices.");
+            fixture.iterationMovement(prime);
+            fixture.pressButton();
+            fixture.iterationMovement(prime);
+            ErrorLogging.logError("DEBUG: Starting tests...");
             for(int i = 0; i < localIterations; i++)
             {
                 Map<String, Double> resultMap = new HashMap<>();
-                LOCK.lock();
+                while(!LOCK.tryLock()) {}
                 fixture.iterationMovement(prime);
                 LOCK.unlock();
-                LOCK.lock();
+                while(!LOCK.tryLock()) {}
                 List<File> iteration = OpenCVFacade.singleIteration();
                 LOCK.unlock();
                 for(File file : iteration)
                 {
-                    LOCK.lock();
-                    ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
+                    while(!LOCK.tryLock()) {}
+                    //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
                     Double result = TesseractFacade.imageToDouble(file);
                     LOCK.unlock();
-                    LOCK.lock();
-                    resultMap.put(file.getAbsolutePath(),result);
-                    LOCK.unlock();
-                    LOCK.lock();
+                    while(!LOCK.tryLock()) {}
+                    resultMap.put(file.getPath(),result);
                     ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
                     LOCK.unlock();
                 }
-                LOCK.lock();
+                while(!LOCK.tryLock()) {}
                 DataSaving.writeValues(i,resultMap);
                 LOCK.unlock();
             }
@@ -590,9 +641,15 @@ public class Cli
     }
 
 
+    /**
+     * Function used if a config file was successfully imported.
+     */
     public static void configImported()
     { camerasConfigured = true; }
 
+    /**
+     * Function that closes GPIO and logging.
+     */
     private static void close()
     {
         ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
@@ -728,5 +785,8 @@ public class Cli
         println("");
     }
 
+    /**
+     * Enum of possible menus available
+     */
     private enum Menus { MAIN,MOVEMENT,CAMERA,OTHER; }
 }
