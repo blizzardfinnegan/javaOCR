@@ -51,7 +51,10 @@ public class GuiController
     { GuiModel.runTests(); }
 
     public static void testMotions()
-    { GuiModel.testMovement(); }
+    { 
+        testingMotions();
+        GuiModel.testMovement(); 
+    }
 
     public static void updateStart()
     {
@@ -59,6 +62,9 @@ public class GuiController
         GuiView.getStart().setDisable(ready);
         if(ready) GuiView.getStart().setTooltip(new Tooltip("Start running automated testing."));
     }
+
+    public static void startTests()
+    { GuiController.userUpdate("Starting tests..."); }
 
     public static void updateIterations()
     {
@@ -95,8 +101,14 @@ public class GuiController
     public static void updatePrime()
     { GuiModel.updatePrime(); }
 
+    public static void setSerial(String cameraName, String serial)
+    { GuiModel.setSerial(cameraName,serial); }
+
     public static String getIterationCount()
     { return Integer.toString(GuiModel.getIterations()); }
+
+    public static void calibrateCameras()
+    { GuiModel.calibrateCameras(); }
 
     public static void closeModel() { GuiModel.close(); }
 }

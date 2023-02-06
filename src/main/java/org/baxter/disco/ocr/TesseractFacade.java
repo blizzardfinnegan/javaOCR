@@ -14,7 +14,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 1.1.0, 27 Jan. 2023
+ * @version 2.0.0, 06 Feb. 2023
  */
 public class TesseractFacade
 {
@@ -45,12 +45,12 @@ public class TesseractFacade
      * Converts an image file to a double.
      *
      * @param file  File object of the image to be parsed by Tesseract.
-     * @return Double, as read from the image by Tesseract. Anomalous data returns -1.
+     * @return Double, as read from the image by Tesseract. Anomalous data returns Double.NEGATIVE_INFINITY
      */
     public static double imageToDouble(File file)
     {
         //Set default output
-        double output = -1.0;
+        double output = Double.NEGATIVE_INFINITY;
 
         //Import image, parse image
         PIX importedImage = lept.pixRead(file.getAbsolutePath());
@@ -63,7 +63,8 @@ public class TesseractFacade
             try(Scanner sc = new Scanner(stringOutput.trim());)
             {
                 /*
-                 *Discos have error messages (LO, HI, POS, ?). Consider parsing as well.
+                 * Discos have error messages (LO, HI, POS, ?). Consider parsing as well.
+                 * Update on above note: Requires retraining Tesseract
                  */
                 if(sc.hasNextDouble()) 
                 {

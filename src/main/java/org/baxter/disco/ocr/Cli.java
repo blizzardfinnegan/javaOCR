@@ -595,43 +595,60 @@ public class Cli
         //{
             DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
             boolean prime = false;
+            List<String> cameraList = new ArrayList<>();
             for(String cameraName : OpenCVFacade.getCameraNames())
             {
-                if(cameraName != null) { /*println(cameraName);*/ }
-                else ErrorLogging.logError("Null camera!");
+                //if(cameraName != null) { /*println(cameraName);*/ }
+                //else ErrorLogging.logError("Null camera!");
                 if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
                 {
                     prime = true;
                 }
+                cameraList.add(cameraName);
             }
             ErrorLogging.logError("DEBUG: Waking devices.");
             fixture.iterationMovement(prime);
             fixture.pressButton();
             fixture.iterationMovement(prime);
             ErrorLogging.logError("DEBUG: Starting tests...");
+            Map<File,Double> resultMap = new HashMap<>();
+            Map<String,File> cameraToFile = new HashMap<>();
+            for(String cameraName : cameraList)
+            {
+                cameraToFile.put(cameraName,new File("/dev/null"));
+            }
             for(int i = 0; i < localIterations; i++)
             {
-                Map<String, Double> resultMap = new HashMap<>();
                 while(!LOCK.tryLock()) {}
                 fixture.iterationMovement(prime);
                 LOCK.unlock();
-                while(!LOCK.tryLock()) {}
-                List<File> iteration = OpenCVFacade.singleIteration();
-                LOCK.unlock();
-                for(File file : iteration)
+                for(String cameraName : cameraList)
                 {
+                    while(!LOCK.tryLock()) {}
+                    File file = OpenCVFacade.completeProcess(cameraName);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
+                    cameraToFile.replace(cameraName,file);
+                    LOCK.unlock();
+                }
+                for(String cameraName : cameraList)
+                {
+                    while(!LOCK.tryLock()) {}
+                    File file = cameraToFile.get(cameraName);
+                    LOCK.unlock();
                     while(!LOCK.tryLock()) {}
                     //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
                     Double result = TesseractFacade.imageToDouble(file);
                     LOCK.unlock();
                     while(!LOCK.tryLock()) {}
-                    resultMap.put(file.getPath(),result);
+                    resultMap.put(file,result);
                     ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
                     LOCK.unlock();
                 }
                 while(!LOCK.tryLock()) {}
-                DataSaving.writeValues(i,resultMap);
+                DataSaving.writeValues(i,resultMap,cameraToFile);
                 LOCK.unlock();
+                resultMap.clear();
             }
             println("=======================================");
             println("Testing complete!");

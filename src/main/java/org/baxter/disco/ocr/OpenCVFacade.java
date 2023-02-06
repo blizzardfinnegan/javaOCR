@@ -180,7 +180,7 @@ public class OpenCVFacade
     {
         //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
         //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
-        File imageLocation = completeProcess(cameraName);
+        File imageLocation = completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
         if(imageLocation == null) return null;
         //ErrorLogging.logError("DEBUG: Image processed successfully.");
         //ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
@@ -424,9 +424,9 @@ public class OpenCVFacade
      *
      * @return null if any error occurs; otherwise File of output image
      */
-    private static File completeProcess(String cameraName)
+    public static File completeProcess(String cameraName)
     {
-        return completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
+        return completeProcess(cameraName,ConfigFacade.getImgSaveLocation());
     }
 
     /**

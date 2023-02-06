@@ -37,6 +37,8 @@ public class GuiView extends Application
 
     private static Button startButton;
 
+    private static Button stopButton;
+
     private static Stage STAGE;
 
     public static void main(String[] args) { launch(args); }
@@ -213,7 +215,12 @@ public class GuiView extends Application
         STOP.setTooltip(new Tooltip("Pauses current iteration."));
 
         Button calibrateCamera = buttonBuilder("Calibrate Cameras",false);
-        calibrateCamera.setOnAction( (event) -> STAGE.setScene(CAMERA_MENU) );
+        calibrateCamera.setOnAction( 
+            (event) -> 
+            {
+                GuiController.calibrateCameras();
+                STAGE.setScene(CAMERA_MENU);
+            });
 
         Button testMovement = buttonBuilder("Test Movement",false);
         testMovement.setOnAction( (event) -> GuiController.testMotions() );
@@ -254,9 +261,25 @@ public class GuiView extends Application
         VBox output = new VBox();
         output.setAlignment(Pos.CENTER_LEFT);
         output.setSpacing(5.0);
-        //HBox serialNumber = userTextField("DUT Serial Number:","","Enter the serial number for the device under test.");
+
+        HBox serialNumber = userTextField("DUT Serial Number:","","Enter the serial number for the device under test.");
+
+        TextField field = null;
+        for(Node child : serialNumber.getChildren())
+        {
+            if(child instanceof TextField)
+            {
+                field = (TextField)child;
+                break;
+            }
+        }
+
+        field.setId("serial" + cameraName);
+        field.textProperty().addListener( 
+            (observable, oldValue, newValue) ->  GuiController.setSerial(cameraName, newValue));
+
         output.getChildren().addAll(cameraHeader(cameraName),
-                                    //serialNumber,
+                                    serialNumber,
                                     cameraView(cameraName));
         return output;
     }
@@ -410,18 +433,21 @@ public class GuiView extends Application
         defaults.setOnAction( (event) ->
             {
                 GuiController.saveDefaults();
+                GuiController.updateStart();
             });
 
         Button save = buttonBuilder("Save");
         save.setOnAction( (event) ->
             {
                 GuiController.save();
+                GuiController.updateStart();
             });
 
         Button saveClose = buttonBuilder("Save and Close");
         saveClose.setOnAction( (event) -> 
             {
                 GuiController.saveClose();
+                GuiController.updateStart();
                 STAGE.setScene(MAIN_MENU);
             });
 

@@ -16,7 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 2.0.0, 02 Feb. 2023
+ * @version 3.0.0, 06 Feb. 2023
  */
 public class DataSaving
 {
@@ -33,8 +33,6 @@ public class DataSaving
      * File representing the location of the final output file.
      */
     private static File outputFile;
-
-    private static Map<String,String> serials;
 
     /**
      * Prepares writer to write to XLSX file.
@@ -67,7 +65,6 @@ public class DataSaving
             outputWorkbook.write(outputStream);
             output = true;
             outputStream.close();
-            serials = ConfigFacade.getSerials();
         }
         catch(Exception e) { ErrorLogging.logError(e); }
         return output;
@@ -80,50 +77,39 @@ public class DataSaving
      *
      * @return Returns whether values were saved successfully.
      */
-    public static boolean writeValues(int cycle, Map<String,Double> inputMap)
+    public static boolean writeValues(int cycle, Map<File,Double> inputMap, Map<String,File> cameraToFile)
     {
         boolean output = false;
         int startingRow = outputSheet.getLastRowNum();
         Row row = outputSheet.createRow(++startingRow);
-        List<String> imageLocations = new ArrayList<>(inputMap.keySet());
+        List<String> cameraNames = new ArrayList<>(cameraToFile.keySet());
         //ErrorLogging.logError("DEBUG: image locations: " + imageLocations.toString());
         List<Object> objectArray = new LinkedList<>();
 
         cycle++;
         objectArray.add((double)cycle);
-        List<String> serialList = new ArrayList<>(serials.keySet());
-        for(String imageLocation : imageLocations)
+        for(String cameraName : cameraNames)
         {
-            String[] temp = imageLocation.split("-");
-            //ErrorLogging.logError("DEBUG: Image location post-split:");
-            //String println = "";
-            //for(String val : temp)
-            //{
-            //    println = println + "   " + val;
-            //}
-            //ErrorLogging.logError("DEBUG: " + println);
-            String cameraAndFile = temp[temp.length - 1];
-            //ErrorLogging.logError("DEBUG: " + cameraAndFile);
-
-            //Magic number explanation:
-            //The 4 used below is defined by the length of the file extension
-            //The files being saved are known to be JPEGs, so the file extension
-            //will be ".jpg", which is 4 characters long.
-            String cameraName = cameraAndFile.substring(0,cameraAndFile.length() - 4);
-
+            File file = cameraToFile.get(cameraName);
             //ErrorLogging.logError("DEBUG: " + cameraName);
 
             String serialNumber = ConfigFacade.getSerial(cameraName);
             objectArray.add(serialNumber);
-            objectArray.add(imageLocation);
-            objectArray.add(inputMap.get(imageLocation));
+            objectArray.add(file.getPath());
+            objectArray.add(inputMap.get(file));
             objectArray.add(" ");
         }
         int cellnum = 0;
         for(Object cellObject : objectArray)
         {
             Cell cell = row.createCell(cellnum++);
-            if(cellObject instanceof Double) cell.setCellValue((Double) cellObject);
+            if(cellObject instanceof Double) 
+            {
+                Double cellValue = (Double)cellObject;
+                if(cellValue.equals(Double.NEGATIVE_INFINITY))
+                    cell.setCellValue("ERROR!");
+                else cell.setCellValue(cellValue);
+            }
             else if(cellObject instanceof String) cell.setCellValue((String) cellObject);
             else 
             { 

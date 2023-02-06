@@ -34,6 +34,7 @@ public class GuiModel
     public static void setIterations(int iterations) 
     { 
         iterationCount = iterations; 
+        GuiController.userUpdate("Iterations set to: " + iterationCount);
         GuiController.updateIterations(); 
     }
 
@@ -102,50 +103,68 @@ public class GuiModel
 
     public static void runTests()
     {
-        testingThread = new Thread(() ->
-        {
+        //testingThread = new Thread(() ->
+        //{
+            GuiController.startTests();
             DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
             boolean prime = false;
+            List<String> cameraList = new ArrayList<>();
             for(String cameraName : OpenCVFacade.getCameraNames())
             {
                 if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
                 {
                     prime = true;
                 }
+                cameraList.add(cameraName);
+            }
+            fixture.iterationMovement(prime);
+            fixture.pressButton();
+            fixture.iterationMovement(prime);
+            Map<File,Double> resultMap = new HashMap<>();
+            Map<String,File> cameraToFile = new HashMap<>();
+            for(String cameraName : cameraList)
+            {
+                cameraToFile.put(cameraName,new File("/dev/null"));
             }
             for(int i = 0; i < iterationCount; i++)
             {
-                Map<String, Double> resultMap = new HashMap<>();
-                LOCK.lock();
+                while(!LOCK.tryLock()) {}
                 fixture.iterationMovement(prime);
                 LOCK.unlock();
-                LOCK.lock();
-                List<File> iteration = OpenCVFacade.singleIteration();
-                LOCK.unlock();
-                for(File file : iteration)
+                for(String cameraName : cameraList)
                 {
-                    LOCK.lock();
+                    while(!LOCK.tryLock()) {}
+                    File file = OpenCVFacade.completeProcess(cameraName);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
+                    cameraToFile.replace(cameraName,file);
+                    LOCK.unlock();
+                }
+                LOCK.unlock();
+                for(String cameraName : cameraList)
+                {
+                    while(!LOCK.tryLock()) {}
+                    File file = cameraToFile.get(cameraName);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
                     Double result = TesseractFacade.imageToDouble(file);
                     LOCK.unlock();
-                    LOCK.lock();
-                    String fileLocation = file.getAbsolutePath();
+                    while(!LOCK.tryLock()) {}
+                    resultMap.put(file,result);
                     LOCK.unlock();
-                    LOCK.lock();
-                    resultMap.put(fileLocation,result);
-                    LOCK.unlock();
-                    LOCK.lock();
+                    while(!LOCK.tryLock()) {}
                     ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
                     LOCK.unlock();
                 }
-                LOCK.lock();
-                DataSaving.writeValues(i,resultMap);
+                while(!LOCK.tryLock()) {}
+                DataSaving.writeValues(i,resultMap,cameraToFile);
                 LOCK.unlock();
                 GuiController.runningUpdate(i);
             }
             //println("=======================================");
             ErrorLogging.logError("Testing complete!");
-        });
-        testingThread.run();
+        //});
+        //testingThread.run();
     }
 
     public static void close() 
@@ -157,4 +176,10 @@ public class GuiModel
     }
 
     public static void interruptTesting() { testingThread.interrupt(); }
+
+    public static void setSerial(String cameraName, String serial)
+    { ConfigFacade.setSerial(cameraName,serial); }
+
+    public static void calibrateCameras()
+    { fixture.goDown(); }
 }
