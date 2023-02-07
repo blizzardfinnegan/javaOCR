@@ -50,11 +50,7 @@ The first command stops all currently running `pigpio` daemon processes. The sec
 2. You will need to create a new `udev` rule. This creates a symlink for a given camera, plugged into a specific USB port, and allows the Java code to consistently communicate with the camera. An example `udev` rule is given in this repo (`83-webcam.rules`), but will need to be modified to your specific device. 
 	1. Copy the example `udev` rule file to your Raspberry Pi, and put it in `/etc/udev/rules.d/` (if this directory does not exist, create it). 
 	2. Open the copied file in the text editor of your choice, and open a terminal window as well. 
-	3. Run the following command in your terminal window. This will show all `udev` activity as it happens.
-
-```
-sudo udevadm monitor -p | grep ID_PATH=
-```
+	3. Run the following command in your terminal window. `sudo udevadm monitor -p | grep ID_PATH=`  This will show all `udev` activity as it happens.
 	4. Unplug *ONE* camera, and plug it back in to the same port. This will generate several lines of text in your terminal window. 
 	5. Copy one of the lines, starting with `platform`, and, *crucially*, ending `.0`.
 	6. Paste this into your `udev` rule file, replacing the `fillerText` portion, but leaving the quotes. The first line of the file distributed in this repo contains a commented-out example line, with the correct syntax.
