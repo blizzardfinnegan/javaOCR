@@ -10,23 +10,15 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 		- [x] Takes in inputs
 		- [x] Sets config values
 		- [x] Saves config values 
-		- [x] Shows camera preview*
-			- currently broken, for unknown reasons. In process of parsing...
+		- [x] Shows camera preview
 	- [x] GPIO test interactions
 	- Test suite
 		- [x] OpenCV image capture
 		- [x] OpenCV image processing
 		- [x] Tesseract OCR processing 
-		- [x] Data storage in defined XLSX file*
+		- [x] Data storage in defined XLSX file
 	- [x] modify number of iterations for test suite
-- [x] JavaFX GUI (Designed, implemented)
-
-## Known Bugs
-
-- Closing the program throws a fatal error. This is due to the current implementation of monitoring of the Run switch, and as of now, to my knowledge, cannot be resolved.
-	- As of CLI build 1.2.0, the external run switch bricks the system.
-- Currently, all images are parsed on a per-iteration level. This means that we cannot guarantee the output columns are correct. As a temporary solution, image location, serial number, and parsed reading are placed in groups. Intention is to ultimately have them be column-wise written.
-- As of CLI build 1.3.0, the first reading row must be discarded, due to one side of the fixture producing a consistent failed reading. This has yet to be debugged, or fully understood.
+- [ ] JavaFX GUI (Designed, partially implemented)
 
 ## Dependencies
 
