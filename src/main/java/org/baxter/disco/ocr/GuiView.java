@@ -8,6 +8,7 @@ import javafx.application.Application;
 import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
@@ -98,6 +99,11 @@ public class GuiView extends Application
     private static double EXTERNAL_SPACING = 10.0;
 
     /**
+     * Map used to store ImageViews
+     */
+    private static Map<String,ImageView> viewMap = new HashMap<>();
+
+    /**
      * The wrapper function to spawn a new JavaFX Stage.
      */
     public static void main(String[] args) { launch(args); }
@@ -136,9 +142,18 @@ public class GuiView extends Application
         CAMERA_ANCHOR.getChildren().add(CAMERA_PANE);
         CAMERA_MENU = new Scene(CAMERA_ANCHOR);
 
-        //Initialise the camera fields map
+        //Initialise the camera fields map and imageview map
         for(String camera : GuiModel.getCameras())
+        {
             uiFields.put(camera, new HashMap<>());
+            ImageView view = new ImageView();
+            view.setId(camera + "-view");
+            view.setFitWidth(GuiController.getConfigValue(camera,ConfigProperties.CROP_W));
+            view.setFitHeight(GuiController.getConfigValue(camera,ConfigProperties.CROP_H));
+            viewMap.put(camera, view);
+        }
+
+        STAGE.setOnCloseRequest( (event) -> GuiController.closeModel() );
     }
 
     @Override
@@ -169,7 +184,7 @@ public class GuiView extends Application
         for(String cameraName : GuiModel.getCameras())
         {
             if(index != 0) layout.getChildren().add(new Separator(Orientation.HORIZONTAL));
-            layout.getChildren().add(cameraSetup(cameraName));
+            layout.getChildren().add(cameraSection(cameraName));
             index++;
         }
         layout.getChildren().add(cameraMenuButtons());
@@ -398,6 +413,7 @@ public class GuiView extends Application
         {
             if(index != 0) output.getChildren().add(new Separator(Orientation.VERTICAL));
             output.getChildren().add(camera(camera));
+            index++;
         }
         return output;
     }
@@ -489,7 +505,8 @@ public class GuiView extends Application
         Label label = new Label("OCR Read:");
         Label ocrRead = new Label("[ ]");
         ocrRead.setId("cameraOCR-" + cameraName);
-        ImageView imageView = new ImageView();
+        ImageView imageView = viewMap.get(cameraName);
+        //imageView.setImage(new Image(GuiController.showImage(cameraName)));
         output.getChildren().addAll(label,
                                     ocrRead,
                                     imageView);
@@ -497,7 +514,7 @@ public class GuiView extends Application
     }
 
     /**
-     * Builder function for a single section in the camera config section.
+     * Builder function for the user-editable section in the camera config menu.
      *
      * Creates a VBox, containing:
      * - A Label (used for a section header)
@@ -520,6 +537,27 @@ public class GuiView extends Application
                                     processingInputs(cameraName),
                                     cropInputs(cameraName),
                                     miscInputs(cameraName));
+        return output;
+    }
+
+    /**
+     * Builder function for a complete section in the camera config menu.
+     *
+     * Creates an HBox, containing:
+     * - A VBox, created by {@link #cameraSetup(String)}
+     * - An ImageView, which will be used to show the image to the user
+     */
+    private static HBox cameraSection(String cameraName)
+    { 
+        HBox output = new HBox();
+        output.setSpacing(INTERNAL_SPACING);
+        output.setAlignment(Pos.CENTER_LEFT);
+
+        output.getChildren().add(cameraSetup(cameraName));
+
+        ImageView imageView = viewMap.get(cameraName);
+        output.getChildren().add(imageView);
+
         return output;
     }
 
@@ -548,7 +586,8 @@ public class GuiView extends Application
             {
                 GuiController.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
-                GuiController.showImage(cameraName);
+                String imageURL = GuiController.showImage(cameraName);
+                viewMap.get(cameraName).setImage(new Image(imageURL));
             });
 
         //Crop image toggle checkbox creation
@@ -595,22 +634,22 @@ public class GuiView extends Application
         output.setAlignment(Pos.CENTER_LEFT);
 
         HBox cropX = userTextField("X:",
-                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_X),
+                                    GuiController.getConfigString(cameraName,ConfigProperties.CROP_X),
                                    "X-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropX,ConfigProperties.CROP_X,cameraName);
 
         HBox cropY = userTextField("Y:",
-                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_Y),
+                                    GuiController.getConfigString(cameraName,ConfigProperties.CROP_Y),
                                    "Y-value of the top left corner of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropY,ConfigProperties.CROP_Y,cameraName);
         
         HBox cropW = userTextField("Width:",
-                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_W),
+                                    GuiController.getConfigString(cameraName,ConfigProperties.CROP_W),
                                    "Width, in pixels, of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropW,ConfigProperties.CROP_W,cameraName);
 
         HBox cropH = userTextField("Height:",
-                                    GuiController.getConfigValue(cameraName,ConfigProperties.CROP_H),
+                                    GuiController.getConfigString(cameraName,ConfigProperties.CROP_H),
                                    "Height, in pixels, of the newly cropped image. Only accepts whole numbers.");
         textFieldSetup(cropH, ConfigProperties.CROP_H, cameraName);
 
@@ -639,13 +678,13 @@ public class GuiView extends Application
         output.setAlignment(Pos.CENTER_LEFT);
 
         HBox thresholdValue = userTextField("Threshold Value:",
-                                            GuiController.getConfigValue(cameraName,ConfigProperties.THRESHOLD),
+                                            GuiController.getConfigString(cameraName,ConfigProperties.THRESHOLD),
                                             "This value can be set from 0 to 255. Higher values mean more black in "+
                                             "the thresholded image. For more information, see the documentation.");
         textFieldSetup(thresholdValue,ConfigProperties.THRESHOLD_VALUE,cameraName);
 
         HBox compositeFrames = userTextField("Composite Frames:",
-                                            GuiController.getConfigValue(cameraName,ConfigProperties.COMPOSITE_FRAMES),
+                                            GuiController.getConfigString(cameraName,ConfigProperties.COMPOSITE_FRAMES),
                                              "Number of frames to bitwise-and together.");
         textFieldSetup(compositeFrames,ConfigProperties.COMPOSITE_FRAMES,cameraName);
 
@@ -846,4 +885,32 @@ public class GuiView extends Application
      */
     public static TextField getIterationField()
     { return iterationField; }
+
+    /**
+     * Getter for the ImageView Map.
+     *
+     * @return Map with keys of the names of cameras, and the value of the corresponding imageview
+     */
+    public static Map<String,ImageView> getViewMap()
+    { return viewMap; }
+
+    /**
+     * Updater for a given camera's ImageView width
+     *
+     * @param cameraName    Name of the camera being updated
+     */
+    public static void updateImageViewWidth(String cameraName)
+    { 
+        viewMap.get(cameraName).setFitWidth(GuiController.getConfigValue(cameraName,ConfigProperties.CROP_W));
+    }
+
+    /**
+     * Updater for a given camera's ImageView height
+     *
+     * @param cameraName    Name of the camera being updated
+     */
+    public static void updateImageViewHeight(String cameraName)
+    {
+        viewMap.get(cameraName).setFitHeight(GuiController.getConfigValue(cameraName,ConfigProperties.CROP_H));
+    }
 }

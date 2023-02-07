@@ -4,6 +4,7 @@ import java.util.List;
 
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 
 /**
  * Controller portion of MVC for Accuracy over Life test fixture.
@@ -12,7 +13,7 @@ import javafx.scene.control.Tooltip;
  * {@link GuiView}, GuiController, and {@link GuiModel} versions are tied together, and are referred to collectively as Gui.
  *
  * @author Blizzard Finnegan
- * @version 0.2.0, 01 Feb, 2023
+ * @version 0.2.0, 06 Feb, 2023
  */
 public class GuiController
 {
@@ -29,8 +30,8 @@ public class GuiController
      *
      * @param cameraName    The camera whose image should be shown.
      */
-    public static void showImage(String cameraName)
-    { GuiModel.showImage(cameraName); }
+    public static String showImage(String cameraName)
+    { return GuiModel.showImage(cameraName); }
 
     /**
      * Wrapper function to toggle cropping for a given camera
@@ -74,8 +75,19 @@ public class GuiController
      *
      * @return String of the value of the current object
      */
-    public static String getConfigValue(String cameraName, ConfigProperties property)
-    { return GuiModel.getConfigVal(cameraName,property); }
+    public static String getConfigString(String cameraName, ConfigProperties property)
+    { return GuiModel.getConfigString(cameraName,property); }
+
+    /**
+     * Wrapper function to get a config value, for a given camera 
+     *
+     * @param cameraName    The name of the camera being inspected
+     * @param property      The config property to be returned
+     *
+     * @return String of the value of the current object
+     */
+    public static double getConfigValue(String cameraName, ConfigProperties property)
+    { return GuiModel.getConfigValue(cameraName,property); }
 
     /**
      * Wrapper function to set a config value for a given camera.
@@ -85,7 +97,13 @@ public class GuiController
      * @param value         The new value to set the property to 
      */
     public static void setConfigValue(String cameraName, ConfigProperties property, double value)
-    { GuiModel.setConfigVal(cameraName,property,value); }
+    { 
+        GuiModel.setConfigVal(cameraName,property,value); 
+        if(property == ConfigProperties.CROP_W)
+            GuiView.updateImageViewWidth(cameraName);
+        if(property == ConfigProperties.CROP_H)
+            GuiView.updateImageViewHeight(cameraName);
+    }
 
     /**
      * Setter for the number of iterations
@@ -150,8 +168,8 @@ public class GuiController
     public static void updateConfigValue(String cameraName, ConfigProperties property)
     {
         TextField field = GuiView.getField(cameraName,property);
-        field.setText(GuiModel.getConfigVal(cameraName,property));
-        field.setPromptText(GuiModel.getConfigVal(cameraName,property));
+        field.setText(GuiModel.getConfigString(cameraName,property));
+        field.setPromptText(GuiModel.getConfigString(cameraName,property));
     }
 
     /**
@@ -229,4 +247,15 @@ public class GuiController
      * Close function for the Model; used to end the program
      */
     public static void closeModel() { GuiModel.close(); }
+
+    /**
+     * Function used to update the ImageView of the GUID
+     *
+     * @param cameraName    Name of the camera the image is from 
+     * @param fileURL       The URL of the file to be shown
+     */
+    public static void updateImage(String cameraName, String fileURL)
+    {
+        GuiView.getViewMap().get(cameraName).setImage(new Image(fileURL));
+    }
 }

@@ -97,9 +97,13 @@ public class GuiModel
     { return new ArrayList<>(OpenCVFacade.getCameraNames()); }
 
     /**
-     * Wrapper function for showing an image.
+     * Function that calls the OpenCVFacade image generation function.
+     * @return String url of the location of the new image
      */
-    public static void showImage(String cameraName) { OpenCVFacade.showImage(cameraName); }
+    public static String showImage(String cameraName) 
+    { 
+        return OpenCVFacade.showImage(cameraName, new Object()); 
+    }
 
     /**
      * Setter for a given camera's config value
@@ -115,15 +119,26 @@ public class GuiModel
     }
 
     /**
-     * Getter for a given camera's config value
+     * Getter for a given camera's config value, in String format
      *
      * @param cameraName    Name of the camera to get the config value from 
      * @param property      Property to get the value of
      *
      * @return String of the current value in the config
      */
-    public static String getConfigVal(String cameraName, ConfigProperties property)
+    public static String getConfigString(String cameraName, ConfigProperties property)
     { return Double.toString(ConfigFacade.getValue(cameraName,property)); }
+
+    /**
+     * Getter for a given camera's config value
+     *
+     * @param cameraName    Name of the camera to get the config value from 
+     * @param property      Property to get the value of
+     *
+     * @return double of the current value in the config
+     */
+    public static double getConfigValue(String cameraName, ConfigProperties property)
+    { return ConfigFacade.getValue(cameraName,property); }
 
     /**
      * Wrapper function around the MovementFacade's pressButton function.
@@ -228,6 +243,7 @@ public class GuiModel
                 {
                     while(!LOCK.tryLock()) {}
                     File file = OpenCVFacade.completeProcess(cameraName);
+                    GuiController.updateImage(cameraName,file.getPath());
                     LOCK.unlock();
                     while(!LOCK.tryLock()) {}
                     cameraToFile.replace(cameraName,file);
@@ -292,4 +308,5 @@ public class GuiModel
      */
     public static void calibrateCameras()
     { fixture.goDown(); }
+
 }

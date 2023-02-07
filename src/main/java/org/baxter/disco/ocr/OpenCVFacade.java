@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.2.0, 03 Feb. 2023
+ * @version 1.3.0, 06 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -170,7 +170,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Show current processed image to user.
+     * Show current processed image to the CLI user.
      *
      * @param cameraName    The name of the camera to be previewed
      *
@@ -189,6 +189,21 @@ public class OpenCVFacade
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
         return canvas;
+    }
+
+    /**
+     * Show current processed image to the GUI user.
+     *
+     * @param cameraName    The name of the camera to be previewed
+     *
+     * @return The {@link CanvasFrame} that is being opened. This is returned so it can be closed by the program.
+     */
+    public static String showImage(String cameraName, Object object)
+    {
+        //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
+        //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
+        File imageLocation = completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
+        return imageLocation.getPath();
     }
 
     /** 

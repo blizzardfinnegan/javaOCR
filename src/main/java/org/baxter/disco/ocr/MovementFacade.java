@@ -21,10 +21,11 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 2.1.0, 03 Feb. 2023
+ * @version 2.2.0, 06 Feb. 2023
  */
 public class MovementFacade
 {
+    private static boolean exit = false;
     /**
      * Constructor for MovementFacade.
      *
@@ -37,7 +38,7 @@ public class MovementFacade
         runSwitchThread = new Thread(() -> 
                 {
                     boolean unlock = false;
-                    while(true)
+                    while(!exit)
                     {
                         if(runSwitch.isOn())
                         {
@@ -470,7 +471,8 @@ public class MovementFacade
         goUp();
         if(runSwitchThread.isAlive())
         {
-            runSwitchThread.interrupt();
+                exit = true;
+                try{ Thread.sleep(100); } catch(Exception e){}
         }
         pi4j.shutdown();
     }
@@ -492,17 +494,16 @@ public class MovementFacade
         return output;
     }
 
+    /**
+     * Function to move the fixture once for an iteration.
+     *
+     * @param prime     Whether or not to wake up the DUT
+     */
     public void iterationMovement(boolean prime)
     {
         goUp();
         if(prime) pressButton();
         goDown();
         pressButton();
-    }
-
-    public void main(String[] args)
-    {
-        testMotions();
-        closeGPIO();
     }
 }

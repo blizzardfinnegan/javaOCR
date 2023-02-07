@@ -155,7 +155,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.baxter.disco.ocr.Cli</mainClass>
+                            <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
