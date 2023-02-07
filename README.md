@@ -112,6 +112,10 @@ sudo killall pigpiod
 
 ## Building from source
 
+Before building this project, decide whether you want a TUI (Terminal User Interface), or a GUI (Graphical User Interface). As of `4.0.0-rc3`, the GUI has only been partially implemented, so should only be compiled for improvement purposes. 
+- If you wish to build the TUI, change the `uitype` field in your `pom.xml` to be `Cli`. 
+- If you wish to build the GUI, change the `uitype` field in your `pom.xml` to be `GuiStarter`.
+
 For your first time compiling the project, clone the repository onto your computer, then run the following in a terminal with Maven to compile the project into a runnable JAR file:
 
 ```
