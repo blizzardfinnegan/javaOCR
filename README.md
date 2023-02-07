@@ -57,6 +57,7 @@ The first command stops all currently running `pigpio` daemon processes. The sec
 	```  
 
 	This will show all `udev` activity as it happens.
+	
 	4. Unplug *ONE* camera, and plug it back in to the same port. This will generate several lines of text in your terminal window. 
 	5. Copy one of the lines, starting with `platform`, and, *crucially*, ending `.0`.
 	6. Paste this into your `udev` rule file, replacing the `fillerText` portion, but leaving the quotes. The first line of the file distributed in this repo contains a commented-out example line, with the correct syntax.
