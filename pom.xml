@@ -31,6 +31,7 @@
         <junit.version>5.9.1</junit.version>
         <tess4j.version>4.1.1</tess4j.version>
         <beanutils.version>1.9.4</beanutils.version>
+        <uitype>GuiStarter</uitype>
     </properties>
 
     <dependencies>
@@ -155,7 +156,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.baxter.disco.ocr.GuiStarter</mainClass>
+                            <mainClass>org.baxter.disco.ocr.${uitype}</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
