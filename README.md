@@ -18,7 +18,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 		- [x] Tesseract OCR processing 
 		- [x] Data storage in defined XLSX file
 	- [x] modify number of iterations for test suite
-- [ ] JavaFX GUI (Designed, partially implemented)
+- [ ] JavaFX GUI (Designed, partially implemented, ommited for smaller build size)
 
 ## Dependencies
 
@@ -88,8 +88,9 @@ To use this program, it *must* be run on a Raspberry Pi, with available GPIO.
 sudo java -jar [name of JAR file, including extension]
 ```
 4. What will happen next depends on your current version:
-	- Versions `4.0.0-rc1` and `4.0.0-rc2` will create a terminal window. From there, use the numbers shown in the menu to control the fixture, and run tests as necessary.
-	- Versions `4.0.0-rc3` and newer will create a terminal window, which load things for a moment before also creating a GUI. This GUI can be used to control the fixture, and run tests as necessary. 
+	- Versions `4.0.0-rc1`,`4.0.0-rc2`, and `4.0.0` will create a terminal window. From there, use the numbers shown in the menu to control the fixture, and run tests as necessary.
+	- An upcoming version will create a terminal window, which load things for a moment before also creating a GUI. This GUI can be used to control the fixture, and run tests as necessary. 
+		- GUI development is currently limited to the `gui` branch.
 
 
 ### Potential Errors
@@ -107,9 +108,9 @@ sudo killall pigpiod
 
 ## Building from source
 
-Before building this project, decide whether you want a TUI (Terminal User Interface), or a GUI (Graphical User Interface). As of `4.0.0-rc3`, the GUI has only been partially implemented, so should only be compiled for improvement purposes. 
-- If you wish to build the TUI, change the `uitype` field in your `pom.xml` to be `Cli`. 
-- If you wish to build the GUI, change the `uitype` field in your `pom.xml` to be `GuiStarter`.
+Before building this project, decide whether you want a TUI (Terminal User Interface), or a GUI (Graphical User Interface). GUI development has been moved to its own separate branch, for ease of project management.
+- If you wish to build the TUI, ensure the `uitype` field in your `pom.xml` is `Cli`. 
+- If you wish to build the GUI, ensure you are in the `gui` branch.
 
 For your first time compiling the project, clone the repository onto your computer, then run the following in a terminal with Maven to compile the project into a runnable JAR file:
 

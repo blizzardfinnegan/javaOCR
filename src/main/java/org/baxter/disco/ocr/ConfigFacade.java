@@ -86,12 +86,24 @@ public class ConfigFacade
             .configure(new Parameters().fileBased().setFile(configFile));
 
         ErrorLogging.logError("Attempting to import config..."); 
-        try
-        { 
-            CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
+        if(newConfig)
+        {
+            try
+            { 
+                CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
+            }
+            catch(Exception e) { ErrorLogging.logError(e); }
+            finally 
+            { 
+                if(CONFIG_STORE == null) 
+                    ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); 
+            }
         }
-        catch(Exception e) { ErrorLogging.logError(e); }
-        finally { if(CONFIG_STORE == null) ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); }
+        else
+        {
+            ErrorLogging.logError("Unable to import config. Loading defaults...");
+            saveDefaultConfig();
+        }
 
         ErrorLogging.logError("Creating image storage directories...");
         File imageLocation  = new File(imageSaveLocation);
@@ -138,6 +150,7 @@ public class ConfigFacade
         if(!configMap.keySet().contains(cameraName)) 
         {
             ErrorLogging.logError("CONFIG ERROR!!! - Invalid camera name: " + cameraName);
+            ErrorLogging.logError("\tKey set: " + configMap.keySet().toString());
             ErrorLogging.logError("\tProperty: " + property.getConfig());
             ErrorLogging.logError("\tconfigMap keys: " + configMap.keySet().toString());
             return output;

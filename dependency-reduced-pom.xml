@@ -101,13 +101,12 @@
     <commons.version>2.8.0</commons.version>
     <maven.compiler.source>11</maven.compiler.source>
     <pi4j.version>2.1.0</pi4j.version>
+    <uitype>Cli</uitype>
     <target.platform.name>raspberry</target.platform.name>
-    <uitype>GuiStarter</uitype>
     <maven.compiler.target>11</maven.compiler.target>
     <opencv.version>1.5.6</opencv.version>
     <poi.version>5.2.3</poi.version>
     <run.with.java.module>true</run.with.java.module>
-    <tess4j.version>4.1.1</tess4j.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>19</javafx.version>
     <junit.version>5.9.1</junit.version>

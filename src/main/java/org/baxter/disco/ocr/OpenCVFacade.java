@@ -421,9 +421,11 @@ public class OpenCVFacade
             return output;
         }
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
+        boolean threshold = false;
+        //boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
         //ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
-        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
+        boolean crop = false;
+        //boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
         //ErrorLogging.logError("DEBUG: Crop config value: " + crop);
         output = completeProcess(cameraName,crop,threshold,compositeFrames,saveLocation);
         if(output == null)
