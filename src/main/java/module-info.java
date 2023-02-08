@@ -3,15 +3,15 @@ module org.baxter.disco.ocr {
     requires com.pi4j.plugin.raspberrypi;
     requires com.pi4j.plugin.pigpio;
     requires com.pi4j.library.pigpio;
-    //requires javafx.fxml;
-    //requires javafx.controls;
+    requires javafx.fxml;
+    requires javafx.controls;
     requires org.apache.poi.poi;
     requires org.apache.commons.configuration2;
     requires org.apache.xmlbeans;
     requires org.bytedeco.tesseract;
     requires org.bytedeco.opencv;
     requires org.bytedeco.javacpp;
-    //requires javafx.graphics;
+    requires javafx.graphics;
     requires org.apache.poi.ooxml;
     requires org.apache.poi.ooxml.schemas;
     requires org.apache.commons.io;
