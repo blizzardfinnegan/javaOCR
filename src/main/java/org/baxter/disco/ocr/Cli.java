@@ -1,7 +1,6 @@
 package org.baxter.disco.ocr;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +49,7 @@ public class Cli
     /**
      * Number of options currently available in the main menu.
      */
-    private static final int mainMenuOptionCount = 7;
+    private static final int mainMenuOptionCount = 8;
 
     /**
      * Number of options currently available in the movement sub-menu.
@@ -60,7 +59,7 @@ public class Cli
     /**
      * Number of options currently available in the camera configuration sub-menu.
      */
-    private static final int cameraMenuOptionCount = 9;
+    private static final int cameraMenuOptionCount = 10;
 
     /**
      * Lock object, used for temporary interruption of {@link #runTests()}
@@ -71,6 +70,8 @@ public class Cli
      * Instance of {@link MovementFacade} for controlling the fixture.
      */
     private static MovementFacade fixture;
+
+    //private static Thread safeThread;
 
     static
     {
@@ -109,12 +110,15 @@ public class Cli
                         break;
                     case 3:
                         setDUTSerials();
-                        serialsSet = true;
+                        //serialsSet = true;
                         break;
                     case 4:
                         setIterationCount();
                         break;
                     case 5:
+                        setActiveCameras();
+                        break;
+                    case 6:
                         if(!camerasConfigured)
                         {
                             prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
@@ -132,8 +136,18 @@ public class Cli
                                 ErrorLogging.logError("WARNING! - Potential for error: Un-initialised cameras.");
                             }
                         }
-                        if(!serialsSet)
+                        for(String cameraName : OpenCVFacade.getCameraNames())
                         {
+                            if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
+                               ConfigFacade.getSerial(cameraName) == null )
+                            {
+                                serialsSet = false;
+                                break;
+                            }
+                            else serialsSet = true;
+                        }
+                        if(!serialsSet) 
+                        { 
                             prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
                             String input = inputScanner.nextLine().toLowerCase();
                             if( input.isBlank())
@@ -151,10 +165,10 @@ public class Cli
                         }
                         runTests();
                         break;
-                    case 6:
+                    case 7:
                         printHelp();
                         break;
-                    case 7:
+                    case 8:
                         break;
                     default:
                         //Input handling already done by inputFiltering()
@@ -229,13 +243,16 @@ public class Cli
                     "\n\trun the tests of the device(s)"+
                     "\n\tunder test.");
         println("----------------------------------------");
-        println("5. Run tests: Run tests, with defined"+
+        println("5. Toggle active cameras: Change which cameras" +
+                    "\n\twill be used during Run Tests.");
+        println("----------------------------------------");
+        println("6. Run tests: Run tests, with defined"+
                     "\n\tnumber of iterations. Uses"+
                     "\n\tvalues defined in config file.");
         println("----------------------------------------");
-        println("6. Help: Show this help page.");
+        println("7. Help: Show this help page.");
         println("----------------------------------------");
-        println("7. Exit: Close the program.");
+        println("8. Exit: Close the program.");
         println("========================================");
         println("Press Enter to continue...");
         inputScanner.nextLine();
@@ -256,9 +273,10 @@ public class Cli
         println("2. Configure camera");
         println("3. Set serial numbers");
         println("4. Change test iteration count");
-        println("5. Run tests");
-        println("6. Help");
-        println("7. Exit");
+        println("5. Toggle active cameras");
+        println("6. Run tests");
+        println("7. Help");
+        println("8. Exit");
         println("======================================");
     }
 
@@ -321,6 +339,25 @@ public class Cli
     }
 
     /**
+     * Pre-defined method for printing all available cameras and the associated serials in a menu
+     */
+    private static void printActiveToggleMenu(List<String> cameraList)
+    {
+        println("Available cameras to toggle:");
+        println("------------------------------------");
+        for(int index = 0; index < cameraList.size(); index++)
+        {
+            int humanIndex = index+1;
+            String cameraName = (String)cameraList.get(index);
+            print(humanIndex + " - " + cameraName + " : ");
+            String activity = (ConfigFacade.getValue(cameraName, ConfigProperties.ACTIVE) != 0 ? "active" : "disabled");
+            println(activity);
+        }
+        println( (cameraList.size() + 1) + " - Exit to Main Menu");
+        println("------------------------------------");
+    }
+
+    /**
      * Pre-defined menu for printing camera configuration options
      */
     private static void printCameraConfigMenu(String cameraName)
@@ -342,10 +379,14 @@ public class Cli
         println("************************************");
         println("Current composite frame count: " + 
                 ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
+        println("Current threshold value: " + 
+                ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE));
         String cropValue = ((ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0) ? "yes" : "no");
         println("Will the image be cropped? " + cropValue);
         String thresholdImage = ((ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0) ? "yes" : "no");
         println("Will the image be thresholded? " + thresholdImage);
+        String cameraActive = ((ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0) ? "yes" : "no");
+        println("Will the camera be used when running tests? " + cameraActive);
         println("------------------------------------");
         println("1. Change Crop X");
         println("2. Change Crop Y");
@@ -355,7 +396,8 @@ public class Cli
         println("6. Change Threshold Value");
         println("7. Toggle crop");
         println("8. Toggle threshold");
-        println("9. Exit");
+        println("9. Toggle camera");
+        println("10. Exit");
         println("====================================");
     }
 
@@ -460,12 +502,11 @@ public class Cli
                 prompt("Enter a camera number to configure: ");
                 userInput = inputFiltering(inputScanner.nextLine());
                 userInput--;
-            } while (cameraList.size() < userInput);
+            } while (cameraList.size() < userInput && userInput < 0);
 
             //Leave do-while loop if the user asks to
             if(userInput == (cameraList.size())) break;
-            else if(userInput < 0)
-            {}
+            else if(userInput < 0) continue;
             else cameraName = cameraList.get((userInput));
 
             do
@@ -511,13 +552,19 @@ public class Cli
                             modifiedProperty = ConfigProperties.THRESHOLD;
                             break;
                         case 9:
+                            modifiedProperty = ConfigProperties.ACTIVE;
+                            break;
+                        case 0:
+                        case 10:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
                     }
                 } while(modifiedProperty == null);
                 
-                if(modifiedProperty == ConfigProperties.THRESHOLD || modifiedProperty == ConfigProperties.CROP)
+                if(modifiedProperty == ConfigProperties.THRESHOLD || 
+                        modifiedProperty == ConfigProperties.CROP || 
+                        modifiedProperty == ConfigProperties.ACTIVE)
                 {
                     double newValue = ConfigFacade.getValue(cameraName,modifiedProperty);
                     newValue = Math.abs(newValue - 1);
@@ -587,55 +634,109 @@ public class Cli
     }
 
     /**
+     * Function to modify the currently active cameras
+     */
+    private static void setActiveCameras()
+    {
+        List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+        do
+        {
+            //Main menu
+            printActiveToggleMenu(cameraList);
+
+            //Pick a camera to configure
+            int userInput;
+
+            String cameraName = "";
+            do
+            {
+                prompt("Enter the camera you wish to toggle: ");
+                userInput = inputFiltering(inputScanner.nextLine());
+                userInput--;
+            } while (cameraList.size() < userInput || userInput < 0);
+
+            //Leave do-while loop if the user asks to
+            if(userInput == (cameraList.size())) break;
+            else cameraName = cameraList.get((userInput));
+
+            double newValue = ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE);
+            newValue = Math.abs(newValue - 1);
+            ConfigFacade.setValue(cameraName,ConfigProperties.ACTIVE,newValue);
+
+        } while(true);
+    }
+
+    /**
      * Starts running tests
      */
     private static void runTests()
     {
+        ErrorLogging.logError("Initialising tests...");
         final int localIterations = iterationCount;
         //testingThread = new Thread(() ->
         //{
-            DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),OpenCVFacade.getCameraNames().size());
-            boolean prime = false;
-            for(String cameraName : OpenCVFacade.getCameraNames())
+        boolean prime = false;
+        List<String> cameraList = new ArrayList<>();
+        for(String cameraName : OpenCVFacade.getCameraNames())
+        {
+            //if(cameraName != null) { /*println(cameraName);*/ }
+            //else ErrorLogging.logError("Null camera!");
+            if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
             {
-                if(cameraName != null) { /*println(cameraName);*/ }
-                else ErrorLogging.logError("Null camera!");
-                if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
-                {
-                    prime = true;
-                }
+                prime = true;
             }
-            ErrorLogging.logError("DEBUG: Waking devices.");
-            fixture.iterationMovement(prime);
-            fixture.pressButton();
-            fixture.iterationMovement(prime);
-            ErrorLogging.logError("DEBUG: Starting tests...");
-            for(int i = 0; i < localIterations; i++)
+            if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0)
             {
-                Map<String, Double> resultMap = new HashMap<>();
+                cameraList.add(cameraName);
+            }
+        }
+        DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),cameraList.size());
+        ErrorLogging.logError("DEBUG: Waking devices...");
+        fixture.iterationMovement(prime);
+        fixture.pressButton();
+        fixture.iterationMovement(prime);
+        ErrorLogging.logError("DEBUG: Starting tests...");
+        Map<File,Double> resultMap = new HashMap<>();
+        Map<String,File> cameraToFile = new HashMap<>();
+        for(String cameraName : cameraList)
+        {
+            cameraToFile.put(cameraName,new File("/dev/null"));
+        }
+        for(int i = 0; i < localIterations; i++)
+        {
+            while(!LOCK.tryLock()) {}
+            fixture.iterationMovement(prime);
+            LOCK.unlock();
+            for(String cameraName : cameraList)
+            {
                 while(!LOCK.tryLock()) {}
-                fixture.iterationMovement(prime);
+                File file = OpenCVFacade.completeProcess(cameraName);
                 LOCK.unlock();
                 while(!LOCK.tryLock()) {}
-                List<File> iteration = OpenCVFacade.singleIteration();
-                LOCK.unlock();
-                for(File file : iteration)
-                {
-                    while(!LOCK.tryLock()) {}
-                    //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
-                    Double result = TesseractFacade.imageToDouble(file);
-                    LOCK.unlock();
-                    while(!LOCK.tryLock()) {}
-                    resultMap.put(file.getPath(),result);
-                    ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
-                    LOCK.unlock();
-                }
-                while(!LOCK.tryLock()) {}
-                DataSaving.writeValues(i,resultMap);
+                cameraToFile.replace(cameraName,file);
                 LOCK.unlock();
             }
-            println("=======================================");
-            println("Testing complete!");
+            for(String cameraName : cameraList)
+            {
+                while(!LOCK.tryLock()) {}
+                File file = cameraToFile.get(cameraName);
+                LOCK.unlock();
+                while(!LOCK.tryLock()) {}
+                //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
+                Double result = TesseractFacade.imageToDouble(file);
+                LOCK.unlock();
+                while(!LOCK.tryLock()) {}
+                resultMap.put(file,result);
+                ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                LOCK.unlock();
+            }
+            while(!LOCK.tryLock()) {}
+            DataSaving.writeValues(i,resultMap,cameraToFile);
+            LOCK.unlock();
+            resultMap.clear();
+        }
+        println("=======================================");
+        println("Testing complete!");
         //});
         //testingThread.start();
     }

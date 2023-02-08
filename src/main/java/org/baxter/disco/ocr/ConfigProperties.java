@@ -40,10 +40,16 @@ public enum ConfigProperties
      * Whether or not to press the button on the device twice, when under test.
      */
     PRIME("Prime device?","prime",0.0),
+
     /**
      * Where the threshold point should land.
      */
-    THRESHOLD_VALUE("Threshold value","thresholdValue",50.0);
+    THRESHOLD_VALUE("Threshold value","thresholdValue",45.0),
+
+    /**
+     * Whether the camera should be active.
+     */
+    ACTIVE("Camera active?","active",1.0);
 
     /**
      * Internal storage of human-readable name/meaning

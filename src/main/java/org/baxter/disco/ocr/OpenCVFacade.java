@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.2.0, 03 Feb. 2023
+ * @version 1.3.0, 06 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -170,7 +170,7 @@ public class OpenCVFacade
     }
 
     /**
-     * Show current processed image to user.
+     * Show current processed image to the CLI user.
      *
      * @param cameraName    The name of the camera to be previewed
      *
@@ -180,7 +180,7 @@ public class OpenCVFacade
     {
         //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
         //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
-        File imageLocation = completeProcess(cameraName);
+        File imageLocation = completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
         if(imageLocation == null) return null;
         //ErrorLogging.logError("DEBUG: Image processed successfully.");
         //ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
@@ -189,6 +189,21 @@ public class OpenCVFacade
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
         return canvas;
+    }
+
+    /**
+     * Show current processed image to the GUI user.
+     *
+     * @param cameraName    The name of the camera to be previewed
+     *
+     * @return The {@link CanvasFrame} that is being opened. This is returned so it can be closed by the program.
+     */
+    public static String showImage(String cameraName, Object object)
+    {
+        //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
+        //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
+        File imageLocation = completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
+        return imageLocation.getPath();
     }
 
     /** 
@@ -406,9 +421,11 @@ public class OpenCVFacade
             return output;
         }
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
+        boolean threshold = false;
+        //boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
         //ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
-        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
+        boolean crop = false;
+        //boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
         //ErrorLogging.logError("DEBUG: Crop config value: " + crop);
         output = completeProcess(cameraName,crop,threshold,compositeFrames,saveLocation);
         if(output == null)
@@ -424,9 +441,9 @@ public class OpenCVFacade
      *
      * @return null if any error occurs; otherwise File of output image
      */
-    private static File completeProcess(String cameraName)
+    public static File completeProcess(String cameraName)
     {
-        return completeProcess(cameraName,ConfigFacade.getImgSaveLocation() + "/config");
+        return completeProcess(cameraName,ConfigFacade.getImgSaveLocation());
     }
 
     /**
