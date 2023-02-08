@@ -18,7 +18,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 		- [x] Tesseract OCR processing 
 		- [x] Data storage in defined XLSX file
 	- [x] modify number of iterations for test suite
-- [ ] JavaFX GUI (Designed, partially implemented, ommited for smaller build size)
+- [ ] JavaFX GUI (see `gui` branch)
 
 ## Dependencies
 

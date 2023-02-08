@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.3.0, 06 Feb. 2023
+ * @version 1.4.0, 08 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -174,9 +174,9 @@ public class OpenCVFacade
      *
      * @param cameraName    The name of the camera to be previewed
      *
-     * @return The {@link CanvasFrame} that is being opened. This is returned so it can be closed by the program.
+     * @return File of the image being shown
      */
-    public static CanvasFrame showImage(String cameraName)
+    public static File showImage(String cameraName)
     {
         //ErrorLogging.logError("DEBUG: Showing image from camera: " + cameraName);
         //ErrorLogging.logError("DEBUG: camera location: " + cameraMap.get(cameraName).toString());
@@ -188,7 +188,7 @@ public class OpenCVFacade
         String canvasTitle = "Camera " + cameraName + " Preview";
         CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
-        return canvas;
+        return imageLocation;
     }
 
     /**
@@ -397,7 +397,15 @@ public class OpenCVFacade
         //ErrorLogging.logError("DEBUG: Camera to take picture from: " + cameraName);
         //ErrorLogging.logError("DEBUG: Composite frame count: " + compositeFrames);
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
-        //ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
+
+        //Debug save of pre-processing image
+        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                              "."  + cameraName + "-preProcess.jpg";
+        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                MAT_CONVERTER.convert(imageList.get(0))));
+
+        ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
         Mat finalImage = compose(imageList, threshold, crop, cameraName);
         output = saveImage(finalImage, saveLocation,cameraName);
         return output;
@@ -421,11 +429,11 @@ public class OpenCVFacade
             return output;
         }
         int compositeFrames = (int)ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES);
-        boolean threshold = false;
-        //boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
+        //boolean threshold = false;
+        boolean threshold = (ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0.0);
         //ErrorLogging.logError("DEBUG: Threshold config value: " + threshold);
-        boolean crop = false;
-        //boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
+        //boolean crop = false;
+        boolean crop = (ConfigFacade.getValue(cameraName,ConfigProperties.CROP) != 0.0);
         //ErrorLogging.logError("DEBUG: Crop config value: " + crop);
         output = completeProcess(cameraName,crop,threshold,compositeFrames,saveLocation);
         if(output == null)
