@@ -9,8 +9,6 @@ import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.bytedeco.javacv.CanvasFrame;
-
 /**
  * CLI for the Fixture.
  *
@@ -19,7 +17,7 @@ import org.bytedeco.javacv.CanvasFrame;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.3.0, 03 Feb. 2023
+ * @version 1.4.0, 08 Feb. 2023
  */
 public class Cli
 {
@@ -360,7 +358,7 @@ public class Cli
     /**
      * Pre-defined menu for printing camera configuration options
      */
-    private static void printCameraConfigMenu(String cameraName)
+    private static void printCameraConfigMenu(String cameraName, double tesseractValue)
     {
         println("\n\n");
         println("====================================");
@@ -387,6 +385,7 @@ public class Cli
         println("Will the image be thresholded? " + thresholdImage);
         String cameraActive = ((ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0) ? "yes" : "no");
         println("Will the camera be used when running tests? " + cameraActive);
+        println("Tesseract parsed value: " + tesseractValue);
         println("------------------------------------");
         println("1. Change Crop X");
         println("2. Change Crop Y");
@@ -487,6 +486,7 @@ public class Cli
         //t.start();
 
         fixture.iterationMovement(true);
+        double tesseractValue = 0.0;
 
         do
         {
@@ -514,15 +514,16 @@ public class Cli
                 fixture.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
                 //Show image 
-                CanvasFrame canvas = OpenCVFacade.showImage(cameraName);
+                File image = OpenCVFacade.showImage(cameraName);
 
+                tesseractValue = TesseractFacade.imageToDouble(image);
 
                 //User input parsing
                 ConfigProperties modifiedProperty = null;
                 do
                 {
                     //list configurable settings
-                    printCameraConfigMenu(cameraName);
+                    printCameraConfigMenu(cameraName,tesseractValue);
 
                     userInput = inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
                     switch (userInput)
@@ -575,7 +576,7 @@ public class Cli
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
                     userInput = inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
-                    if(canvas != null) canvas.dispose();
+                    //if(canvas != null) canvas.dispose();
                 }
                 else break;
             } while(true);
@@ -671,6 +672,7 @@ public class Cli
      */
     private static void runTests()
     {
+        println("====================================");
         ErrorLogging.logError("Initialising tests...");
         final int localIterations = iterationCount;
         //testingThread = new Thread(() ->
@@ -704,6 +706,9 @@ public class Cli
         }
         for(int i = 0; i < localIterations; i++)
         {
+            println("");
+            println("====================================");
+            ErrorLogging.logError("Starting iteration " + (i+1) + " of " + localIterations + "...");
             while(!LOCK.tryLock()) {}
             fixture.iterationMovement(prime);
             LOCK.unlock();

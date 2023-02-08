@@ -24,7 +24,7 @@ import java.util.ArrayList;
  * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
- * @version 1.2.0, 03 Feb. 2023
+ * @version 1.3.0, 08 Feb. 2023
  */
 public class ConfigFacade
 {
@@ -86,17 +86,16 @@ public class ConfigFacade
             .configure(new Parameters().fileBased().setFile(configFile));
 
         ErrorLogging.logError("Attempting to import config..."); 
-        if(newConfig)
+        if(!newConfig)
         {
-            try
-            { 
-                CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
-            }
+            try { CONFIG_STORE = CONFIG_BUILDER.getConfiguration(); }
             catch(Exception e) { ErrorLogging.logError(e); }
             finally 
             { 
                 if(CONFIG_STORE == null) 
                     ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); 
+                else
+                    ErrorLogging.logError("Config successfully imported!");
             }
         }
         else
