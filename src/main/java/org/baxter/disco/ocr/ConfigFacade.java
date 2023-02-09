@@ -13,8 +13,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 /**
@@ -38,13 +37,14 @@ public class ConfigFacade
     /**
      * Location to save images to. 
      */
-    private static String imageSaveLocation = "images";
+    private static String imageSaveLocation = "images-" + 
+        (LocalDateTime.now().format(ErrorLogging.fileDatetime));
 
     /**
      * Location to save output XLSX file to.
      */
-    public static String outputSaveLocation = "outputData-" + 
-        (LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)) + ".xlsx";
+    public static String outputSaveLocation = "outputData/" + 
+        (LocalDateTime.now().format(ErrorLogging.fileDatetime)) + ".xlsx";
 
     /**
      * Map of all config values relating to the camera.
@@ -111,6 +111,8 @@ public class ConfigFacade
         debugImageLocation.mkdir();
         File configImageLocation  = new File(imageSaveLocation + "/config");
         configImageLocation.mkdir();
+        File outputFileDirectory = new File("outputData");
+        outputFileDirectory.mkdir();
 
         ErrorLogging.logError("Creating output file....");
         File outputFile = new File(outputSaveLocation);
@@ -295,7 +297,7 @@ public class ConfigFacade
                 cameraConfig.put(property,propertyValue);
                 //ErrorLogging.logError("DEBUG: Attempting to save to config: ");
                 //ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
-                CONFIG_STORE.addProperty(propertyName,propertyValue);
+                CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
             configMap.put(camera,cameraConfig);
         }
@@ -335,7 +337,7 @@ public class ConfigFacade
             {
                 String propertyName = camera + "." + property.toString();
                 String propertyValue =configMap.get(camera).get(property).toString();
-                CONFIG_STORE.addProperty(propertyName,propertyValue);
+                CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
         }
         try
