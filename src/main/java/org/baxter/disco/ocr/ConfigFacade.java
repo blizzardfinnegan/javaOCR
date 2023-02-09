@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * Can write to file when requested, reads from file on initial start.
  *
  * @author Blizzard Finnegan
- * @version 1.3.0, 08 Feb. 2023
+ * @version 1.3.1, 09 Feb. 2023
  */
 public class ConfigFacade
 {
