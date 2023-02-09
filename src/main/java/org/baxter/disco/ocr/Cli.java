@@ -17,10 +17,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.4.0, 08 Feb. 2023
+ * @version 1.4.1, 09 Feb. 2023
  */
 public class Cli
 {
+    /**
+     * Complete build version number
+     */
+
+    private static final String version = "4.0.0";
     /**
      * Currently saved iteration count.
      */
@@ -78,6 +83,10 @@ public class Cli
 
     public static void main(String[] args)
     {
+        ErrorLogging.logError("========================");
+        ErrorLogging.logError("Accuracy Over Life Test");
+        ErrorLogging.logError("Version: " + version);
+        ErrorLogging.logError("========================");
         try{
             inputScanner = new Scanner(System.in);
 
@@ -385,7 +394,7 @@ public class Cli
         println("Will the image be thresholded? " + thresholdImage);
         String cameraActive = ((ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0) ? "yes" : "no");
         println("Will the camera be used when running tests? " + cameraActive);
-        println("Tesseract parsed value: " + tesseractValue);
+        println("Tesseract parsed value for camera " + cameraName + ": " + tesseractValue);
         println("------------------------------------");
         println("1. Change Crop X");
         println("2. Change Crop Y");
@@ -573,7 +582,8 @@ public class Cli
                 }
                 else if(modifiedProperty != ConfigProperties.PRIME)
                 {
-                    prompt("Enter new value for this property (" + modifiedProperty.toString() + "): ");
+                    prompt("Enter new value for this property (" + modifiedProperty.toString() + ", currently : " +
+                            ConfigFacade.getValue(cameraName,modifiedProperty) + "): ");
                     userInput = inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
                     //if(canvas != null) canvas.dispose();
@@ -764,6 +774,7 @@ public class Cli
         fixture.closeGPIO();
         ErrorLogging.logError("DEBUG: END OF PROGRAM.");
         ErrorLogging.closeLogs();
+        println("The program has exited successfully. Please press Ctrl-c to return to the terminal prompt.");
     }
 
     /**
