@@ -73,7 +73,7 @@ public class Cli
 
     static
     {
-        ErrorLogging.logError("DEBUG: START OF PROGRAM");
+        ErrorLogging.logError("START OF PROGRAM");
     }
 
     public static void main(String[] args)
@@ -712,6 +712,7 @@ public class Cli
             while(!LOCK.tryLock()) {}
             fixture.iterationMovement(prime);
             LOCK.unlock();
+            try{ Thread.sleep(1500); } catch(Exception e){ ErrorLogging.logError(e); }
             for(String cameraName : cameraList)
             {
                 while(!LOCK.tryLock()) {}
@@ -732,7 +733,7 @@ public class Cli
                 LOCK.unlock();
                 while(!LOCK.tryLock()) {}
                 resultMap.put(file,result);
-                ErrorLogging.logError("DEBUG: Tesseract final output: " + result);
+                ErrorLogging.logError("Tesseract final output: " + result);
                 LOCK.unlock();
             }
             while(!LOCK.tryLock()) {}

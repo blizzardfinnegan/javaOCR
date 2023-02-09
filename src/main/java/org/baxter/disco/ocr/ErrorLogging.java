@@ -58,10 +58,12 @@ public class ErrorLogging
     {
         fileDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
         datetime = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-        logFile = fileDatetime.format(LocalDateTime.now()) + "-log.txt";
+        logFile =  "logs/" + fileDatetime.format(LocalDateTime.now()) + "-log.txt";
+        File logDirectory = new File("logs");
         File outFile = new File(logFile);
         try
         {
+            logDirectory.mkdir();
             outFile.createNewFile();
             fw = new FileWriter(logFile, true);
             bw = new BufferedWriter(fw);
@@ -85,8 +87,7 @@ public class ErrorLogging
     {
         String errorStackTrace = ExceptionUtils.getStackTrace(error);
         String errorMessage = datetime.format(LocalDateTime.now())  + " - " + errorStackTrace;
-        fileOut.println(errorMessage);
-        System.err.println(errorMessage);
+        logError(errorMessage);
     }
 
     /**
@@ -103,7 +104,8 @@ public class ErrorLogging
         String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error;
         fileOut.println(errorMessage);
         fileOut.flush();
-        System.out.println(errorMessage);
+        if(!error.substring(0,5).equals("DEBUG"))
+            System.out.println(errorMessage);
     }
 
     /**

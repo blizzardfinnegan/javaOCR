@@ -48,11 +48,25 @@ sudo systemctl disable pigpiod
 The first command stops all currently running `pigpio` daemon processes. The second command disables the daemon, so that it will not start again if you reboot.
 
 2. You will need to create a new `udev` rule. This creates a symlink for a given camera, plugged into a specific USB port, and allows the Java code to consistently communicate with the camera. An example `udev` rule is given in this repo (`83-webcam.rules`), but will need to be modified to your specific device. 
-	1. Copy the example `udev` rule file to your Raspberry Pi, and put it in `/etc/udev/rules.d/` (if this directory does not exist, create it). 
-	2. Open the copied file in the text editor of your choice, and open a terminal window as well. 
+	1. Copy the example `udev` rule file to your Raspberry Pi, and put it in `/etc/udev/rules.d/` (if this directory does not exist, create it). It is recommended to do this in the terminal, by running the following commands:
+
+	```bash
+	sudo cp /media/pi/[flash drive]/83-webcam.rules /etc/udev/rules.d/
+	```
+
+	This is a soft-requirement, as interacting with files in this location requires administrative privileges. 
+
+	2. Open the copied file in the text editor of your choice, and open a terminal window as well. It is recommended to do this by running the following command in a terminal:
+
+	```bash
+	sudo -e /etc/udev/rules.d/83-webcam.rules
+	```
+
+	This will open a terminal-based text editor, crucially, *as an admin*, which will allow you to save the file.
+
 	3. Run the following command in your terminal window. 
 
-	```
+	```bash
 	sudo udevadm monitor -p | grep ID_PATH=
 	```  
 
@@ -60,9 +74,10 @@ The first command stops all currently running `pigpio` daemon processes. The sec
 	
 	4. Unplug *ONE* camera, and plug it back in to the same port. This will generate several lines of text in your terminal window. 
 	5. Copy one of the lines, starting with `platform`, and, *crucially*, ending `.0`.
-	6. Paste this into your `udev` rule file, replacing the `fillerText` portion, but leaving the quotes. The first line of the file distributed in this repo contains a commented-out example line, with the correct syntax.
+	6. Paste this into your `udev` rule file, replacing the `fillerText` portion, but leaving the quotes. If you are using a terminal text editor, this will require you to either right click to paste, or press `Ctrl-Shift-v` rather than `Ctrl-v`, as `Ctrl-v` is used by the terminal for a separate purpose. The first line of the file distributed in this repo contains a commented-out example line, with the correct syntax.
 	7. Repeat steps 4-6 for all cameras in the fixture. If there are no new lines available, copy and paste the line into a new line to create a new rule, *ensuring to increment the number at the end of the line in the `SYMLINK` section*.
-	8. Reboot the Raspberry Pi to load the new `udev` rule. 
+	8. Save the file. If the file fails to save, you most likely have insufficient permissions to save the file, and will need to follow the terminal text editor instructions.
+	9. Once the file has been saved, reboot the Raspberry Pi to load the new `udev` rule. 
 	9. Open a terminal, and check that the new symlinks were created successfully. This can be done by running the below command. If the symlinks have not been created successfully, restart from step 3 until all symlinks are created properly.
 ```
 ls /dev/video-*
