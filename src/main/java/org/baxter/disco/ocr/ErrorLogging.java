@@ -17,7 +17,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * as well as stderr.
  *
  * @author Blizzard Finnegan
- * @version 1.3.0, 03 Feb. 2023
+ * @version 1.3.1, 09 Feb. 2023
  */
 
 public class ErrorLogging
@@ -87,7 +87,8 @@ public class ErrorLogging
     {
         String errorStackTrace = ExceptionUtils.getStackTrace(error);
         String errorMessage = datetime.format(LocalDateTime.now())  + " - " + errorStackTrace;
-        logError(errorMessage);
+        fileOut.println(errorMessage);
+        fileOut.flush();
     }
 
     /**

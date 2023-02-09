@@ -22,7 +22,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.4.0, 08 Feb. 2023
+ * @version 1.4.1, 09 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -136,9 +136,7 @@ public class OpenCVFacade
      * @return List of available Webcam names.
      */
     public static Set<String> getCameraNames()
-    {
-        return cameraMap.keySet();
-    }
+    { return cameraMap.keySet(); }
 
 
     /** 
