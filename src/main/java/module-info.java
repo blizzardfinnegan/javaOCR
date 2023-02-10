@@ -18,7 +18,7 @@ module org.baxter.disco.ocr {
     requires org.apache.commons.lang3;
 
     requires org.bytedeco.javacv.platform;
-    requires java.desktop;
+    //requires java.desktop;
 
     uses com.pi4j.extension.Extension;
     uses com.pi4j.provider.Provider;

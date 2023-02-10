@@ -5,6 +5,7 @@ import java.util.Set;
 
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
+import static org.bytedeco.opencv.global.opencv_highgui.*;
 import static org.bytedeco.opencv.global.opencv_core.*;
 
 import org.bytedeco.javacv.*;
@@ -22,7 +23,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *
  * @author Blizzard Finnegan
- * @version 1.4.1, 09 Feb. 2023
+ * @version 1.5.0, 10 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -36,7 +37,7 @@ public class OpenCVFacade
     /**
      * Object used to convert between Mats and Frames
      */
-    private static final OpenCVFrameConverter.ToMat MAT_CONVERTER = new OpenCVFrameConverter.ToMat();
+    public static final OpenCVFrameConverter.ToMat MAT_CONVERTER = new OpenCVFrameConverter.ToMat();
 
     /**
      * Width of the image created by the camera.
@@ -228,15 +229,68 @@ public class OpenCVFacade
         return output;
     }
 
-    /** 
-     * Crop the given image to the dimensions in the configuration.
+    /**
+     * Set crop size and location by GUI means.
      *
+     * @param cameraName    The name of the camera being configured
+     */
+    public static void setCrop(String cameraName)
+    {
+        Mat uncroppedImage = takePicture(cameraName);
+        Rect roi = selectROI("Pick Crop Location", uncroppedImage);
+        ConfigFacade.setValue(cameraName,ConfigProperties.CROP_X, roi.x());
+        ConfigFacade.setValue(cameraName,ConfigProperties.CROP_Y, roi.y());
+        ConfigFacade.setValue(cameraName,ConfigProperties.CROP_W, roi.width());
+        ConfigFacade.setValue(cameraName,ConfigProperties.CROP_H, roi.height());
+    }
+
+    /**
+     * Crop a given image, based on dimensions in the configuration.
+     *
+     * @param image         Frame taken from the camera
+     * @param cameraName    Name of the camera the frame is from
+     */
+    public static Mat crop(Mat image, String cameraName)
+    {
+        int x = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X);
+        int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
+        int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
+        int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
+        Rect roi = new Rect(x,y,width,height);
+        return crop(image, roi,cameraName);
+    }
+
+    /** 
+     * Crop the given image, based on dimensions defined in a {@link Rect}
+     *
+     * @param image         Frame taken from the camera
+     * @param roi           The region of interest to crop the image to
+     *
+     * @return Frame of the cropped image
+     */
+    public static Mat crop(Mat image, Rect roi, String cameraName)
+    {
+        Mat output = null;
+        output = image.apply(roi);
+        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+                              "."  + cameraName + "-preProcess.jpg";
+        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+                                MAT_CONVERTER.convert(output)));
+        return output;
+    }
+
+    /** 
+     * Crop the given image to the dimensions in the configuration; 
+     * deprecated in favour of {@link #crop(Mat, Rect)}
+     *
+     * @deprecated
      * @param image         Frame taken from the camera.
      * @param cameraName    Name of the camera taking the picture
      *
      * @return Frame of the cropped image
      */
-    public static Mat crop(Mat image, String cameraName)
+    private static Mat cropImage(Mat image, String cameraName)
     {
         Mat output = null;
         int x = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X);
