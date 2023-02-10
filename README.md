@@ -20,6 +20,10 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 	- [x] modify number of iterations for test suite
 - [ ] JavaFX GUI (see `gui` branch)
 
+## Known Bugs
+
+- As of v4.1.0, cropping images is done by a temporary window created by OpenCV. This window will crash after being used correctly. This can be safely killed when prompted, without affecting the rest of the project. Investigation into how to fix this crashing is ongoing, but it has not yet been resolved.
+
 ## Dependencies
 
 To install this project, you must have the following:
