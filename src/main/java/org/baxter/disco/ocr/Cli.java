@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.4.1, 09 Feb. 2023
+ * @version 1.5.0, 10 Feb. 2023
  */
 public class Cli
 {
@@ -25,7 +25,7 @@ public class Cli
      * Complete build version number
      */
 
-    private static final String version = "4.0.0";
+    private static final String version = "4.1.0";
     /**
      * Currently saved iteration count.
      */
@@ -239,7 +239,9 @@ public class Cli
                     "\n\tfor use in OCR. Can modify"+
                     "\n\tconfig file, if requested." +
                     "\n\tAvailable variables to change:"+
-                    "\n\t\tCrop dimensions");
+                    "\n\t\tCrop dimensions"+
+                    "\n\t\tComposite frame count"+
+                    "\n\t\tThreshold value");
         println("----------------------------------------");
         println("3. Set serial numbers: Set the serial " +
                 "\n\tnumber for the device under test." +
@@ -373,17 +375,6 @@ public class Cli
         println("====================================");
         println("Camera Config Menu:");
         println("------------------------------------");
-        println("Current Crop values: ");
-        println("************************************");
-        print("X: " + ConfigFacade.getValue(cameraName,
-                                            ConfigProperties.CROP_X));
-        print(" | Y: " + ConfigFacade.getValue(cameraName,
-                                               ConfigProperties.CROP_Y));
-        print(" | Width: " + ConfigFacade.getValue(cameraName,
-                                                   ConfigProperties.CROP_W));
-        println(" | Height: " + ConfigFacade.getValue(cameraName,
-                                                    ConfigProperties.CROP_H));
-        println("************************************");
         println("Current composite frame count: " + 
                 ConfigFacade.getValue(cameraName,ConfigProperties.COMPOSITE_FRAMES));
         println("Current threshold value: " + 
@@ -392,20 +383,14 @@ public class Cli
         println("Will the image be cropped? " + cropValue);
         String thresholdImage = ((ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD) != 0) ? "yes" : "no");
         println("Will the image be thresholded? " + thresholdImage);
-        String cameraActive = ((ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0) ? "yes" : "no");
-        println("Will the camera be used when running tests? " + cameraActive);
         println("Tesseract parsed value for camera " + cameraName + ": " + tesseractValue);
         println("------------------------------------");
-        println("1. Change Crop X");
-        println("2. Change Crop Y");
-        println("3. Change Crop Width");
-        println("4. Change Crop Height");
-        println("5. Change Composite Frame Count");
-        println("6. Change Threshold Value");
-        println("7. Toggle crop");
-        println("8. Toggle threshold");
-        println("9. Toggle camera");
-        println("10. Exit");
+        println("1. Change Crop Point");
+        println("2. Change Composite Frame Count");
+        println("3. Change Threshold Value");
+        println("4. Toggle crop");
+        println("5. Toggle threshold");
+        println("6. Exit");
         println("====================================");
     }
 
@@ -541,53 +526,48 @@ public class Cli
                             modifiedProperty = ConfigProperties.CROP_X;
                             break;
                         case 2:
-                            modifiedProperty = ConfigProperties.CROP_Y;
-                            break;
-                        case 3:
-                            modifiedProperty = ConfigProperties.CROP_W;
-                            break;
-                        case 4:
-                            modifiedProperty = ConfigProperties.CROP_H;
-                            break;
-                        case 5:
                             modifiedProperty = ConfigProperties.COMPOSITE_FRAMES;
                             break;
-                        case 6:
+                        case 3:
                             modifiedProperty = ConfigProperties.THRESHOLD_VALUE;
                             break;
-                        case 7:
+                        case 4:
                             modifiedProperty = ConfigProperties.CROP;
                             break;
-                        case 8:
+                        case 5:
                             modifiedProperty = ConfigProperties.THRESHOLD;
                             break;
-                        case 9:
-                            modifiedProperty = ConfigProperties.ACTIVE;
-                            break;
-                        case 0:
-                        case 10:
+                        case 6:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
                     }
                 } while(modifiedProperty == null);
                 
+                //Toggle threshold/crop
                 if(modifiedProperty == ConfigProperties.THRESHOLD || 
-                        modifiedProperty == ConfigProperties.CROP || 
-                        modifiedProperty == ConfigProperties.ACTIVE)
+                        modifiedProperty == ConfigProperties.CROP)
                 {
                     double newValue = ConfigFacade.getValue(cameraName,modifiedProperty);
                     newValue = Math.abs(newValue - 1);
                     ConfigFacade.setValue(cameraName,modifiedProperty,newValue);
                 }
+
+                //Redefine crop points
+                else if(modifiedProperty == ConfigProperties.CROP_X)
+                { OpenCVFacade.setCrop(cameraName); }
+
+                //Modify config values
                 else if(modifiedProperty != ConfigProperties.PRIME)
                 {
                     prompt("Enter new value for this property (" + modifiedProperty.toString() + ", currently : " +
-                            ConfigFacade.getValue(cameraName,modifiedProperty) + "): ");
+                            (int)ConfigFacade.getValue(cameraName,modifiedProperty) + "): ");
                     userInput = inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
                     //if(canvas != null) canvas.dispose();
                 }
+
+                //Exit loop
                 else break;
             } while(true);
 

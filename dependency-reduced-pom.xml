@@ -4,7 +4,7 @@
   <groupId>org.baxter.disco</groupId>
   <artifactId>ocr</artifactId>
   <name>Disco OCR Accuracy Over Life Testing</name>
-  <version>4.0.0</version>
+  <version>4.1.0</version>
   <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>
   <organization>
     <name>Baxter International</name>
@@ -108,7 +108,6 @@
     <poi.version>5.2.3</poi.version>
     <run.with.java.module>true</run.with.java.module>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <javafx.version>19</javafx.version>
     <junit.version>5.9.1</junit.version>
     <beanutils.version>1.9.4</beanutils.version>
   </properties>
