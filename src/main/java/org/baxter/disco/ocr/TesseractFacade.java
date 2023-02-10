@@ -3,8 +3,8 @@ package org.baxter.disco.ocr;
 import java.io.File;
 import java.util.Scanner;
 
-import org.bytedeco.leptonica.*;
-import org.bytedeco.leptonica.global.*;
+import org.bytedeco.leptonica.PIX;
+import org.bytedeco.leptonica.global.lept;
 import org.bytedeco.tesseract.TessBaseAPI;
 
 /**

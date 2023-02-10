@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.configuration2.*;
-import org.apache.commons.configuration2.builder.*;
-import org.apache.commons.configuration2.builder.fluent.*;
+import org.apache.commons.configuration2.INIConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
 
 import java.util.List;
 import java.io.File;

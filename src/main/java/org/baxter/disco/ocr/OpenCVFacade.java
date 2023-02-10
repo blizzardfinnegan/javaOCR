@@ -3,13 +3,22 @@ package org.baxter.disco.ocr;
 import java.util.Map;
 import java.util.Set;
 
-import static org.bytedeco.opencv.global.opencv_imgproc.*;
-import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
-import static org.bytedeco.opencv.global.opencv_highgui.*;
-import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.CV_BGR2GRAY;
+import static org.bytedeco.opencv.global.opencv_imgproc.THRESH_BINARY;
+import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.cvSaveImage;
+import static org.bytedeco.opencv.global.opencv_highgui.selectROI;
+import static org.bytedeco.opencv.global.opencv_core.bitwise_and;
 
-import org.bytedeco.javacv.*;
-import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.CanvasFrame;
+import org.bytedeco.javacv.FrameGrabber;
+import org.bytedeco.javacv.OpenCVFrameGrabber;
+import org.bytedeco.javacv.OpenCVFrameConverter;
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.IplImage;
+import org.bytedeco.opencv.opencv_core.Rect;
 
 import java.io.File;
 import java.time.LocalDateTime;

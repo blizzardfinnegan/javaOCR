@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
@@ -70,7 +69,7 @@ public class ErrorLogging
             fileOut = new PrintWriter(bw);
             System.setErr(new PrintStream(new FileOutputStream(logFile,true)));
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             System.err.println(e);
         }
@@ -125,7 +124,7 @@ public class ErrorLogging
             if(bw != null) bw.close();
             if(fw != null) fw.close();
             }
-            catch(IOException e) 
+            catch(Exception e) 
             { /* This is being run because the program is closing. Errors here don't matter. */}
         }
     }
