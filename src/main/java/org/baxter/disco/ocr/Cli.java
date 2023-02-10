@@ -697,7 +697,7 @@ public class Cli
         for(int i = 0; i < localIterations; i++)
         {
             println("");
-            println("====================================");
+            ErrorLogging.logError("====================================");
             ErrorLogging.logError("Starting iteration " + (i+1) + " of " + localIterations + "...");
             while(!LOCK.tryLock()) {}
             fixture.iterationMovement(prime);

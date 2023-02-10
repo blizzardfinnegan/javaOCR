@@ -280,46 +280,6 @@ public class OpenCVFacade
         return output;
     }
 
-    /** 
-     * Crop the given image to the dimensions in the configuration; 
-     * deprecated in favour of {@link #crop(Mat, Rect)}
-     *
-     * @deprecated
-     * @param image         Frame taken from the camera.
-     * @param cameraName    Name of the camera taking the picture
-     *
-     * @return Frame of the cropped image
-     */
-    private static Mat cropImage(Mat image, String cameraName)
-    {
-        Mat output = null;
-        int x = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_X);
-        int y = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_Y);
-        int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
-        int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
-        //ErrorLogging.logError("DEBUG: Crop dimensions:");
-        //ErrorLogging.logError("DEBUG: X = " + x);
-        //ErrorLogging.logError("DEBUG: Y = " + y);
-        //ErrorLogging.logError("DEBUG: Width = " + width);
-        //ErrorLogging.logError("DEBUG: Height = " + height);
-        //ErrorLogging.logError("DEBUG: Original image size: ");
-        //ErrorLogging.logError("DEBUG: Width: " + image.cols());
-        //ErrorLogging.logError("DEBUG: Height: " + image.rows());
-
-        IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
-        CvRect crop = new CvRect();
-        crop.x(x); crop.y(y); crop.width(width); crop.height(height);
-        cvSetImageROI(temp,crop);
-        IplImage croppedImage = cvCreateImage(cvGetSize(temp), temp.depth(),temp.nChannels());
-        cvCopy(temp,croppedImage);
-        output = MAT_CONVERTER.convert(MAT_CONVERTER.convert(croppedImage));
-        //Old code; Throws runtime exception - Failed assertion that all inputs are safe. Not entirely sure why though.
-        //var cropRectangle = new Rect(x,y,width,height);
-        //output = image.apply(cropRectangle);
-        ////output = new Mat(image,cropRectangle);
-        return output;
-    }
-
     /**
      * Put the given image through a binary threshold.
      * This reduces the image from greyscale to only pure white and black pixels.

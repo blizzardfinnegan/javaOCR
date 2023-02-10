@@ -52,15 +52,20 @@ sudo systemctl disable pigpiod
 The first command stops all currently running `pigpio` daemon processes. The second command disables the daemon, so that it will not start again if you reboot.
 
 2. You will need to create a new `udev` rule. This creates a symlink for a given camera, plugged into a specific USB port, and allows the Java code to consistently communicate with the camera. An example `udev` rule is given in this repo (`83-webcam.rules`), but will need to be modified to your specific device. 
-	1. Copy the example `udev` rule file to your Raspberry Pi, and put it in `/etc/udev/rules.d/` (if this directory does not exist, create it). It is recommended to do this in the terminal, by running the following commands:
+	1. Copy the example `udev` rule file to your Raspberry Pi, and put it in `/etc/udev/rules.d/` (if this directory does not exist, create it). This is done by running the followwing command in the terminal.
 
 	```bash
 	sudo cp /media/pi/[flash drive]/83-webcam.rules /etc/udev/rules.d/
 	```
 
-	This is a soft-requirement, as interacting with files in this location requires administrative privileges. 
+	Replace the `[flash drive]` portion of the above line with the name of your flash drive. 
+	Alternatively, you can go to your flash drive in the File Manager, and press the `F4` key to open a terminal in that location. Then, enter the following command:
 
-	2. Open the copied file in the text editor of your choice, and open a terminal window as well. It is recommended to do this by running the following command in a terminal:
+	```bash
+	sudo cp 83-webcam.rules /etc/udev/rules.d/
+	```
+
+	2. Open the copied file in the text editor of your choice, and open a terminal window as well. This is done easiest by running the following command in a terminal:
 
 	```bash
 	sudo -e /etc/udev/rules.d/83-webcam.rules
@@ -68,7 +73,7 @@ The first command stops all currently running `pigpio` daemon processes. The sec
 
 	This will open a terminal-based text editor, crucially, *as an admin*, which will allow you to save the file.
 
-	3. Run the following command in your terminal window. 
+	3. Run the following command in a second terminal window. 
 
 	```bash
 	sudo udevadm monitor -p | grep ID_PATH=
