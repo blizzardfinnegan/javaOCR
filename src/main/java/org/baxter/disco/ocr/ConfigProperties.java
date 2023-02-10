@@ -69,9 +69,9 @@ public enum ConfigProperties
     private ConfigProperties(String print, String config, double defaultValue) { this.print = print; this.config = config; this.defaultValue = defaultValue; }
 
     /**
-     * Getter for the config-readable name of the value.
+     * Getter for the default value for this config property
      *
-     * @return String of the name of the value.
+     * @return double of the default value
      */
     public double getDefaultValue()
     { return defaultValue; }

@@ -335,8 +335,8 @@ public class ConfigFacade
         {
             for(ConfigProperties property : ConfigProperties.values())
             {
-                String propertyName = camera + "." + property.toString();
-                String propertyValue =configMap.get(camera).get(property).toString();
+                String propertyName = camera + "." + property.getConfig();
+                String propertyValue = configMap.get(camera).get(property).toString();
                 CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
         }
