@@ -25,7 +25,7 @@ public class Cli
      * Complete build version number
      */
 
-    private static final String version = "4.1.0";
+    private static final String version = "4.2.0";
     /**
      * Currently saved iteration count.
      */
@@ -731,6 +731,7 @@ public class Cli
             LOCK.unlock();
             resultMap.clear();
         }
+        DataSaving.closeWorkbook(cameraList.size());
         println("=======================================");
         println("Testing complete!");
         //});

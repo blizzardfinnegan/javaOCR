@@ -6,6 +6,7 @@ import java.util.Set;
 import static org.bytedeco.opencv.global.opencv_imgproc.CV_BGR2GRAY;
 import static org.bytedeco.opencv.global.opencv_imgproc.THRESH_BINARY;
 import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
+import static org.bytedeco.opencv.global.opencv_imgproc.threshold;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.cvSaveImage;
 import static org.bytedeco.opencv.global.opencv_highgui.selectROI;
