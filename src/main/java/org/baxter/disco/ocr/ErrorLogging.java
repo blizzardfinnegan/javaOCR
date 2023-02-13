@@ -1,5 +1,6 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,6 +10,7 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+//Error parsing import
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
@@ -53,10 +55,16 @@ public class ErrorLogging
      */
     public static final DateTimeFormatter fileDatetime;
 
+    //This will always run first, before anything else in this file
     static
     {
+        //Make sure the filename formatter is compatible with Windows and Linux
         fileDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
+
+        //Local formatter for logs
         datetime = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        //Create a new log file on every run; put them all in a common folder
         logFile =  "logs/" + fileDatetime.format(LocalDateTime.now()) + "-log.txt";
         File logDirectory = new File("logs");
         File outFile = new File(logFile);

@@ -1,5 +1,6 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,8 +25,8 @@ public class Cli
     /**
      * Complete build version number
      */
-
     private static final String version = "4.2.0";
+
     /**
      * Currently saved iteration count.
      */
@@ -76,6 +77,7 @@ public class Cli
 
     //private static Thread safeThread;
 
+    //Start of program message; always runs first
     static
     {
         ErrorLogging.logError("START OF PROGRAM");
@@ -83,49 +85,61 @@ public class Cli
 
     public static void main(String[] args)
     {
+        //Beginning message to user
         ErrorLogging.logError("========================");
         ErrorLogging.logError("Accuracy Over Life Test");
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
         try{
+            //Create scanner for user input from the console
             inputScanner = new Scanner(System.in);
 
-            //ErrorLogging.logError("DEBUG: Setting up multithreading...");
+            //Initialise the fixture, start monitor thread
             fixture = new MovementFacade(LOCK);
-            //ErrorLogging.logError("DEBUG: Multithreading complete!");
             
-            //ErrorLogging.logError("DEBUG: Importing config...");
+            //Initialise the config
             ConfigFacade.init();
-            //ErrorLogging.logError("DEBUG: Config imported!");
 
+            //Create the user input value
             int userInput = 0;
 
+            //Main menu loop
             do
             {
+                //Show the main menu, wait for user input
                 printMainMenu();
                 userInput = inputFiltering(inputScanner.nextLine());
+
+                //Perform action based on user input
                 switch (userInput)
                 {
                     case 1:
+                        //Test fixture movement, modify fixture values as necessary
                         testMovement();
                         break;
                     case 2:
+                        //Warn user that starting cameras will take a moment.
                         println("Setting up cameras...");
                         println("This may take a moment...");
                         configureCameras();
+                        //Set that cameras are successfully configured, to mute runTests warning
                         camerasConfigured = true;
                         break;
                     case 3:
+                        //Set serials of the DUTs
                         setDUTSerials();
-                        //serialsSet = true;
                         break;
                     case 4:
+                        //Change the number of iterations to run the tests
                         setIterationCount();
                         break;
                     case 5:
+                        //Set cameras to use in testing
                         setActiveCameras();
                         break;
                     case 6:
+                        //Warn user that cameras haven't been set up, if they haven't been set up
+                        //Won't warn user if config was imported successfully
                         if(!camerasConfigured)
                         {
                             prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
@@ -138,11 +152,14 @@ public class Cli
                             {
                                 break;
                             }
+                            //Save in the logs that cameras may not have been configured.
                             else 
                             {
                                 ErrorLogging.logError("WARNING! - Potential for error: Un-initialised cameras.");
                             }
                         }
+
+                        //If there's an unset camera serial, prompt the user to go back and set that up
                         for(String cameraName : OpenCVFacade.getCameraNames())
                         {
                             if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
@@ -170,12 +187,16 @@ public class Cli
                                 ErrorLogging.logError("WARNING! - Potential for error: Un-initialised DUT Serial numbers.");
                             }
                         }
+
+                        //Run tests for the given number of iterations
                         runTests();
                         break;
                     case 7:
+                        //Show help menu
                         printHelp();
                         break;
                     case 8:
+                        //Leave the menu
                         break;
                     default:
                         //Input handling already done by inputFiltering()
@@ -184,11 +205,13 @@ public class Cli
         } while (userInput != mainMenuOptionCount);
 
         }
+        //If anything ever goes wrong, catch the error and exit
         catch(Exception e) 
         { 
             ErrorLogging.logError(e); 
             ErrorLogging.logError("ERROR CAUGHT - CLOSING PROGRAM.");
         }
+        //Always return the fixture back to the upper limit switch, close all open connections safely
         finally
         {
             close();
@@ -401,6 +424,7 @@ public class Cli
     private static void testMovement()
     {
         int userInput = -1;
+        //Loop to allow multiple changes to device GPIO settings
         do
         {
             println("Testing movement...");
@@ -455,41 +479,19 @@ public class Cli
     private static void configureCameras()
     {
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
-        //println(cameraList.toString());
-        
-        // The below code should be unnecessary now. Leaving in for now to ensure things work properly.
-        ////Open a single new thread, so the canvas 
-        ////used further down to display the temporary 
-        ////image doesn't accidentally kill the program.
-        ////Created at beginning of function call to reduce 
-        ////thread spawn count.
-        ////See also: https://docs.oracle.com/javase/8/docs/api/java/awt/doc-files/AWTThreadIssues.html#Autoshutdown
-        //Runnable r = new Runnable() {
-        //    public void run() {
-        //        Object o = new Object();
-        //        try {
-        //            synchronized (o) {
-        //                o.wait();
-        //            }
-        //        } catch (InterruptedException ie) {
-        //        }
-        //    }
-        //};
-        //Thread t = new Thread(r);
-        //t.setDaemon(false);
-        //t.start();
 
+        //Always wake the camera, to ensure that the image is useful
         fixture.iterationMovement(true);
         double tesseractValue = 0.0;
 
+        //Main camera config loop
         do
         {
-            //Main menu
+            //Show the menu
             printCameraMenu(cameraList);
 
             //Pick a camera to configure
             int userInput;
-
             String cameraName = "";
             do
             {
@@ -503,13 +505,19 @@ public class Cli
             else if(userInput < 0) continue;
             else cameraName = cameraList.get((userInput));
 
+            //Single camera config loop
             do
             {
+                //Press button twice, to make sure the DUT is awake
                 fixture.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
+                fixture.pressButton();
+                try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
+
                 //Show image 
                 File image = OpenCVFacade.showImage(cameraName);
 
+                //Parse the image with Tesseract, to show user what the excel output will be
                 tesseractValue = TesseractFacade.imageToDouble(image);
 
                 //User input parsing
@@ -557,14 +565,16 @@ public class Cli
                 else if(modifiedProperty == ConfigProperties.CROP_X)
                 { OpenCVFacade.setCrop(cameraName); }
 
-                //Modify config values
-                else if(modifiedProperty != ConfigProperties.PRIME)
+                //Modify number of composite frames, or threshold value
+                else if(modifiedProperty == ConfigProperties.COMPOSITE_FRAMES ||
+                        modifiedProperty == ConfigProperties.THRESHOLD_VALUE)
                 {
-                    prompt("Enter new value for this property (" + modifiedProperty.toString() + ", currently : " +
+                    prompt("Enter new value for this property (" + modifiedProperty.toString() + ": " +
+                            //Prompt is in int, as the ultimate values are cast
+                            //to int anyways, a decimal would be confusing
                             (int)ConfigFacade.getValue(cameraName,modifiedProperty) + "): ");
                     userInput = inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
-                    //if(canvas != null) canvas.dispose();
                 }
 
                 //Exit loop
@@ -573,6 +583,7 @@ public class Cli
 
         } while(true);
 
+        //Save the current config to the config file
         ConfigFacade.saveCurrentConfig();
         println("Configuration complete!");
     }
@@ -582,7 +593,9 @@ public class Cli
      */
     private static void setDUTSerials()
     {
+        //Get a list of available cameras
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+        //Main serial setting loop
         do
         {
             //Main menu
@@ -590,12 +603,12 @@ public class Cli
 
             //Pick a camera to configure
             int userInput;
-
             String cameraName = "";
             do
             {
                 prompt("Enter the camera you wish to set the serial of: ");
                 userInput = inputFiltering(inputScanner.nextLine());
+                //Compensate for off-by-one errors
                 userInput--;
             } while (cameraList.size() < userInput || userInput < 0);
 
@@ -603,6 +616,8 @@ public class Cli
             if(userInput == (cameraList.size())) break;
             else cameraName = cameraList.get((userInput));
 
+            //Save the serial number.
+            //No parsing is ever done on this serial number.
             prompt("Enter the serial number you wish to use for this camera: ");
             ConfigFacade.setSerial(cameraName,inputScanner.nextLine());
 
@@ -629,15 +644,17 @@ public class Cli
      */
     private static void setActiveCameras()
     {
+        //Get available cameras
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
+
+        //Main loop
         do
         {
-            //Main menu
+            //Print menu
             printActiveToggleMenu(cameraList);
 
             //Pick a camera to configure
             int userInput;
-
             String cameraName = "";
             do
             {
@@ -650,6 +667,7 @@ public class Cli
             if(userInput == (cameraList.size())) break;
             else cameraName = cameraList.get((userInput));
 
+            //Toggle whether the camera is active, at the config level
             double newValue = ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE);
             newValue = Math.abs(newValue - 1);
             ConfigFacade.setValue(cameraName,ConfigProperties.ACTIVE,newValue);
@@ -664,10 +682,15 @@ public class Cli
     {
         println("====================================");
         ErrorLogging.logError("Initialising tests...");
+
+        //Bring the iteration count into the function as a final variable
+        //useful for multithreading, which isn't necessary in CLI
         final int localIterations = iterationCount;
-        //testingThread = new Thread(() ->
-        //{
+
+        //TODO: Hard-coded value that needs fixing
         boolean prime = false;
+
+        //Create a List of *active* cameras.
         List<String> cameraList = new ArrayList<>();
         for(String cameraName : OpenCVFacade.getCameraNames())
         {
@@ -682,43 +705,67 @@ public class Cli
                 cameraList.add(cameraName);
             }
         }
+
+        //Initialise the workbook, with the number of cameras and the final output location
         DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),cameraList.size());
+
+        //Do 2 dummy passes, to make completely sure that the devices are awake
         ErrorLogging.logError("DEBUG: Waking devices...");
         fixture.iterationMovement(prime);
         fixture.pressButton();
         fixture.iterationMovement(prime);
-        ErrorLogging.logError("DEBUG: Starting tests...");
+
+        //Create final maps for result images, result values, and camera names
         Map<File,Double> resultMap = new HashMap<>();
         Map<String,File> cameraToFile = new HashMap<>();
+
+        //Initialise cameraToFile, so keys don't shuffle.
         for(String cameraName : cameraList)
         {
             cameraToFile.put(cameraName,new File("/dev/null"));
         }
+
+        ErrorLogging.logError("DEBUG: Starting tests...");
+        //Start actually running tests
+        //All portions of the test check with the GPIO Run/Pause switch before 
+        //continuing, using the Lock object.
         for(int i = 0; i < localIterations; i++)
         {
             println("");
             ErrorLogging.logError("====================================");
             ErrorLogging.logError("Starting iteration " + (i+1) + " of " + localIterations + "...");
+
+            //Move the fixture for one iteration, with whether or not the DUTs need to be primed
             while(!LOCK.tryLock()) {}
             fixture.iterationMovement(prime);
             LOCK.unlock();
+
+            //Wait for the DUT to display an image
             try{ Thread.sleep(1500); } catch(Exception e){ ErrorLogging.logError(e); }
+
+            //For all available cameras:
+            //  take an image, process it, and save it to a file
+            //  put that file into the camera name file Map
             for(String cameraName : cameraList)
             {
                 while(!LOCK.tryLock()) {}
                 File file = OpenCVFacade.completeProcess(cameraName);
                 LOCK.unlock();
+
                 while(!LOCK.tryLock()) {}
                 cameraToFile.replace(cameraName,file);
                 LOCK.unlock();
             }
+
+            //ONCE ALL IMAGES ARE CREATED
+            //Re-iterate over list of cameras, parse the images with Tesseract, then add 
+            //the parsed value to the map
             for(String cameraName : cameraList)
             {
                 while(!LOCK.tryLock()) {}
                 File file = cameraToFile.get(cameraName);
                 LOCK.unlock();
                 while(!LOCK.tryLock()) {}
-                //ErrorLogging.logError("DEBUG: File passed to Tesseract: " + file.getAbsolutePath());
                 Double result = TesseractFacade.imageToDouble(file);
                 LOCK.unlock();
                 while(!LOCK.tryLock()) {}
@@ -726,16 +773,19 @@ public class Cli
                 ErrorLogging.logError("Tesseract final output: " + result);
                 LOCK.unlock();
             }
+            //Write all given values to the Excel file
             while(!LOCK.tryLock()) {}
             DataSaving.writeValues(i,resultMap,cameraToFile);
             LOCK.unlock();
+            //Clear the result map
+            //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
         }
+        //Close the Excel workbook
         DataSaving.closeWorkbook(cameraList.size());
+        //Alert the user to testing being complete
         println("=======================================");
         println("Testing complete!");
-        //});
-        //testingThread.start();
     }
 
 
@@ -876,7 +926,7 @@ public class Cli
      */
     private static void invalidInput(String input)
     {
-        ErrorLogging.logError("Invalid User Input!!! - Message to user: '" + input + "'");
+        ErrorLogging.logError("DEBUG: Invalid User Input!!! - Message to user: '" + input + "'");
         println("");
         println("=================================================");
         println("Invalid input! - " + input);

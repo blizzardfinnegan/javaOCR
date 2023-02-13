@@ -1,5 +1,6 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -7,18 +8,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+//Generic spreadsheet imports
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+
+//Excel-specific imports
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFRow;
-//import org.apache.poi.hssf.usermodel.HSSF
 import org.apache.poi.hssf.usermodel.HSSFSheet;
+import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
 
 /**
  * Facade for saving data out to a file.
@@ -87,97 +90,119 @@ public class DataSaving
         DataSaving.failRange = failRange;
         boolean output = false;
         outputFile = new File(filename);
-        try
+        DataFormat format = null;
+
+        //Create workbook, Sheet, and DataFormat object
+        //HSSF objects are used, as these are compatible with Microsoft Excel
+        //XSSF objects were initially used, but caused issues.
+        outputWorkbook = new HSSFWorkbook(); 
+        outputSheet = outputWorkbook.createSheet();
+        format = outputWorkbook.createDataFormat();
+
+        //Create a default style for values.
+        defaultStyle = outputWorkbook.createCellStyle();
+        defaultStyle.setDataFormat(format.getFormat("0.0"));
+
+        //Create a style for the final percentage values
+        finalValuesStyle = outputWorkbook.createCellStyle();
+        finalValuesStyle.setDataFormat(format.getFormat("0.000%"));
+
+        //Note on backgrounds:
+        //Excel cells have a foreground and a background, allowing
+        //for various patterned backgrounds. 
+        //To set a solid background, and NOT modify the font, 
+        //as below is shown, we need to set the foreground color.
+        //As of POI 5.2.3, there is no defined fill type 
+        //SOLID_BACKGROUND or similar
+        failStyle = outputWorkbook.createCellStyle();
+        failStyle.setFillForegroundColor(HSSFColorPredefined.RED.getIndex());
+        failStyle.setDataFormat(format.getFormat("0.0"));
+        failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        //Create a style for error-ed, but not out-of-range, values
+        errorStyle = outputWorkbook.createCellStyle();
+        errorStyle.setFillForegroundColor(HSSFColorPredefined.YELLOW.getIndex());
+        errorStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+
+        //Create the header
+        int startingRow = outputSheet.getLastRowNum();
+        HSSFRow row = outputSheet.createRow(++startingRow);
+        int cellnum = 0;
+        HSSFCell cell = row.createCell(cellnum++);
+        cell.setCellValue("Iteration");
+        //Create a section for every camera
+        for(int i = 0; i < camCount; i++)
         {
-            outputWorkbook = new HSSFWorkbook();
-            outputSheet = outputWorkbook.createSheet();
-            DataFormat format = outputWorkbook.createDataFormat();
-
-            defaultStyle = outputWorkbook.createCellStyle();
-            defaultStyle.setDataFormat(format.getFormat("0.0"));
-
-            finalValuesStyle = outputWorkbook.createCellStyle();
-            finalValuesStyle.setDataFormat(format.getFormat("0.000%"));
-
-            //Note on backgrounds:
-            //Excel cells have a foreground and a background, allowing
-            //for various patterned backgrounds. 
-            //To set a solid background, and NOT modify the font, 
-            //as below is shown, we need to set the foreground color.
-            //As of POI 5.2.3, there is no defined fill type 
-            //SOLID_BACKGROUND or similar
-            failStyle = outputWorkbook.createCellStyle();
-            failStyle.setFillForegroundColor(HSSFColorPredefined.RED.getIndex());
-            failStyle.setDataFormat(format.getFormat("0.0"));
-            failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            errorStyle = outputWorkbook.createCellStyle();
-            errorStyle.setFillForegroundColor(HSSFColorPredefined.YELLOW.getIndex());
-            errorStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            int startingRow = outputSheet.getLastRowNum();
-            HSSFRow row = outputSheet.createRow(++startingRow);
-            int cellnum = 0;
-            HSSFCell cell = row.createCell(cellnum++);
-            cell.setCellValue("Iteration");
-            for(int i = 0; i < camCount; i++)
-            {
-                cell = row.createCell(cellnum++);
-                cell.setCellValue("Serial");
-                cell = row.createCell(cellnum++);
-                cell.setCellValue("Image Location");
-                cell = row.createCell(cellnum++);
-                cell.setCellValue("Read Value");
-                cell = row.createCell(cellnum++);
-                cell.setCellValue("");
-            }
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-            outputWorkbook.write(outputStream);
-            output = true;
-            outputStream.close();
+            cell = row.createCell(cellnum++);
+            cell.setCellValue("Serial");
+            cell = row.createCell(cellnum++);
+            cell.setCellValue("Image Location");
+            cell = row.createCell(cellnum++);
+            cell.setCellValue("Read Value");
+            cell = row.createCell(cellnum++);
+            cell.setCellValue("");
         }
-        catch(Exception e) { ErrorLogging.logError(e); }
+
+        //Save to file
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile))
+        { outputWorkbook.write(outputStream); }
+        catch(Exception e) {ErrorLogging.logError(e);}
 
         return output;
     }
 
     /**
+     * Add final totals to the excel document. 
+     * Run at the end of testing.
      *
+     * @param cameraCount   The number of cameras that were used.
      */
     public static void closeWorkbook(int cameraCount)
     {
+        //Get the last row, add another row below it, and name the first cell "Totals:"
         int lastRowOfData = outputSheet.getLastRowNum();
         HSSFRow finalRow = outputSheet.createRow(++lastRowOfData);
         HSSFCell titleCell = finalRow.createCell(0);
         titleCell.setCellValue("Totals:");
 
-        ErrorLogging.logError("DEBUG: 3 ?= " + (cameraCount*3));
+        //ErrorLogging.logError("DEBUG: 3 ?= " + (cameraCount*3));
+        
+        //For each camera, create a unique total line
         for(int column = 3; column <= (cameraCount*3); column+=3)
         {
+            //Create a cell in the right column
             HSSFCell cell = finalRow.createCell(column);
             FormulaEvaluator formulaEvaluator = outputWorkbook.getCreationHelper().createFormulaEvaluator();
             String columnName = CellReference.convertNumToColString(column);
+            
+            //Intermediate variable to store the array of possible values
+            //Dollar signs in use here indicate that if the cell is copied and pasted, 
+            //the same cells will be referenced
             String verticalArray = String.format("$%s$2:$%s$%s",columnName,columnName,lastRowOfData);
             ErrorLogging.logError("DEBUG: Vertical Array: " + verticalArray);
+
+            //Create the error formula, then set it as the cell's formula.
             String formula = String.format(
                 "(COUNT(%s)-COUNTIF(%s,{\"<%s\",\"%s\"}))/(COUNT(%s))",
                 verticalArray,
                 verticalArray, (targetTemp - failRange), (targetTemp + failRange), 
                 verticalArray);
             cell.setCellFormula(formula);
+
+            //Make the percentage human-readable
             cell.setCellStyle(finalValuesStyle);
 
+            //To make the cell be a readable value, you need to
+            //evaluate the formula within the cell.
             formulaEvaluator.evaluate(cell);
 
             ErrorLogging.logError("DEBUG: Formula: " + formula);
         }
 
-        try
-        {
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-            outputWorkbook.write(outputStream);
-            outputStream.close();
-        }
+        //Once all totals have been created, write to the file
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile))
+        { outputWorkbook.write(outputStream); }
         catch(Exception e) {ErrorLogging.logError(e);}
     }
 
@@ -245,13 +270,8 @@ public class DataSaving
             }
 
         }
-        try
-        {
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-            outputWorkbook.write(outputStream);
-            output = true;
-            outputStream.close();
-        }
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile))
+        { outputWorkbook.write(outputStream); output = true; }
         catch(Exception e) {ErrorLogging.logError(e);}
         return output;
     }
