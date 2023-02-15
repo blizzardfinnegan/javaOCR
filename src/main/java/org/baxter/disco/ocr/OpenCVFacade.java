@@ -31,9 +31,9 @@ import java.util.List;
 /**
  * Facade for the OpenCV package.
  * Performs image capture, as well as image manipulation.
- *
+ *  
  * @author Blizzard Finnegan
- * @version 1.5.0, 10 Feb. 2023
+ * @version 2.0.0, 15 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -195,7 +195,7 @@ public class OpenCVFacade
         //ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
         Frame outputImage = MAT_CONVERTER.convert(imread(imageLocation.getAbsolutePath()));
         String canvasTitle = "Camera " + cameraName + " Preview";
-        CanvasFrame canvas = new CanvasFrame(canvasTitle);
+        final CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
         return imageLocation;
     }
@@ -280,15 +280,16 @@ public class OpenCVFacade
      */
     public static Mat crop(Mat image, Rect roi, String cameraName)
     {
-        Mat output = null;
-        output = image.apply(roi);
-        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                              "."  + cameraName + "-preProcess.jpg";
-        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                MAT_CONVERTER.convert(output)));
+        Mat output = image.apply(roi).clone();
+        //IplImage croppedImage = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(output));
+        //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+        //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+        //                      "."  + cameraName + "-preProcess.jpg";
+        //cvSaveImage(fileLocation,croppedImage);
+        
         return output;
     }
+
 
     /**
      * Put the given image through a binary threshold.

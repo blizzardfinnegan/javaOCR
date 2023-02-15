@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.2.0";
+    private static final String version = "4.3.0";
 
     /**
      * Currently saved iteration count.

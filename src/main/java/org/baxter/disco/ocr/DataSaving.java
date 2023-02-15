@@ -27,7 +27,7 @@ import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 4.0.0, 13 Feb. 2023
+ * @version 4.0.1, 13 Feb. 2023
  */
 public class DataSaving
 {
@@ -184,7 +184,7 @@ public class DataSaving
 
             //Create the error formula, then set it as the cell's formula.
             String formula = String.format(
-                "(COUNT(%s)-COUNTIF(%s,{\"<%s\",\"%s\"}))/(COUNT(%s))",
+                "(COUNT(%s)-COUNTIF(%s,{\"<%s\",\">%s\"}))/(COUNT(%s))",
                 verticalArray,
                 verticalArray, (targetTemp - failRange), (targetTemp + failRange), 
                 verticalArray);
