@@ -9,6 +9,7 @@ module org.baxter.disco.ocr {
     requires org.apache.commons.configuration2;
     requires org.apache.xmlbeans;
     requires org.bytedeco.tesseract;
+    requires org.bytedeco.leptonica;
     requires org.bytedeco.opencv;
     requires org.bytedeco.javacpp;
     requires javafx.graphics;

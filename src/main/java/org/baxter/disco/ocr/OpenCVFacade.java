@@ -3,13 +3,23 @@ package org.baxter.disco.ocr;
 import java.util.Map;
 import java.util.Set;
 
-import static org.bytedeco.opencv.global.opencv_imgproc.*;
-import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
-import static org.bytedeco.opencv.global.opencv_highgui.*;
-import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.CV_BGR2GRAY;
+import static org.bytedeco.opencv.global.opencv_imgproc.THRESH_BINARY;
+import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
+import static org.bytedeco.opencv.global.opencv_imgproc.threshold;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.cvSaveImage;
+import static org.bytedeco.opencv.global.opencv_highgui.selectROI;
+import static org.bytedeco.opencv.global.opencv_core.bitwise_and;
 
-import org.bytedeco.javacv.*;
-import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.CanvasFrame;
+import org.bytedeco.javacv.FrameGrabber;
+import org.bytedeco.javacv.OpenCVFrameGrabber;
+import org.bytedeco.javacv.OpenCVFrameConverter;
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.IplImage;
+import org.bytedeco.opencv.opencv_core.Rect;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -21,9 +31,9 @@ import java.util.List;
 /**
  * Facade for the OpenCV package.
  * Performs image capture, as well as image manipulation.
- *
+ *  
  * @author Blizzard Finnegan
- * @version 1.5.0, 10 Feb. 2023
+ * @version 2.0.0, 15 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -185,7 +195,7 @@ public class OpenCVFacade
         //ErrorLogging.logError("DEBUG: Image location: " + imageLocation.getAbsolutePath());
         Frame outputImage = MAT_CONVERTER.convert(imread(imageLocation.getAbsolutePath()));
         String canvasTitle = "Camera " + cameraName + " Preview";
-        CanvasFrame canvas = new CanvasFrame(canvasTitle);
+        final CanvasFrame canvas = new CanvasFrame(canvasTitle);
         canvas.showImage(outputImage);
         return imageLocation;
     }
@@ -270,15 +280,16 @@ public class OpenCVFacade
      */
     public static Mat crop(Mat image, Rect roi, String cameraName)
     {
-        Mat output = null;
-        output = image.apply(roi);
-        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                              "."  + cameraName + "-preProcess.jpg";
-        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                MAT_CONVERTER.convert(output)));
+        Mat output = image.apply(roi).clone();
+        //IplImage croppedImage = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(output));
+        //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+        //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+        //                      "."  + cameraName + "-preProcess.jpg";
+        //cvSaveImage(fileLocation,croppedImage);
+        
         return output;
     }
+
 
     /**
      * Put the given image through a binary threshold.
