@@ -5,10 +5,12 @@ module org.baxter.disco.ocr {
     requires com.pi4j.library.pigpio;
     //requires javafx.fxml;
     //requires javafx.controls;
+    requires javafx.swing;
     requires org.apache.poi.poi;
     requires org.apache.commons.configuration2;
     requires org.apache.xmlbeans;
     requires org.bytedeco.tesseract;
+    requires org.bytedeco.leptonica;
     requires org.bytedeco.opencv;
     requires org.bytedeco.javacpp;
     //requires javafx.graphics;

@@ -3,8 +3,8 @@ package org.baxter.disco.ocr;
 import java.io.File;
 import java.util.Scanner;
 
-import org.bytedeco.leptonica.*;
-import org.bytedeco.leptonica.global.*;
+import org.bytedeco.leptonica.PIX;
+import static org.bytedeco.leptonica.global.leptonica.pixRead;
 import org.bytedeco.tesseract.TessBaseAPI;
 
 /**
@@ -14,7 +14,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 2.0.0, 06 Feb. 2023
+ * @version 2.1.0, 06 Feb. 2023
  */
 public class TesseractFacade
 {
@@ -53,7 +53,7 @@ public class TesseractFacade
         double output = Double.NEGATIVE_INFINITY;
 
         //Import image, parse image
-        PIX importedImage = lept.pixRead(file.getAbsolutePath());
+        PIX importedImage = pixRead(file.getAbsolutePath());
         api.SetImage(importedImage);
         String stringOutput = api.GetUTF8Text().getString();
 

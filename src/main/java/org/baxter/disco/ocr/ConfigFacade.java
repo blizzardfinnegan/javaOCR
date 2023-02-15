@@ -1,13 +1,9 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.configuration2.*;
-import org.apache.commons.configuration2.builder.*;
-import org.apache.commons.configuration2.builder.fluent.*;
-
 import java.util.List;
 import java.io.File;
 import java.nio.file.Files;
@@ -15,6 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+
+//Apache Commons Configuration imports
+import org.apache.commons.configuration2.INIConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
 
 /**
  * Facade for working with config files, using the Apache Commons 
@@ -72,10 +73,13 @@ public class ConfigFacade
      */
     private static INIConfiguration CONFIG_STORE;
 
-    static
+    //This block will ALWAYS run first.
+    static 
     {
         ErrorLogging.logError("Starting configuration setup...");
+        //Give CONFIG_STORE an intentionally bad value
         CONFIG_STORE = null;
+        //See if a config file already exists
         File configFile = new File(configFileLocation);
         boolean newConfig = true;
         try{ newConfig = configFile.createNewFile(); }
@@ -85,6 +89,7 @@ public class ConfigFacade
         CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class)
             .configure(new Parameters().fileBased().setFile(configFile));
 
+        //Try to import the config
         ErrorLogging.logError("Attempting to import config..."); 
         if(!newConfig)
         {
@@ -93,17 +98,29 @@ public class ConfigFacade
             finally 
             { 
                 if(CONFIG_STORE == null) 
-                    ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); 
+                    ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful "+
+                            "config initialisation. Please delete the current config "+
+                            "file, then restart this program!"); 
                 else
+                {
                     ErrorLogging.logError("Config successfully imported!");
+                    loadConfig(); 
+                    ErrorLogging.logError("Configuration settings loaded!");
+                }
             }
         }
+
+        //If there isn't a config file yet (or rather, if we just made a new one)
+        //save the default values to it
         else
         {
             ErrorLogging.logError("Unable to import config. Loading defaults...");
-            saveDefaultConfig();
+            boolean saveSuccessful = saveDefaultConfig();
+            if(!saveSuccessful) ErrorLogging.logError("Save config failed!!!");
+            else ErrorLogging.logError("Configuration settings set up!");
         }
 
+        //Make necessary directories, if not already available
         ErrorLogging.logError("Creating image storage directories...");
         File imageLocation  = new File(imageSaveLocation);
         imageLocation.mkdir();
@@ -114,21 +131,13 @@ public class ConfigFacade
         File outputFileDirectory = new File("outputData");
         outputFileDirectory.mkdir();
 
+        //Create a new output file
         ErrorLogging.logError("Creating output file....");
         File outputFile = new File(outputSaveLocation);
         try{ outputFile.createNewFile(); }
         catch(Exception e){ ErrorLogging.logError(e); }
-        if(newConfig) 
-        {
-            boolean saveSuccessful = saveDefaultConfig();
-            if(!saveSuccessful) ErrorLogging.logError("Save config failed!!!");
-            else ErrorLogging.logError("Configuration settings set up!");
-        }
-        else 
-        { 
-            loadConfig(); 
-            ErrorLogging.logError("Configuration settings loaded!");
-        }
+
+        //Autosave the config
         CONFIG_BUILDER.setAutoSave(true);
     }
     /**
@@ -150,6 +159,7 @@ public class ConfigFacade
         double output = 0.0;
         if(!configMap.keySet().contains(cameraName)) 
         {
+            //Log failure information
             ErrorLogging.logError("CONFIG ERROR!!! - Invalid camera name: " + cameraName);
             ErrorLogging.logError("\tKey set: " + configMap.keySet().toString());
             ErrorLogging.logError("\tProperty: " + property.getConfig());
@@ -160,17 +170,15 @@ public class ConfigFacade
         output = cameraConfig.get(property);
         //Debug logger. 
         //NOTE THAT THIS BREAKS TUI MENUS, AS OF ErrorLogging 1.1.0
-        //ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName + "/" + property.getConfig() + " = " + output);
+        //ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName 
+        //                      + "/" + property.getConfig() + " = " + output);
         return output;
     }
 
     /**
-     * Initialises local list of available cameras
+     * Called to force early calling of the static block
      */
-    public static void init()
-    {
-        //ErrorLogging.logError("Starting import...");
-    }
+    public static void init() {}
 
     /**
      * Getter for the location of the output XLSX file.
@@ -222,7 +230,6 @@ public class ConfigFacade
     
     /**
      * Set a given config value.
-     * DOES NOT SAVE VALUE TO FILE.
      *
      * @param cameraName    Name of the camera 
      * @param property      name of the property 
@@ -270,6 +277,7 @@ public class ConfigFacade
     //**********************************************
     //SAVE AND LOAD SETTINGS
     //**********************************************
+    
     /**
      * Save current config to a user-defined file location.
      *
@@ -278,15 +286,34 @@ public class ConfigFacade
      */
     public static boolean saveDefaultConfig(String filename)
     {
+        //Get set of camera names
         boolean output = false;
         Set<String> cameraNames = OpenCVFacade.getCameraNames();
-        CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class).configure(new Parameters().fileBased().setFile(new File(filename)));
-        try
-        { 
-            CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
-        }
+
+        //Set the config builder to a file-based, INI configuration, 
+        //with the given filename
+        CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class)
+                             .configure(new Parameters().fileBased()
+                             .setFile(new File(filename)));
+
+        //Set CONFIG_STORE to the Configuration created by the Builder 
+        try { CONFIG_STORE = CONFIG_BUILDER.getConfiguration(); }
         catch(Exception e) { ErrorLogging.logError(e); }
-        finally { if(CONFIG_STORE == null) ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); }
+
+        //If the save default fails, warn the user that something is wrong
+        finally 
+        { 
+            if(CONFIG_STORE == null) 
+            {
+                ErrorLogging.logError("CONFIG INIT ERROR!!! - Unsuccessful config initialisation. Camera commands will fail!"); 
+                ErrorLogging.logError("CONFIG INIT ERROR!!! - Attempted file save point: "+ filename);
+            }
+        }
+
+        //Iterate over every camera
+        //  Create a map of the default values
+        //  Save the default values to the CONFIG_STORE
+        //  save the map to the main config map
         for(String camera : cameraNames)
         {
             Map<ConfigProperties,Double> cameraConfig = new HashMap<>();
@@ -301,15 +328,14 @@ public class ConfigFacade
             }
             configMap.put(camera,cameraConfig);
         }
+
+        //Save out to the file
         try
         { 
             CONFIG_BUILDER.save(); 
             output = true;
         }
-        catch(Exception e)
-        { 
-            ErrorLogging.logError(e); 
-        }
+        catch(Exception e){ ErrorLogging.logError(e); }
 
         return output;
     }
@@ -319,7 +345,8 @@ public class ConfigFacade
      *
      * @return true if saved successfully, otherwise false
      */
-    public static boolean saveDefaultConfig() { return saveDefaultConfig(configFileLocation); }
+    public static boolean saveDefaultConfig() 
+    { return saveDefaultConfig(configFileLocation); }
 
     /**
      * Save current config to a user-defined file location.
@@ -330,7 +357,12 @@ public class ConfigFacade
     public static boolean saveCurrentConfig(String filename)
     {
         boolean output = false;
+
+        //Get a list of all cameras
         List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
+
+        //For every available camera
+        //  get every current property value, save it to the CONFIG_STORE
         for(String camera : activeCameras)
         {
             for(ConfigProperties property : ConfigProperties.values())
@@ -340,15 +372,14 @@ public class ConfigFacade
                 CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
         }
+
+        //Save to the file
         try
         { 
             CONFIG_BUILDER.save(); 
             output = true;
         }
-        catch(Exception e)
-        { 
-            ErrorLogging.logError(e); 
-        }
+        catch(Exception e) { ErrorLogging.logError(e); }
 
         return output;
     }
@@ -358,7 +389,8 @@ public class ConfigFacade
      *
      * @return true if saved successfully, otherwise false
      */
-    public static boolean saveCurrentConfig() { return saveCurrentConfig(configFileLocation); }
+    public static boolean saveCurrentConfig() 
+    { return saveCurrentConfig(configFileLocation); }
 
     /** 
      * Load config from a user-defined file location.
@@ -368,60 +400,55 @@ public class ConfigFacade
      */
     public static boolean loadConfig(String filename)
     {
+        //Check if the current configMap is empty
         boolean emptyMap = configMap.keySet().size() == 0;
         boolean output = false;
+
+        //If the config file we're trying to load from doesn't exist, failover to saving
+        //the default values to a new file with that name
         File file = new File(filename);
-        try
-        {
-        if(file.createNewFile())
-            return saveDefaultConfig();
-        }
+        try{ if(file.createNewFile()) return saveDefaultConfig(); }
         catch(Exception e)
         {
             ErrorLogging.logError(e);
-            return saveDefaultConfig();
+            return saveDefaultConfig(filename);
         }
+
+        //At this point, the file should exist
+        //Get a list of camera names
         List<String> cameraNames = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(Files.isRegularFile(Path.of(file.toURI())))
         {
+            //Import the config file into a Java object
             try
             { 
-                CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class).configure(new Parameters().fileBased().setFile(file));
+                CONFIG_BUILDER = new FileBasedConfigurationBuilder<>(INIConfiguration.class)
+                    .configure(new Parameters().fileBased().setFile(file));
                 CONFIG_STORE = CONFIG_BUILDER.getConfiguration();
             }
             catch(Exception e){ ErrorLogging.logError(e); }
 
+            //Iterate over the imported object, saving the file's config values to the map
             Set<String> configSections = CONFIG_STORE.getSections();
-            //ErrorLogging.logError("DEBUG: imported sections - " + configSections.toString());
-            //ErrorLogging.logError("DEBUG: empty map? : " + (configMap.keySet().size() == 0));
-            //ErrorLogging.logError("DEBUG: imported section size - " + configSections.size());
             for(String sectionName : configSections)
             {
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
                 String subSectionPrefix = "";
                 for(String cameraName : cameraNames)
                 {
-                    if(cameraName == null)
-                    {
-                        ErrorLogging.logError("CONFIG LOAD ERROR!!! - Empty camera name.");
-                        continue;
-                    }
-                    else if(sectionName == null)
-                    {
-                        ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid imported section name.");
-                        continue;
-                    }
-                    else if(sectionName.equals(cameraName))
+                    if(sectionName.equals(cameraName))
                     {
                         subSectionPrefix = cameraName;
                         break;
                     }
                 }
 
+                //If an imported section fails, fallback to saving the default values to 
+                //the given location
                 if(subSectionPrefix.equals("")) 
                 {
                     ErrorLogging.logError("CONFIG LOAD ERROR!!! - Failed import from file. Setting default config.");
-                    return saveDefaultConfig();
+                    return saveDefaultConfig(filename);
                 }
 
                 for(ConfigProperties configState : ConfigProperties.values())
@@ -444,8 +471,8 @@ public class ConfigFacade
             output = true;
         }
 
+        //If something broke, complain
         if(!output) ErrorLogging.logError("CONFIG LOAD ERROR!!! - Invalid path.");
-        else Cli.configImported();
         return output;
     }
 
