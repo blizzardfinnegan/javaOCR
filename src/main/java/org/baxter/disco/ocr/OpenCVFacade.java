@@ -1,8 +1,6 @@
 package org.baxter.disco.ocr;
 
-import java.util.Map;
-import java.util.Set;
-
+//Static imports for OpenCV
 import static org.bytedeco.opencv.global.opencv_imgproc.CV_BGR2GRAY;
 import static org.bytedeco.opencv.global.opencv_imgproc.THRESH_BINARY;
 import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
@@ -12,15 +10,21 @@ import static org.bytedeco.opencv.global.opencv_imgcodecs.cvSaveImage;
 import static org.bytedeco.opencv.global.opencv_highgui.selectROI;
 import static org.bytedeco.opencv.global.opencv_core.bitwise_and;
 
+//JavaCV imports
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.CanvasFrame;
 import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.OpenCVFrameGrabber;
 import org.bytedeco.javacv.OpenCVFrameConverter;
+
+//OpenCV imports
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.IplImage;
 import org.bytedeco.opencv.opencv_core.Rect;
 
+//Standard imports
+import java.util.Map;
+import java.util.Set;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,7 +37,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *  
  * @author Blizzard Finnegan
- * @version 2.0.0, 15 Feb. 2023
+ * @version 2.0.1, 15 Feb. 2023
  */
 public class OpenCVFacade
 {
@@ -422,11 +426,11 @@ public class OpenCVFacade
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
 
         //Debug save of pre-processing image
-        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                              "."  + cameraName + "-preProcess.jpg";
-        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                MAT_CONVERTER.convert(imageList.get(0))));
+        //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+        //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+        //                      "."  + cameraName + "-preProcess.jpg";
+        //cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+        //                        MAT_CONVERTER.convert(imageList.get(0))));
 
         ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
         Mat finalImage = compose(imageList, threshold, crop, cameraName);

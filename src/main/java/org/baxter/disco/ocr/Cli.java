@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.5.0, 10 Feb. 2023
+ * @version 1.6.0, 10 Feb. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.0";
+    private static final String version = "4.3.1";
 
     /**
      * Currently saved iteration count.
@@ -777,6 +777,16 @@ public class Cli
             while(!LOCK.tryLock()) {}
             DataSaving.writeValues(i,resultMap,cameraToFile);
             LOCK.unlock();
+
+            //LO detection and avoidance
+            for(Double result : resultMap.values())
+            {
+                if(result <= 1.0 || result >= 117.0)
+                {
+                    fixture.goUp();
+                    try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                }
+            }
             //Clear the result map
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();

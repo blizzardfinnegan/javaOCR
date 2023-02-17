@@ -1,7 +1,9 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.util.concurrent.locks.Lock;
 
+//Pi4J imports
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
 import com.pi4j.io.gpio.digital.DigitalInput;
@@ -472,7 +474,7 @@ public class MovementFacade
         if(runSwitchThread.isAlive())
         {
                 exit = true;
-                try{ Thread.sleep(100); } catch(Exception e){}
+                try{ Thread.sleep(500); } catch(Exception e){}
         }
         pi4j.shutdown();
     }
@@ -502,8 +504,9 @@ public class MovementFacade
     public void iterationMovement(boolean prime)
     {
         goUp();
-        if(prime) pressButton();
+        //if(prime) pressButton();
         goDown();
+        try{ Thread.sleep(100); } catch(Exception e){ ErrorLogging.logError(e); }
         pressButton();
     }
 }
