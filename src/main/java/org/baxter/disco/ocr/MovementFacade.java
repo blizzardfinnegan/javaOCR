@@ -474,7 +474,7 @@ public class MovementFacade
         if(runSwitchThread.isAlive())
         {
                 exit = true;
-                try{ Thread.sleep(100); } catch(Exception e){}
+                try{ Thread.sleep(500); } catch(Exception e){}
         }
         pi4j.shutdown();
     }
