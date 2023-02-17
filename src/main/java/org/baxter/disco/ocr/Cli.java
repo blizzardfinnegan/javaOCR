@@ -785,6 +785,7 @@ public class Cli
                 {
                     fixture.goUp();
                     try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                    fixture.pressButton();
                 }
             }
             //Clear the result map
