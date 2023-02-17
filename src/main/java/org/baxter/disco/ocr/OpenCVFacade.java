@@ -426,11 +426,11 @@ public class OpenCVFacade
         List<Mat> imageList = takeBurst(cameraName, compositeFrames);
 
         //Debug save of pre-processing image
-        String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
-                              + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
-                              "."  + cameraName + "-preProcess.jpg";
-        cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
-                                MAT_CONVERTER.convert(imageList.get(0))));
+        //String fileLocation = ConfigFacade.getImgSaveLocation() + "/debug/" 
+        //                      + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + 
+        //                      "."  + cameraName + "-preProcess.jpg";
+        //cvSaveImage(fileLocation,MAT_CONVERTER.convertToIplImage(
+        //                        MAT_CONVERTER.convert(imageList.get(0))));
 
         ErrorLogging.logError("DEBUG: Size of output image list: " + imageList.size());
         Mat finalImage = compose(imageList, threshold, crop, cameraName);
