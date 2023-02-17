@@ -777,6 +777,16 @@ public class Cli
             while(!LOCK.tryLock()) {}
             DataSaving.writeValues(i,resultMap,cameraToFile);
             LOCK.unlock();
+
+            //LO detection and avoidance
+            for(Double result : resultMap.values())
+            {
+                if(result <= 1.0 || result >= 117.0)
+                {
+                    fixture.goUp();
+                    try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                }
+            }
             //Clear the result map
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
