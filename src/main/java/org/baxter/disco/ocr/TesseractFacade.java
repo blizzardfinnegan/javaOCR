@@ -1,10 +1,16 @@
 package org.baxter.disco.ocr;
 
+//Standard imports
 import java.io.File;
 import java.util.Scanner;
 
-import org.bytedeco.leptonica.PIX;
+//Static import of image reader
 import static org.bytedeco.leptonica.global.leptonica.pixRead;
+
+//Import Tesseract-capable image class
+import org.bytedeco.leptonica.PIX;
+
+//Import Tesseract API
 import org.bytedeco.tesseract.TessBaseAPI;
 
 /**

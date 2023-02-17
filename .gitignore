@@ -27,3 +27,6 @@ hs_err_pid*
 target
 *log.txt
 **/.vscode
+.classpath
+.settings
+.metadata
