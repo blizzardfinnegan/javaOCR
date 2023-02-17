@@ -4,7 +4,7 @@
   <groupId>org.baxter.disco</groupId>
   <artifactId>ocr</artifactId>
   <name>Disco OCR Accuracy Over Life Testing</name>
-  <version>4.3.0</version>
+  <version>4.3.1</version>
   <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>
   <organization>
     <name>Baxter International</name>

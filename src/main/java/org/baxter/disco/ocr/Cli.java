@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.5.0, 10 Feb. 2023
+ * @version 1.6.0, 10 Feb. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.0";
+    private static final String version = "4.3.1";
 
     /**
      * Currently saved iteration count.
