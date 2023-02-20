@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.6.0, 10 Feb. 2023
+ * @version 1.6.1, 10 Feb. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.1";
+    private static final String version = "4.3.2";
 
     /**
      * Currently saved iteration count.
@@ -735,59 +735,72 @@ public class Cli
             ErrorLogging.logError("====================================");
             ErrorLogging.logError("Starting iteration " + (i+1) + " of " + localIterations + "...");
 
-            //Move the fixture for one iteration, with whether or not the DUTs need to be primed
-            while(!LOCK.tryLock()) {}
-            fixture.iterationMovement(prime);
-            LOCK.unlock();
-
-            //Wait for the DUT to display an image
-            try{ Thread.sleep(1500); } catch(Exception e){ ErrorLogging.logError(e); }
-
-            //For all available cameras:
-            //  take an image, process it, and save it to a file
-            //  put that file into the camera name file Map
-            for(String cameraName : cameraList)
+            //Loop the below if errors are created errors include 
+            // - reading of LO on the DUT (Tesseract reads this generally as 1.0 or 117.0)
+            // - Failed reading from the DUT (Tesseract fails this reading, and TesseractFacade.imageToDouble() returns Double.NEGATIVE_INFINITY)
+            boolean fail = false;
+            do
             {
+                fail = false;
+                //Move the fixture for one iteration, with whether or not the DUTs need to be primed
                 while(!LOCK.tryLock()) {}
-                File file = OpenCVFacade.completeProcess(cameraName);
+                fixture.iterationMovement(prime);
                 LOCK.unlock();
 
-                while(!LOCK.tryLock()) {}
-                cameraToFile.replace(cameraName,file);
-                LOCK.unlock();
-            }
+                //Wait for the DUT to display an image
+                try{ Thread.sleep(1500); } catch(Exception e){ ErrorLogging.logError(e); }
 
-            //ONCE ALL IMAGES ARE CREATED
-            //Re-iterate over list of cameras, parse the images with Tesseract, then add 
-            //the parsed value to the map
-            for(String cameraName : cameraList)
-            {
-                while(!LOCK.tryLock()) {}
-                File file = cameraToFile.get(cameraName);
-                LOCK.unlock();
-                while(!LOCK.tryLock()) {}
-                Double result = TesseractFacade.imageToDouble(file);
-                LOCK.unlock();
-                while(!LOCK.tryLock()) {}
-                resultMap.put(file,result);
-                ErrorLogging.logError("Tesseract final output: " + result);
-                LOCK.unlock();
+                //For all available cameras:
+                //  take an image, process it, and save it to a file
+                //  put that file into the camera name file Map
+                for(String cameraName : cameraList)
+                {
+                    while(!LOCK.tryLock()) {}
+                    File file = OpenCVFacade.completeProcess(cameraName);
+                    LOCK.unlock();
+
+                    while(!LOCK.tryLock()) {}
+                    cameraToFile.replace(cameraName,file);
+                    LOCK.unlock();
+                }
+
+                //ONCE ALL IMAGES ARE CREATED
+                //Re-iterate over list of cameras, parse the images with Tesseract, then add 
+                //the parsed value to the map
+                for(String cameraName : cameraList)
+                {
+                    while(!LOCK.tryLock()) {}
+                    File file = cameraToFile.get(cameraName);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
+                    Double result = TesseractFacade.imageToDouble(file);
+                    LOCK.unlock();
+                    while(!LOCK.tryLock()) {}
+                    resultMap.put(file,result);
+                    ErrorLogging.logError("Tesseract final output: " + result);
+                    LOCK.unlock();
+                }
+
+                //LO detection and avoidance
+                for(Double result : resultMap.values())
+                {
+                    if(result <= 1.0 || result >= 117.0 || result == Double.NEGATIVE_INFINITY)
+                    {
+                        fixture.goUp();
+                        try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                        fixture.pressButton();
+                        fail = true;
+                        break;
+                    }
+                }
             }
+            while(fail == true);
+
             //Write all given values to the Excel file
             while(!LOCK.tryLock()) {}
             DataSaving.writeValues(i,resultMap,cameraToFile);
             LOCK.unlock();
 
-            //LO detection and avoidance
-            for(Double result : resultMap.values())
-            {
-                if(result <= 1.0 || result >= 117.0)
-                {
-                    fixture.goUp();
-                    try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
-                    fixture.pressButton();
-                }
-            }
             //Clear the result map
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
