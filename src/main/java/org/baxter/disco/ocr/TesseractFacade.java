@@ -81,6 +81,8 @@ public class TesseractFacade
                         output = output / 10;
                         if(output >= 200)
                             ErrorLogging.logError("OCR WARNING - OCR output is too high for DUT, potential misread.");
+                        else
+                            ErrorLogging.logError("OCR output successfully adjusted. Disregard warning.");
                     }
                     if(output <= -10) 
                         ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
