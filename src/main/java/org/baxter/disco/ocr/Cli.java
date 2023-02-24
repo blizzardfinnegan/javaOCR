@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.2";
+    private static final String version = "4.3.3";
 
     /**
      * Currently saved iteration count.
@@ -774,22 +774,20 @@ public class Cli
                     resultMap.put(file,result);
                     ErrorLogging.logError("Tesseract final output: " + result);
                     LOCK.unlock();
-                }
-
-                //LO detection and avoidance
-                for(Double result : resultMap.values())
-                {
-                    if(result <= 1.0 || result >= 117.0 || result == Double.NEGATIVE_INFINITY)
+                    if(result <= 10  || 
+                       result >= 100 || 
+                       result == Double.NEGATIVE_INFINITY)
                     {
                         fixture.goUp();
-                        try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                        try{ Thread.sleep(20000); } 
+                        catch(Exception e){ ErrorLogging.logError(e); }
                         fixture.pressButton();
                         fail = true;
                         break;
                     }
                 }
             }
-            while(fail == true);
+            while(fail);
 
             //Write all given values to the Excel file
             while(!LOCK.tryLock()) {}

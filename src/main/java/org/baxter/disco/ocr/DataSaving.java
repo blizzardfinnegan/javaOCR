@@ -1,16 +1,19 @@
 package org.baxter.disco.ocr;
 
+import java.io.DataInputStream;
 //Standard imports
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 
 //Generic spreadsheet imports
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.util.IOUtils;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
@@ -18,16 +21,18 @@ import org.apache.poi.ss.usermodel.FormulaEvaluator;
 //Excel-specific imports
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFPatriarch;
 import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
 
 /**
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 4.0.1, 13 Feb. 2023
+ * @version 4.1.0, 24 Feb. 2023
  */
 public class DataSaving
 {
@@ -222,7 +227,7 @@ public class DataSaving
         HSSFRow row = outputSheet.createRow(++startingRow);
         List<String> cameraNames = new ArrayList<>(cameraToFile.keySet());
         //ErrorLogging.logError("DEBUG: image locations: " + imageLocations.toString());
-        List<Object> objectArray = new LinkedList<>();
+        //List<Object> objectArray = new LinkedList<>();
 
         cycle++;
 
@@ -230,46 +235,91 @@ public class DataSaving
         indexCell.setCellValue(cycle);
         for(String cameraName : cameraNames)
         {
+            //put serial number into sheet
+            String serialNumber = ConfigFacade.getSerial(cameraName);
+            HSSFCell serialCell = row.createCell(cellnum++);
+            serialCell.setCellValue(serialNumber);
+
+            //Put the generated image into the spreadsheet
             File file = cameraToFile.get(cameraName);
+            HSSFCell imageCell = row.createCell(cellnum++);
+            try
+            {
+                InputStream cameraImage = new DataInputStream(new FileInputStream(file));
+                byte[] cameraImageRaw = IOUtils.toByteArray(cameraImage);
+                HSSFPatriarch patriarch = outputSheet.createDrawingPatriarch();
+                int imageID = outputWorkbook.addPicture(cameraImageRaw,HSSFWorkbook.PICTURE_TYPE_PNG);
+                HSSFClientAnchor imageAnchor = new HSSFClientAnchor();
+                imageAnchor.setCol1(cellnum-1);
+                imageAnchor.setCol2(cellnum);
+                imageAnchor.setRow1(startingRow);
+                imageAnchor.setRow2(startingRow+1);
+                patriarch.createPicture(imageAnchor, imageID);
+            } 
+            //If the image fails for some reason, fallback to putting the image path into the cell
+            catch(Exception e)
+            { 
+                String fileLocation = file.getPath();
+                imageCell.setCellValue(fileLocation);
+                ErrorLogging.logError(e); 
+            }
+
+            //Put the OCR value into the sheet
+            HSSFCell ocrCell = row.createCell(cellnum++);
+            Double ocrRead = inputMap.get(file);
+            if(ocrRead.equals(Double.NEGATIVE_INFINITY))
+            {
+                ocrCell.setCellValue("ERROR!");
+                ocrCell.setCellStyle(errorStyle);
+            }
+            else
+            {
+                ocrCell.setCellValue(ocrRead);
+                if( ocrRead.doubleValue() > (targetTemp + failRange) ||
+                    ocrRead.doubleValue() < (targetTemp - failRange) )
+                    ocrCell.setCellStyle(failStyle);
+            }
+
+            //Create a blank cell as a spacer
+            row.createCell(cellnum++);
             //ErrorLogging.logError("DEBUG: " + cameraName);
 
-            String serialNumber = ConfigFacade.getSerial(cameraName);
-            objectArray.add(serialNumber);
-            objectArray.add(file.getPath());
-            objectArray.add(inputMap.get(file));
-            objectArray.add(" ");
+            //objectArray.add(serialNumber);
+            //objectArray.add(file.getPath());
+            //objectArray.add(inputMap.get(file));
+            //objectArray.add(" ");
         }
-        for(Object cellObject : objectArray)
-        {
-            HSSFCell cell = row.createCell(cellnum++);
-            if(cellObject instanceof Double) 
-            {
-                Double cellValue = (Double)cellObject;
-                ErrorLogging.logError("DEBUG: " + cellValue + " ?= " + targetTemp + " +- " + failRange);
-                if(cellValue.equals(Double.NEGATIVE_INFINITY))
-                {
-                    cell.setCellValue("ERROR!");
-                    cell.setCellStyle(errorStyle);
-                }
-                else 
-                {
-                    cell.setCellValue(cellValue);
-                    if( cellValue.doubleValue() > (targetTemp + failRange) ||
-                        cellValue.doubleValue() < (targetTemp - failRange) )
-                    {
-                        ErrorLogging.logError("DEBUG: Cell value " + cellValue.doubleValue() + " is outside the allowed range! (" + (targetTemp -failRange) + "-" + (targetTemp + failRange) + "). Setting cell to fail colouring.");
-                        cell.setCellStyle(failStyle);
-                    }
-                }
-            }
-            else if(cellObject instanceof String) cell.setCellValue((String) cellObject);
-            else 
-            { 
-                ErrorLogging.logError("XLSX Write Error!!! - Invalid input."); 
-                ErrorLogging.logError("\t" + cellObject.toString());
-            }
+        //for(Object cellObject : objectArray)
+        //{
+        //    HSSFCell cell = row.createCell(cellnum++);
+        //    if(cellObject instanceof Double) 
+        //    {
+        //        Double cellValue = (Double)cellObject;
+        //        ErrorLogging.logError("DEBUG: " + cellValue + " ?= " + targetTemp + " +- " + failRange);
+        //        if(cellValue.equals(Double.NEGATIVE_INFINITY))
+        //        {
+        //            cell.setCellValue("ERROR!");
+        //            cell.setCellStyle(errorStyle);
+        //        }
+        //        else 
+        //        {
+        //            cell.setCellValue(cellValue);
+        //            if( cellValue.doubleValue() > (targetTemp + failRange) ||
+        //                cellValue.doubleValue() < (targetTemp - failRange) )
+        //            {
+        //                ErrorLogging.logError("DEBUG: Cell value " + cellValue.doubleValue() + " is outside the allowed range! (" + (targetTemp -failRange) + "-" + (targetTemp + failRange) + "). Setting cell to fail colouring.");
+        //                cell.setCellStyle(failStyle);
+        //            }
+        //        }
+        //    }
+        //    else if(cellObject instanceof String) cell.setCellValue((String) cellObject);
+        //    else 
+        //    { 
+        //        ErrorLogging.logError("XLSX Write Error!!! - Invalid input."); 
+        //        ErrorLogging.logError("\t" + cellObject.toString());
+        //    }
 
-        }
+        //}
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
         { outputWorkbook.write(outputStream); output = true; }
         catch(Exception e) {ErrorLogging.logError(e);}

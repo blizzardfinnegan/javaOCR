@@ -324,7 +324,7 @@ public class OpenCVFacade
     {
         File output = null;
         IplImage temp = MAT_CONVERTER.convertToIplImage(MAT_CONVERTER.convert(image));
-        fileLocation = fileLocation + "/" + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + "-" + cameraName + ".jpg";
+        fileLocation = fileLocation + "/" + ErrorLogging.fileDatetime.format(LocalDateTime.now()) + "-" + cameraName + ".png";
         cvSaveImage(fileLocation,temp);
         output = new File(fileLocation);
         return output;
