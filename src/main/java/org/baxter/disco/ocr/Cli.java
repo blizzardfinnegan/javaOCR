@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.2";
+    private static final String version = "4.3.3";
 
     /**
      * Currently saved iteration count.
@@ -687,19 +687,15 @@ public class Cli
         //useful for multithreading, which isn't necessary in CLI
         final int localIterations = iterationCount;
 
-        //TODO: Hard-coded value that needs fixing
-        boolean prime = false;
+        //Save whether to prime the devices; defaults to false
+        boolean prime = false; 
 
         //Create a List of *active* cameras.
         List<String> cameraList = new ArrayList<>();
         for(String cameraName : OpenCVFacade.getCameraNames())
         {
-            //if(cameraName != null) { /*println(cameraName);*/ }
-            //else ErrorLogging.logError("Null camera!");
-            if(ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0)
-            {
-                prime = true;
-            }
+            prime = (ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0) || prime; 
+
             if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0)
             {
                 cameraList.add(cameraName);
@@ -709,11 +705,10 @@ public class Cli
         //Initialise the workbook, with the number of cameras and the final output location
         DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),cameraList.size());
 
-        //Do 2 dummy passes, to make completely sure that the devices are awake
+        //Wake the device, then wait to ensure they're awake before continuing
         ErrorLogging.logError("DEBUG: Waking devices...");
-        fixture.iterationMovement(prime);
         fixture.pressButton();
-        fixture.iterationMovement(prime);
+        try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
         //Create final maps for result images, result values, and camera names
         Map<File,Double> resultMap = new HashMap<>();
@@ -779,22 +774,20 @@ public class Cli
                     resultMap.put(file,result);
                     ErrorLogging.logError("Tesseract final output: " + result);
                     LOCK.unlock();
-                }
-
-                //LO detection and avoidance
-                for(Double result : resultMap.values())
-                {
-                    if(result <= 1.0 || result >= 117.0 || result == Double.NEGATIVE_INFINITY)
+                    if(result <= 10  || 
+                       result >= 100 || 
+                       result == Double.NEGATIVE_INFINITY)
                     {
                         fixture.goUp();
-                        try{ Thread.sleep(20000); } catch(Exception e){ ErrorLogging.logError(e); }
+                        try{ Thread.sleep(20000); } 
+                        catch(Exception e){ ErrorLogging.logError(e); }
                         fixture.pressButton();
                         fail = true;
                         break;
                     }
                 }
             }
-            while(fail == true);
+            while(fail);
 
             //Write all given values to the Excel file
             while(!LOCK.tryLock()) {}
