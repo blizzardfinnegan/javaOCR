@@ -23,7 +23,7 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 2.2.0, 06 Feb. 2023
+ * @version 2.3.0, 27 Feb. 2023
  */
 public class MovementFacade
 {
@@ -68,7 +68,7 @@ public class MovementFacade
     /**
      * PWM Frequency
      */
-    private static int FREQUENCY = 70000;
+    private static int FREQUENCY = 75000;
 
     /**
      * PWM Duty Cycle
@@ -78,7 +78,7 @@ public class MovementFacade
     /**
      * Number of seconds to wait before timing out a fixture movement.
      */
-    private static int TIME_OUT = 3;
+    private static double TIME_OUT = 2.5;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -117,6 +117,17 @@ public class MovementFacade
      * Input pin address for the lower limit switch.
      */
     private static final int LOWER_LIMIT_ADDR = 24;
+
+    /**
+     * How many milliseconds to wait before polling the GPIO
+     */
+    private static final int POLL_WAIT = 20;
+
+    /**
+     * How many times to poll the GPIO during a movement call.
+     * The 1000/POLL_WAIT in this definition is converting poll-times to polls-per-second.
+     */
+    private static double POLL_COUNT = TIME_OUT * (1000 / POLL_WAIT);
 
     //Pi GPIO pin objects
     
@@ -332,7 +343,7 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public boolean setTimeout(int newTimeout)
+    public boolean setTimeout(double newTimeout)
     {
         boolean output = false;
         if(newTimeout < 0)
@@ -342,6 +353,7 @@ public class MovementFacade
         else
         {
             TIME_OUT = newTimeout;
+            POLL_COUNT = TIME_OUT * ( 1000 / POLL_WAIT );
             output = true;
         }
         return output;
@@ -352,7 +364,7 @@ public class MovementFacade
      *
      * @return The current timeout.
      */
-    public int getTimeout() { return TIME_OUT; }
+    public double getTimeout() { return TIME_OUT; }
 
     /**
      * Setter for the fixture's PWM frequency.
@@ -391,7 +403,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    private boolean gotoLimit(boolean moveUp, int timeout)
+    private boolean gotoLimit(boolean moveUp, double timeout)
     {
         boolean output = false;
         DigitalInput limitSense;
@@ -408,16 +420,22 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Sending fixture down...");
         }
 
+        double mostlyThere = (POLL_COUNT * 2) / 3;
+        int slowerSpeed = FREQUENCY / 4;
+
         motorEnable.on();
-        for(int i = 0; i < (timeout * 20);i++)
+        for(int i = 0; i < (POLL_COUNT);i++)
         {
-            try{ Thread.sleep(50); } catch(Exception e) {ErrorLogging.logError(e);};
+            try{ Thread.sleep(POLL_WAIT); } catch(Exception e) {ErrorLogging.logError(e);};
             output = limitSense.isHigh();
             if(output) break;
+            else if(i >= mostlyThere)
+            { pwm.on(DUTY_CYCLE, slowerSpeed); continue; }
         }
         if(output == false) 
             ErrorLogging.logError("FIXTURE MOVEMENT ERROR! - Motor movement timed out!");
         motorEnable.off();
+        pwm.on(DUTY_CYCLE, FREQUENCY);
         return output;
     }
 
@@ -427,7 +445,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public boolean goDown(int timeout) { return gotoLimit(false, timeout); }
+    public boolean goDown(double timeout) { return gotoLimit(false, timeout); }
 
     /**
      * Send the fixture to the upper limit switch.
@@ -435,7 +453,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public boolean goUp(int timeout) { return gotoLimit(true, timeout); }
+    public boolean goUp(double timeout) { return gotoLimit(true, timeout); }
 
     /**
      * Send the fixture to the lower limit switch.
