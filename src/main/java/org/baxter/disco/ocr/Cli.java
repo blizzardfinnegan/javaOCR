@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.3";
+    private static final String version = "4.3.4";
 
     /**
      * Currently saved iteration count.
@@ -108,7 +108,7 @@ public class Cli
             {
                 //Show the main menu, wait for user input
                 printMainMenu();
-                userInput = inputFiltering(inputScanner.nextLine());
+                userInput = (int)inputFiltering(inputScanner.nextLine());
 
                 //Perform action based on user input
                 switch (userInput)
@@ -430,7 +430,7 @@ public class Cli
             println("Testing movement...");
             fixture.testMotions();
             printMovementMenu();
-            userInput = inputFiltering(inputScanner.nextLine());
+            userInput = (int)inputFiltering(inputScanner.nextLine());
             switch (userInput)
             {
                 /*
@@ -442,7 +442,7 @@ public class Cli
                  */
                 case 1:
                     prompt("Input the desired duty cycle value: ");
-                    int newDutyCycle = inputFiltering(inputScanner.nextLine());
+                    int newDutyCycle = (int)inputFiltering(inputScanner.nextLine());
                     if (newDutyCycle != -1)
                     {
                         fixture.setDutyCycle(newDutyCycle);
@@ -450,7 +450,7 @@ public class Cli
                     }
                 case 2:
                     prompt("Input the desired frequency value: ");
-                    int newFrequency = inputFiltering(inputScanner.nextLine());
+                    int newFrequency = (int)inputFiltering(inputScanner.nextLine());
                     if (newFrequency != -1) 
                     {
                         fixture.setFrequency(newFrequency);
@@ -458,7 +458,7 @@ public class Cli
                     }
                 case 3:
                     prompt("Input the desired time-out (in seconds): ");
-                    int newTimeout = inputFiltering(inputScanner.nextLine());
+                    double newTimeout = inputFiltering(inputScanner.nextLine());
                     if (newTimeout != -1) 
                     {
                         fixture.setTimeout(newTimeout);
@@ -496,7 +496,7 @@ public class Cli
             do
             {
                 prompt("Enter a camera number to configure: ");
-                userInput = inputFiltering(inputScanner.nextLine());
+                userInput = (int)inputFiltering(inputScanner.nextLine());
                 userInput--;
             } while (cameraList.size() < userInput && userInput < 0);
 
@@ -527,7 +527,7 @@ public class Cli
                     //list configurable settings
                     printCameraConfigMenu(cameraName,tesseractValue);
 
-                    userInput = inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
+                    userInput = (int)inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
                     switch (userInput)
                     {
                         case 1:
@@ -573,7 +573,7 @@ public class Cli
                             //Prompt is in int, as the ultimate values are cast
                             //to int anyways, a decimal would be confusing
                             (int)ConfigFacade.getValue(cameraName,modifiedProperty) + "): ");
-                    userInput = inputFiltering(inputScanner.nextLine());
+                    userInput = (int)inputFiltering(inputScanner.nextLine());
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
                 }
 
@@ -607,7 +607,7 @@ public class Cli
             do
             {
                 prompt("Enter the camera you wish to set the serial of: ");
-                userInput = inputFiltering(inputScanner.nextLine());
+                userInput = (int)inputFiltering(inputScanner.nextLine());
                 //Compensate for off-by-one errors
                 userInput--;
             } while (cameraList.size() < userInput || userInput < 0);
@@ -634,7 +634,7 @@ public class Cli
         do 
         {
             prompt("Input the number of test iterations to complete: ");
-            input = inputFiltering(inputScanner.nextLine());
+            input = (int)inputFiltering(inputScanner.nextLine());
         } while(input == -1);
         iterationCount = input;
     }
@@ -659,7 +659,7 @@ public class Cli
             do
             {
                 prompt("Enter the camera you wish to toggle: ");
-                userInput = inputFiltering(inputScanner.nextLine());
+                userInput = (int)inputFiltering(inputScanner.nextLine());
                 userInput--;
             } while (cameraList.size() < userInput || userInput < 0);
 
@@ -830,7 +830,7 @@ public class Cli
      *
      * @param input     The unparsed user input, directly from the {@link Scanner}
      */
-    private static int inputFiltering(String input) 
+    private static double inputFiltering(String input) 
     { return inputFiltering(input, Menus.OTHER); }
 
     /**
@@ -841,18 +841,18 @@ public class Cli
      * 
      * @return The parsed value from the user. Returns -1 upon any error.
      */
-    private static int inputFiltering(String input, Menus menu)
+    private static double inputFiltering(String input, Menus menu)
     {
-        int output = -1;
+        double output = -1;
         input.trim();
         try(Scanner sc = new Scanner(input))
         {
-            if(!sc.hasNextInt()) 
+            if(!sc.hasNextDouble()) 
             { 
                 invalidInput();
                 return output; 
             }
-            output = sc.nextInt();
+            output = sc.nextDouble();
                 if(output < 0)
                 {
                     negativeInput();
