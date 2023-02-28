@@ -397,7 +397,9 @@ public class MovementFacade
     public int getFrequency() { return FREQUENCY; }
 
     /**
-     * Internal function to send the fixture to one limit switch or another.
+     * Internal function to send the fixture to a given limit switch.
+     *
+     * Motor slows down after timeout is halfway through, to protect hardware.
      *
      * @param moveUp    Whether to send the fixture up or down. (True = up, False = down)
      * @param timeout   How long (in seconds) to wait before timing out.
