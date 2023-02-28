@@ -20,7 +20,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 2.1.0, 06 Feb. 2023
+ * @version 2.2.0, 27 Feb. 2023
  */
 public class TesseractFacade
 {
@@ -79,8 +79,15 @@ public class TesseractFacade
                     {
                         ErrorLogging.logError("OCR WARNING - OCR output is too high for DUT, attempting to adjust...");
                         output = output / 10;
-                        if(output >= 200)
+                        if(output >= 300)
+                        {
+                            output = output / 10;
+                            ErrorLogging.logError("OCR output saved, as value appears to be real. Value needs to be verified.");
+                        }
+                        else if(output >= 200)
                             ErrorLogging.logError("OCR WARNING - OCR output is too high for DUT, potential misread.");
+                        else
+                            ErrorLogging.logError("OCR output successfully adjusted. Disregard warning.");
                     }
                     if(output <= -10) 
                         ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
