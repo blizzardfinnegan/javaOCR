@@ -141,10 +141,9 @@ public class MovementFacade
     private static final int POLL_WAIT = 10;
 
     /**
-     * How many times to poll the GPIO during a movement call.
-     * The 1000/POLL_WAIT in this definition is converting poll-times to polls-per-second.
+     * Multiply the time-out value by this value to get the number of polls to make.
      */
-    private static double POLL_COUNT = TIME_OUT * (1000 / POLL_WAIT);
+    private static final int TIME_CONVERSION = 1000 / POLL_WAIT;
 
     //Pi GPIO pin objects
     
@@ -377,7 +376,6 @@ public class MovementFacade
         {
             TIME_OUT = newTimeout;
             ConfigFacade.setFixtureValue(ConfigFacade.FixtureValues.TIMEOUT, newTimeout);
-            POLL_COUNT = TIME_OUT * ( 1000 / POLL_WAIT );
             output = true;
         }
         return output;
@@ -463,6 +461,7 @@ public class MovementFacade
 
         if(limitSense.isHigh()) return FinalState.SAFE;
 
+        double POLL_COUNT = timeout * TIME_CONVERSION;
         double mostlyThere = (POLL_COUNT * 1) / 2;
         int slowerSpeed = FREQUENCY / 4;
 
