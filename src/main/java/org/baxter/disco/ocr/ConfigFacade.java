@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 //Apache Commons Configuration imports
 import org.apache.commons.configuration2.INIConfiguration;
+import org.apache.commons.configuration2.SubnodeConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 
@@ -59,6 +60,15 @@ public class ConfigFacade
      */
     private static final Map<String, String> DUT_SERIALS = new HashMap<>();
 
+    private static final String MOVEMENT_SECTION = "Fixture";
+    private static int MOVEMENT_FREQ;
+
+    private static final int MOVEMENT_DEFAULT_FREQ = 70000;
+
+    private static double MOVEMENT_TIME_OUT;
+
+    private static final double MOVEMENT_DEFAULT_TIME_OUT = 2.5;
+
     /**
      * Builder for the main Configuration object.
      *
@@ -76,6 +86,7 @@ public class ConfigFacade
     //This block will ALWAYS run first.
     static 
     {
+        //Get config values
         ErrorLogging.logError("Starting configuration setup...");
         //Give CONFIG_STORE an intentionally bad value
         CONFIG_STORE = null;
@@ -140,6 +151,31 @@ public class ConfigFacade
         //Autosave the config
         CONFIG_BUILDER.setAutoSave(true);
     }
+
+    /**
+     *
+     */
+    public static double getFixtureValue(FixtureValues value)
+    {
+        switch (value)
+        {
+            case FREQUENCY: return (double)MOVEMENT_FREQ;
+            case TIMEOUT: return MOVEMENT_TIME_OUT;
+            default: return -1.0;
+        }
+    }
+
+    public static boolean setFixtureValue(FixtureValues type, double value)
+    {
+        boolean output = true;
+        switch(type)
+        {
+            case FREQUENCY: MOVEMENT_FREQ     = (int)value;
+            case TIMEOUT:   MOVEMENT_TIME_OUT = value;
+            default:
+        }
+        return output;
+    }
     /**
      * Get a given config value. 
      * All values are stored as doubles.
@@ -169,7 +205,6 @@ public class ConfigFacade
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         output = cameraConfig.get(property);
         //Debug logger. 
-        //NOTE THAT THIS BREAKS TUI MENUS, AS OF ErrorLogging 1.1.0
         //ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName 
         //                      + "/" + property.getConfig() + " = " + output);
         return output;
@@ -329,6 +364,9 @@ public class ConfigFacade
             configMap.put(camera,cameraConfig);
         }
 
+        CONFIG_STORE.setProperty(MOVEMENT_SECTION + "." + "frequency", MOVEMENT_DEFAULT_FREQ);
+        CONFIG_STORE.setProperty(MOVEMENT_SECTION + "." + "timeout", MOVEMENT_DEFAULT_TIME_OUT);
+
         //Save out to the file
         try
         { 
@@ -372,6 +410,9 @@ public class ConfigFacade
                 CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
         }
+
+        CONFIG_STORE.setProperty(MOVEMENT_SECTION + "." + "frequency", MOVEMENT_FREQ);
+        CONFIG_STORE.setProperty(MOVEMENT_SECTION + "." + "timeout", MOVEMENT_TIME_OUT);
 
         //Save to the file
         try
@@ -430,6 +471,17 @@ public class ConfigFacade
 
             //Iterate over the imported object, saving the file's config values to the map
             Set<String> configSections = CONFIG_STORE.getSections();
+            if(configSections.remove(MOVEMENT_SECTION))
+            {
+                SubnodeConfiguration fixtureConfiguration = CONFIG_STORE.getSection(MOVEMENT_SECTION);
+                MOVEMENT_FREQ = fixtureConfiguration.getInt("frequency");
+                MOVEMENT_TIME_OUT = fixtureConfiguration.getDouble("timeout");
+            }
+            else
+            {
+                MOVEMENT_FREQ = MOVEMENT_DEFAULT_FREQ;
+                MOVEMENT_TIME_OUT = MOVEMENT_DEFAULT_TIME_OUT;
+            }
             for(String sectionName : configSections)
             {
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
@@ -482,4 +534,7 @@ public class ConfigFacade
      * @return true if loaded successfully, otherwise false
      */
     public static boolean loadConfig() { return loadConfig(configFileLocation); }
+
+    public enum FixtureValues
+    { FREQUENCY, TIMEOUT; }
 }

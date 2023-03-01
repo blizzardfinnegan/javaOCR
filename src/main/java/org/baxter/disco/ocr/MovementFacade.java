@@ -1,8 +1,5 @@
 package org.baxter.disco.ocr;
 
-//Standard imports
-import java.util.concurrent.locks.Lock;
-
 //Pi4J imports
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
@@ -23,7 +20,7 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 2.3.0, 27 Feb. 2023
+ * @version 2.4.0, 01 Mar. 2023
  */
 public class MovementFacade
 {
@@ -34,51 +31,71 @@ public class MovementFacade
      * @param LOCK  A Lock object, used for interactions with
      *              the physical lock switch on the fixture.
      */
-    public MovementFacade(Lock LOCK)
-    {
-        //ErrorLogging.logError("DEBUG: Starting lock thread...");
-        runSwitchThread = new Thread(() -> 
-                {
-                    boolean unlock = false;
-                    while(!exit)
-                    {
-                        if(runSwitch.isOn())
-                        {
-                            ErrorLogging.logError("Run switch turned off!");
-                            while(!LOCK.tryLock())
-                            {}
-                            unlock = true;
-                        }
-                        else
-                        {
-                            //ErrorLogging.logError("Run switch on!");
-                            if(unlock) 
-                            { LOCK.unlock(); unlock = false; }
-                        }
-                        //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
-                    }
-                }, "Run switch monitor.");
-        runSwitchThread.start();
-        //ErrorLogging.logError("DEBUG: Lock thread started!");
-    }
+    //public MovementFacade(Lock LOCK)
+    //{
+    //    //ErrorLogging.logError("DEBUG: Starting lock thread...");
+    //    runSwitchThread = new Thread(() -> 
+    //            {
+    //                boolean unlock = false;
+    //                while(!exit)
+    //                {
+    //                    if(runSwitch.isOn())
+    //                    {
+    //                        ErrorLogging.logError("Run switch turned off!");
+    //                        while(!LOCK.tryLock())
+    //                        {}
+    //                        unlock = true;
+    //                    }
+    //                    else
+    //                    {
+    //                        //ErrorLogging.logError("Run switch on!");
+    //                        if(unlock) 
+    //                        { LOCK.unlock(); unlock = false; }
+    //                    }
+    //                    //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
+    //                }
+    //            }, "Run switch monitor.");
+    //    runSwitchThread.start();
+    //    //ErrorLogging.logError("DEBUG: Lock thread started!");
+    //}
 
     private static Thread runSwitchThread;
 
+    /**
+     * Internal PWM Frequency
+     */
+    private static int FREQUENCY;
+
+    /**
+     * Conversion factor for freq to FREQUENCY
+     */
+    private static final int FREQUENCY_UNITS = 1000;
+
+    /**
+     * Max allowable frequency by current fixture design.
+     */
+    private static final int MAX_FREQUENCY = 175000;
+
+    /**
+     * Minimum allowed frequency; also used for reset travels.
+     */
+    private static final int MIN_FREQUENCY = 25000;
+
     //Externally Available Variables
     /**
-     * PWM Frequency
+     * Human-readable frequency
      */
-    private static int FREQUENCY = 75000;
+    private static double freq;
 
     /**
      * PWM Duty Cycle
      */
-    private static int DUTY_CYCLE = 50;
+    private static final int DUTY_CYCLE = 50;
 
     /**
      * Number of seconds to wait before timing out a fixture movement.
      */
-    private static double TIME_OUT = 2.5;
+    private static double TIME_OUT;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -121,7 +138,7 @@ public class MovementFacade
     /**
      * How many milliseconds to wait before polling the GPIO
      */
-    private static final int POLL_WAIT = 20;
+    private static final int POLL_WAIT = 10;
 
     /**
      * How many times to poll the GPIO during a movement call.
@@ -192,6 +209,35 @@ public class MovementFacade
 
     static
     {
+        FREQUENCY = (int)ConfigFacade.getFixtureValue(ConfigFacade.FixtureValues.FREQUENCY);
+        freq = FREQUENCY / FREQUENCY_UNITS;
+        TIME_OUT = (int)ConfigFacade.getFixtureValue(ConfigFacade.FixtureValues.TIMEOUT);
+
+        //ErrorLogging.logError("DEBUG: Starting lock thread...");
+        runSwitchThread = new Thread(() -> 
+                {
+                    boolean unlock = false;
+                    while(!exit)
+                    {
+                        if(runSwitch.isOn())
+                        {
+                            ErrorLogging.logError("Run switch turned off!");
+                            while(!Cli.LOCK.tryLock())
+                            {}
+                            unlock = true;
+                        }
+                        else
+                        {
+                            //ErrorLogging.logError("Run switch on!");
+                            if(unlock) 
+                            { Cli.LOCK.unlock(); unlock = false; }
+                        }
+                        //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
+                    }
+                }, "Run switch monitor.");
+        runSwitchThread.start();
+        //ErrorLogging.logError("DEBUG: Lock thread started!");
+
         //Initialise Pi4J
         pi4j = Pi4J.newAutoContext();
 
@@ -307,34 +353,11 @@ public class MovementFacade
     }
 
     /**
-     * Setter for the fixture's PWM duty cycle.
-     *
-     * @param newDutyCycle  The new duty cycle to be set by the user.
-     *
-     * @return True if the value was set successfully; otherwise false.
-     */
-    public boolean setDutyCycle(int newDutyCycle)
-    {
-        boolean output = false;
-        if(newDutyCycle < 0)
-        {
-            ErrorLogging.logError("Movement error!!! - Invalid DutyCycle input.");
-        }
-        else
-        {
-            DUTY_CYCLE = newDutyCycle;
-            pwm.on(DUTY_CYCLE, FREQUENCY);
-            output = true;
-        }
-        return output;
-    }
-
-    /**
      * Getter for the fixture's PWM duty cycle.
      *
      * @return The current DutyCycle.
      */
-    public int getDutyCycle() { return DUTY_CYCLE; }
+    public static int getDutyCycle() { return DUTY_CYCLE; }
 
     /**
      * Setter for the fixture's time to give up on a movement.
@@ -343,7 +366,7 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public boolean setTimeout(double newTimeout)
+    public static boolean setTimeout(double newTimeout)
     {
         boolean output = false;
         if(newTimeout < 0)
@@ -353,6 +376,7 @@ public class MovementFacade
         else
         {
             TIME_OUT = newTimeout;
+            ConfigFacade.setFixtureValue(ConfigFacade.FixtureValues.TIMEOUT, newTimeout);
             POLL_COUNT = TIME_OUT * ( 1000 / POLL_WAIT );
             output = true;
         }
@@ -364,7 +388,7 @@ public class MovementFacade
      *
      * @return The current timeout.
      */
-    public double getTimeout() { return TIME_OUT; }
+    public static double getTimeout() { return TIME_OUT; }
 
     /**
      * Setter for the fixture's PWM frequency.
@@ -373,16 +397,22 @@ public class MovementFacade
      *
      * @return True if the value was set successfully; otherwise false.
      */
-    public boolean setFrequency(int newFrequency)
+    public static boolean setFrequency(double newFrequency)
     {
         boolean output = false;
         if(newFrequency < 0)
         {
-            ErrorLogging.logError("Movement error!!! - Invalid frequency input.");
+            ErrorLogging.logError("Movement error! - Invalid frequency input.");
+        }
+        else if(newFrequency > MAX_FREQUENCY)
+        {
+            ErrorLogging.logError("Movement warning!!! - Value above maximum allowed.");
         }
         else
         {
-            FREQUENCY = newFrequency;
+            freq = newFrequency;
+            ConfigFacade.setFixtureValue(ConfigFacade.FixtureValues.FREQUENCY, newFrequency);
+            FREQUENCY = (int)(freq * FREQUENCY_UNITS);
             pwm.on(DUTY_CYCLE, FREQUENCY);
             output = true;
         }
@@ -390,14 +420,23 @@ public class MovementFacade
     }
 
     /**
-     * Getter for the fixture's PWM frequency.
+     * Getter for the fixture's PWM frequency, in hertz.
      *
      * @return The current PWM frequency.
      */
-    public int getFrequency() { return FREQUENCY; }
+    public static int getFrequency() { return FREQUENCY; }
+
+    /**
+     * Getter for the fixture's PWM frequency, in KHz.
+     *
+     * @return The current PWM frequency.
+     */
+    public static double getUserFrequency() { return freq; }
 
     /**
      * Internal function to send the fixture to a given limit switch.
+     *
+     * Detects if the limit switch is active before activating motor.
      *
      * Motor slows down after timeout is halfway through, to protect hardware.
      *
@@ -405,9 +444,9 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    private boolean gotoLimit(boolean moveUp, double timeout)
+    private static FinalState gotoLimit(boolean moveUp, double timeout)
     {
-        boolean output = false;
+        FinalState output = FinalState.FAILED;
         DigitalInput limitSense;
         if(moveUp)  
         {
@@ -422,23 +461,41 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Sending fixture down...");
         }
 
-        double mostlyThere = (POLL_COUNT * 2) / 3;
+        if(limitSense.isHigh()) return FinalState.SAFE;
+
+        double mostlyThere = (POLL_COUNT * 1) / 2;
         int slowerSpeed = FREQUENCY / 4;
 
         motorEnable.on();
         for(int i = 0; i < (POLL_COUNT);i++)
         {
-            try{ Thread.sleep(POLL_WAIT); } catch(Exception e) {ErrorLogging.logError(e);};
-            output = limitSense.isHigh();
-            if(output) break;
+            try{ Thread.sleep(POLL_WAIT); } 
+            catch(Exception e) {ErrorLogging.logError(e);};
+
+            if(limitSense.isHigh()) 
+            {
+                output = ( (i >= mostlyThere) ? FinalState.SAFE : FinalState.UNSAFE);
+                break;
+            }
             else if(i >= mostlyThere)
-            { pwm.on(DUTY_CYCLE, slowerSpeed); continue; }
+            { 
+                pwm.on(DUTY_CYCLE, slowerSpeed); 
+                continue; 
+            }
         }
-        if(output == false) 
+        
+        if(output == FinalState.FAILED) 
             ErrorLogging.logError("FIXTURE MOVEMENT ERROR! - Motor movement timed out!");
         motorEnable.off();
         pwm.on(DUTY_CYCLE, FREQUENCY);
         return output;
+    }
+
+    public static void reset()
+    {
+        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
+        goUp(Double.POSITIVE_INFINITY);
+        pwm.on(DUTY_CYCLE, FREQUENCY);
     }
 
     /**
@@ -447,7 +504,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public boolean goDown(double timeout) { return gotoLimit(false, timeout); }
+    public static FinalState goDown(double timeout) { return gotoLimit(false, timeout); }
 
     /**
      * Send the fixture to the upper limit switch.
@@ -455,7 +512,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public boolean goUp(double timeout) { return gotoLimit(true, timeout); }
+    public static FinalState goUp(double timeout) { return gotoLimit(true, timeout); }
 
     /**
      * Send the fixture to the lower limit switch.
@@ -463,7 +520,7 @@ public class MovementFacade
      *
      * @return true if movement was successful; otherwise false
      */
-    public boolean goDown() { return goDown(TIME_OUT); }
+    public static FinalState goDown() { return goDown(TIME_OUT); }
 
     /**
      * Send the fixture to the upper limit switch.
@@ -471,12 +528,12 @@ public class MovementFacade
      *
      * @return true if movement was successful; otherwise false
      */
-    public boolean goUp() { return goUp(TIME_OUT); }
+    public static FinalState goUp() { return goUp(TIME_OUT); }
 
     /**
      * Extends the piston for 1 second, pushing the button on the DUT.
      */
-    public void pressButton()
+    public static void pressButton()
     {
         ErrorLogging.logError("DEBUG: Pressing button...");
         pistonActivate.on();
@@ -488,9 +545,9 @@ public class MovementFacade
     /**
      * Closes connections to all GPIO pins.
      */
-    public void closeGPIO()
+    public static void closeGPIO()
     {
-        goUp();
+        reset();
         if(runSwitchThread.isAlive())
         {
                 exit = true;
@@ -500,33 +557,19 @@ public class MovementFacade
     }
 
     /**
-     * Tests all available motions of the fixture. 
-     *
-     * @return True if all movements worked properly; otherwise False
-     */
-    public boolean testMotions()
-    {
-        boolean output = goUp();
-        if(!output) return output;
-        pressButton();
-        output = goDown();
-        if(!output) return output;
-        pressButton();
-        output = goUp();
-        return output;
-    }
-
-    /**
      * Function to move the fixture once for an iteration.
      *
      * @param prime     Whether or not to wake up the DUT
      */
-    public void iterationMovement(boolean prime)
+    public static void iterationMovement(boolean prime)
     {
         goUp();
-        //if(prime) pressButton();
+        if(prime) pressButton();
         goDown();
         try{ Thread.sleep(100); } catch(Exception e){ ErrorLogging.logError(e); }
         pressButton();
     }
+
+    public enum FinalState
+    { UNSAFE, SAFE, FAILED; }
 }

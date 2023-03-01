@@ -20,7 +20,7 @@ import org.bytedeco.tesseract.TessBaseAPI;
  * information for this specific testing aparatus.
  *
  * @author Blizzard Finnegan
- * @version 2.2.0, 27 Feb. 2023
+ * @version 2.2.1, 27 Feb. 2023
  */
 public class TesseractFacade
 {
@@ -30,21 +30,35 @@ public class TesseractFacade
      */
     private static TessBaseAPI api;
 
+    /**
+     * OCR engine mode.
+     *
+     * From https://ai-facets.org/tesseract-ocr-best-practices/:
+     *  0: Legacy engine only
+     *  1: Neural nets Long Short-Term Memory (LSTM) engine only. This form of neural network has feedback, as well as feedforward within the design, allowing the neural network to learn from itself.
+     *  2: Legacy + LSTM engines
+     *  3: Default, based on what is available
+     *
+     * As I didn't write the training data, and don't actually know what kind of network the training set requires, this value is set to default.
+     */
+    private static final int OCR_ENGINE_MODE = 3;
+
+    /**
+     * OCR language name, or training data filename.
+     */
+    private static final String OCR_LANGUAGE = "Pro6_temp_test";
+
+    /**
+     * Location on the file system that the OCR languages are stored.
+     *
+     * This value requires that the folder "tessdata" be in the same location as your current working directory. 
+     */
+    private static final String OCR_LANGUAGE_LOCATION = "tessdata";
+
     static
     {
-        //Initialise the Tesseract API
         api = new TessBaseAPI();
-
-        //Magic number below.
-        //The seemingly random 3 in the following line
-        //is used to define the OCR Engine mode. 
-        //This mode autoselects the OCR Engine, based on
-        //available hardware.
-        //This line also sets the location of the language 
-        //files, and declares the language as "Pro6_temp_test".
-        //Considering changing this to be more understandable, 
-        //but potential consequences are unclear.
-        api.Init("tessdata", "Pro6_temp_test", 3);
+        api.Init(OCR_LANGUAGE_LOCATION, OCR_LANGUAGE, OCR_ENGINE_MODE);
     }
 
     /** 
