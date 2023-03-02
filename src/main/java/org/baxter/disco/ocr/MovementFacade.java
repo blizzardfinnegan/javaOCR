@@ -62,40 +62,67 @@ public class MovementFacade
     private static Thread runSwitchThread;
 
     /**
-     * Internal PWM Frequency
+     * Conversion factor from cm/s to PWM frequency. 
+     *
+     * PWM to linear speed conversion:
+     * Motor controller should be set to 6400 pulses / revolution
+     *      (See motor controller documentation)
+     * Fixture corkscrew has a lead of 3 revolutions / cm
+     *      (Lead = thread pitch * # of thread starts)
+     *
+     * Frequency (Hz) = Speed (cm/s) * (pulses/rev) * (lead)
      */
-    private static int FREQUENCY;
+    private static final int PWM_FREQ_CONVERT = 19200;
 
     /**
-     * Conversion factor for freq to FREQUENCY
+     * Max allowed frequency by current fixture design.
      */
-    private static final int FREQUENCY_UNITS = 1000;
+    //private static int MAX_FREQUENCY = 175000;
 
     /**
-     * Max allowable frequency by current fixture design.
+     * Max allowed speed by current fixture design.
+     * Motor appears to start acting erratically over 192kHz.
      */
-    private static final int MAX_FREQUENCY = 175000;
+    private static final double MAX_SPEED = 10.0;
 
     /**
-     * Minimum allowed frequency; also used for reset travels.
+     * Amount of buffer between the found absolute speed, and used speed.
      */
-    private static final int MIN_FREQUENCY = 25000;
-
-    //Externally Available Variables
-    /**
-     * Human-readable frequency
-     */
-    private static double freq;
+    private static final double SPEED_BUFFER = 0.2;
 
     /**
-     * PWM Duty Cycle
+     * Minimum allowed speed of the fixture arm; also used for reset travels.
+     */
+    private static final double MIN_SPEED = 0.5;
+
+    /**
+     * minimum speed, represented as frequency
+     */
+    private static final int MIN_FREQUENCY = (int)(MIN_SPEED * PWM_FREQ_CONVERT);
+
+    /**
+     * Distance in cm the fixture needs to travel.
+     *
+     * Distance between limit switches: ~80cm.
+     * Thickness of fixture arm: ~30cm.
+     */
+    private static final int TRAVEL_DIST = 30;
+
+    private static final double STEP_1 = 2/3;
+    private static final double STEP_2 = 5/6;
+
+    /**
+     * Speed of the fixture arm, in cm/s
+     */
+    private static double SPEED = MIN_SPEED;
+
+    private static int FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
+
+    /**
+     * PWM Duty Cycle.
+     * Does not affect motor speed; necessary for PWM setup.
      */
     private static final int DUTY_CYCLE = 50;
-
-    /**
-     * Number of seconds to wait before timing out a fixture movement.
-     */
-    private static double TIME_OUT;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -208,10 +235,6 @@ public class MovementFacade
 
     static
     {
-        FREQUENCY = (int)ConfigFacade.getFixtureValue(ConfigFacade.FixtureValues.FREQUENCY);
-        freq = FREQUENCY / FREQUENCY_UNITS;
-        TIME_OUT = (int)ConfigFacade.getFixtureValue(ConfigFacade.FixtureValues.TIMEOUT);
-
         //ErrorLogging.logError("DEBUG: Starting lock thread...");
         runSwitchThread = new Thread(() -> 
                 {
@@ -253,7 +276,7 @@ public class MovementFacade
         //Initialise PWM object. This object is never used, 
         //as the PWM signal is simply a clock for the motor.
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
-        pwm.on(DUTY_CYCLE, FREQUENCY);
+        //pwm.on(DUTY_CYCLE, FREQUENCY);
 
     }
 
@@ -287,7 +310,6 @@ public class MovementFacade
                                    .address(address)
                                    .pwmType(PwmType.HARDWARE)
                                    .provider("pigpio-pwm")
-                                   .frequency(FREQUENCY)
                                    .initial(1)
                                    //On program close, turn off PWM.
                                    .shutdown(0);
@@ -300,7 +322,6 @@ public class MovementFacade
                                    .address(address)
                                    .pwmType(PwmType.SOFTWARE)
                                    .provider("pigpio-pwm")
-                                   .frequency(FREQUENCY)
                                    .initial(1)
                                    //On program close, turn off PWM.
                                    .shutdown(0);
@@ -352,84 +373,76 @@ public class MovementFacade
     }
 
     /**
-     * Getter for the fixture's PWM duty cycle.
-     *
-     * @return The current DutyCycle.
+     * Function used to locate the fixture's motor.
      */
-    public static int getDutyCycle() { return DUTY_CYCLE; }
-
-    /**
-     * Setter for the fixture's time to give up on a movement.
-     *
-     * @param newTimeout  The new timeout (in seconds) to be set by the user.
-     *
-     * @return True if the value was set successfully; otherwise false.
-     */
-    public static boolean setTimeout(double newTimeout)
+    private static void resetArm()
     {
-        boolean output = false;
-        if(newTimeout < 0)
+        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
+        if(!upperLimit.isHigh())
         {
-            ErrorLogging.logError("Movement error!!! - Invalid timeout input.");
+            motorDirection.low();
+            motorEnable.on();
+            try{ Thread.sleep(50); }
+            catch (Exception e){ ErrorLogging.logError(e); }
+            motorEnable.off();
         }
-        else
-        {
-            TIME_OUT = newTimeout;
-            ConfigFacade.setFixtureValue(ConfigFacade.FixtureValues.TIMEOUT, newTimeout);
-            output = true;
-        }
-        return output;
+        motorDirection.high();
+        motorEnable.on();
+        while(!upperLimit.isHigh()) {}
+        motorEnable.off();
     }
 
     /**
-     * Getter for the fixture's time to give up on a movement.
-     *
-     * @return The current timeout.
+     * Used to set the motor's max speed.
      */
-    public static double getTimeout() { return TIME_OUT; }
-
-    /**
-     * Setter for the fixture's PWM frequency.
-     *
-     * @param newFrequency  The new frequency to be set by the user.
-     *
-     * @return True if the value was set successfully; otherwise false.
-     */
-    public static boolean setFrequency(double newFrequency)
+    public static void calibrate()
     {
-        boolean output = false;
-        if(newFrequency < 0)
-        {
-            ErrorLogging.logError("Movement error! - Invalid frequency input.");
-        }
-        else if(newFrequency > MAX_FREQUENCY)
-        {
-            ErrorLogging.logError("Movement warning!!! - Value above maximum allowed.");
-        }
-        else
-        {
-            freq = newFrequency;
-            ConfigFacade.setFixtureValue(ConfigFacade.FixtureValues.FREQUENCY, newFrequency);
-            FREQUENCY = (int)(freq * FREQUENCY_UNITS);
-            pwm.on(DUTY_CYCLE, FREQUENCY);
-            output = true;
-        }
-        return output;
+        resetArm();
+        SPEED = calib(1, MAX_SPEED, 1);
+        SPEED = calib(SPEED,(SPEED+1),0.1);
+        setSpeed(SPEED - SPEED_BUFFER);
     }
 
     /**
-     * Getter for the fixture's PWM frequency, in hertz.
+     * Find the max speed of the fixure between two points.
      *
-     * @return The current PWM frequency.
+     * @param start     Lowest speed to check 
+     * @param max       Highest speed to check
+     * @param iterate   How much to iterate by
+     *
+     * @return The largest safe value between start and max. 
      */
-    public static int getFrequency() { return FREQUENCY; }
+    private static double calib(double start, double max, double iterate)
+    {
+        for(double i = start; i < max; i+=iterate)
+        {
+            setSpeed(i);
+            motorDirection.low();
+            motorEnable.on();
+            try{ Thread.sleep(100); }
+            catch (Exception e){ ErrorLogging.logError(e); }
+            motorEnable.off();
+            if(upperLimit.isHigh())
+                return i;
+            else
+                resetArm();
+        }
+        return max;
+    }
 
     /**
-     * Getter for the fixture's PWM frequency, in KHz.
+     * Safely set the speed of the motor and fixture.
      *
-     * @return The current PWM frequency.
+     * @return true if set successfully, else false
      */
-    public static double getUserFrequency() { return freq; }
+    private static boolean setSpeed(double newSpeed)
+    {
+        if(newSpeed < MIN_SPEED || newSpeed > MAX_SPEED) return false;
+        SPEED = newSpeed;
+        FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
+        pwm.on(DUTY_CYCLE, FREQUENCY);
+        return true;
+    }
 
     /**
      * Internal function to send the fixture to a given limit switch.
@@ -442,7 +455,7 @@ public class MovementFacade
      * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    private static FinalState gotoLimit(boolean moveUp, double timeout)
+    private static FinalState gotoLimit(boolean moveUp)
     {
         FinalState output = FinalState.FAILED;
         DigitalInput limitSense;
@@ -450,37 +463,33 @@ public class MovementFacade
         {
             motorDirection.high();
             limitSense = upperLimit;
-            ErrorLogging.logError("DEBUG: Sending fixture up...");
+            ErrorLogging.logError("Sending fixture up...");
         }
         else        
         {
             motorDirection.low();
             limitSense = lowerLimit;
-            ErrorLogging.logError("DEBUG: Sending fixture down...");
+            ErrorLogging.logError("Sending fixture down...");
         }
 
         if(limitSense.isHigh()) return FinalState.SAFE;
 
-        double POLL_COUNT = timeout * TIME_CONVERSION;
-        double mostlyThere = (POLL_COUNT * 1) / 2;
-        int slowerSpeed = FREQUENCY / 4;
+        FREQUENCY = (int)(SPEED * TIME_CONVERSION);
+        int TRAVEL_TIME = (int)(TRAVEL_DIST / SPEED);
+        int POLL_COUNT = TRAVEL_TIME * TIME_CONVERSION;
+        int VEL_STEP_1 = (int)(STEP_1 * POLL_COUNT);
+        int VEL_STEP_2 = (int)(STEP_2 * POLL_COUNT);
+        //int mostlyThere = (int) (POLL_COUNT * slowFraction);
+        //int slowerSpeed = (int) (FREQUENCY / speedReduceFactor);
 
         motorEnable.on();
         for(int i = 0; i < (POLL_COUNT);i++)
         {
-            try{ Thread.sleep(POLL_WAIT); } 
-            catch(Exception e) {ErrorLogging.logError(e);};
-
-            if(limitSense.isHigh()) 
-            {
-                output = ( (i >= mostlyThere) ? FinalState.SAFE : FinalState.UNSAFE);
-                break;
-            }
-            else if(i >= mostlyThere)
-            { 
-                pwm.on(DUTY_CYCLE, slowerSpeed); 
-                continue; 
-            }
+            try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+            if(i >= VEL_STEP_1 && i < VEL_STEP_2)
+                pwm.on(DUTY_CYCLE, FREQUENCY / 2);
+            else if(i >= VEL_STEP_2)
+                pwm.on(DUTY_CYCLE, FREQUENCY / 4);
         }
         
         if(output == FinalState.FAILED) 
@@ -490,44 +499,19 @@ public class MovementFacade
         return output;
     }
 
-    public static void reset()
-    {
-        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
-        goUp(Double.POSITIVE_INFINITY);
-        pwm.on(DUTY_CYCLE, FREQUENCY);
-    }
-
     /**
      * Send the fixture to the lower limit switch.
      *
-     * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public static FinalState goDown(double timeout) { return gotoLimit(false, timeout); }
+    public static FinalState goDown() { return gotoLimit(false); }
 
     /**
      * Send the fixture to the upper limit switch.
      *
-     * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
-    public static FinalState goUp(double timeout) { return gotoLimit(true, timeout); }
-
-    /**
-     * Send the fixture to the lower limit switch.
-     * Timeout defaults to {@link #TIME_OUT}.
-     *
-     * @return true if movement was successful; otherwise false
-     */
-    public static FinalState goDown() { return goDown(TIME_OUT); }
-
-    /**
-     * Send the fixture to the upper limit switch.
-     * Timeout defaults to {@link #TIME_OUT}.
-     *
-     * @return true if movement was successful; otherwise false
-     */
-    public static FinalState goUp() { return goUp(TIME_OUT); }
+    public static FinalState goUp() { return gotoLimit(true); }
 
     /**
      * Extends the piston for 1 second, pushing the button on the DUT.
@@ -546,7 +530,7 @@ public class MovementFacade
      */
     public static void closeGPIO()
     {
-        reset();
+        resetArm();
         if(runSwitchThread.isAlive())
         {
                 exit = true;

@@ -58,7 +58,7 @@ public class Cli
     /**
      * Number of options currently available in the movement sub-menu.
      */
-    private static final int movementMenuOptionCount = 3;
+    private static final int movementMenuOptionCount = 5;
 
     /**
      * Number of options currently available in the camera configuration sub-menu.
@@ -285,10 +285,13 @@ public class Cli
         println("------------------------------------");
         println("Current Frequency: " + MovementFacade.getUserFrequency() + "KHz");
         println("Current Motor Time-out: " + MovementFacade.getTimeout());
+        println("After " + (MovementFacade.getSlowFraction() * 100) + "% of the movement, motor speed will be " + MovementFacade.getSlowFactor() + "x slower.");
         println("------------------------------------");
         println("1. Change Frequency");
         println("2. Change Motor Time-out");
-        println("3. Exit");
+        println("3. Change Slow-down Point");
+        println("4. Change Slow-down Amount");
+        println("5. Exit");
         println("====================================");
     }
 
@@ -421,7 +424,9 @@ public class Cli
                  * Menu options:
                  * 1. Change Frequency
                  * 2. Change Motor Time-out
-                 * 3. Exit
+                 * 3. Change slow-down point
+                 * 4. Change slow-down amount
+                 * 5. Exit
                  */
                 case 1:
                     prompt("Input the desired frequency value (in KHz): ");
@@ -440,12 +445,30 @@ public class Cli
                         break;
                     }
                 case 3:
+                    prompt("Input the desired percentage of travel to be slower: ");
+                    double newSlowFraction = inputFiltering(inputScanner.nextLine());
+                    if(newSlowFraction != -1)
+                    {
+                        newSlowFraction = newSlowFraction / 100;
+                        MovementFacade.setSlowFraction(newSlowFraction);
+                        break;
+                    }
+                case 4:
+                    prompt("Input the desired speed reduction factor: ");
+                    double newSpeedReduceFactor = inputFiltering(inputScanner.nextLine());
+                    if(newSpeedReduceFactor != -1) 
+                    {
+                        MovementFacade.setSlowFactor(newSpeedReduceFactor);
+                        break;
+                    }
+                case movementMenuOptionCount:
                     break;
                 default:
                     ErrorLogging.logError("User Input Error!!! - Invalid input.");
             }
         } 
-        while(userInput != 3);
+        while(userInput != movementMenuOptionCount);
+        ConfigFacade.saveCurrentConfig();
     }
 
     /** 
