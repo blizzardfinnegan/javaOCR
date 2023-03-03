@@ -53,7 +53,7 @@ public class Cli
     /**
      * Number of options currently available in the main menu.
      */
-    private static final int mainMenuOptionCount = 8;
+    private static final int mainMenuOptionCount = 7;
 
     /**
      * Number of options currently available in the movement sub-menu.
@@ -92,7 +92,7 @@ public class Cli
 
             int userInput = 0;
 
-            boolean fixtureTested = false;
+            MovementFacade.calibrate();
 
             do
             {
@@ -102,33 +102,21 @@ public class Cli
                 switch (userInput)
                 {
                     case 1:
-                        testMovement();
-                        fixtureTested = true;
-                        break;
-                    case 2:
                         println("Setting up cameras...");
                         println("This may take a moment...");
                         configureCameras();
                         camerasConfigured = true;
                         break;
-                    case 3:
+                    case 2:
                         setDUTSerials();
                         break;
-                    case 4:
+                    case 3:
                         setIterationCount();
                         break;
-                    case 5:
+                    case 4:
                         setActiveCameras();
                         break;
-                    case 6:
-                        if(!fixtureTested)
-                        {
-                            prompt("You have not tested the fixture's movement configuration! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase().trim();
-                            if(input.isBlank() || input.charAt(0) != 'y') break;
-                            else
-                                ErrorLogging.logError("DEBUG: Potential for error: Untested fixture movement config.");
-                        }
+                    case 5:
                         if(!camerasConfigured)
                         {
                             prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
@@ -156,7 +144,7 @@ public class Cli
 
                         runTests();
                         break;
-                    case 7:
+                    case 6:
                         printHelp();
                         break;
                     case 8:
@@ -263,37 +251,36 @@ public class Cli
         println("--------------------------------------");
         println("Current iteration count: " + iterationCount);
         println("--------------------------------------");
-        println("1. Test and configure fixture movement");
-        println("2. Configure camera");
-        println("3. Set serial numbers");
-        println("4. Change test iteration count");
-        println("5. Toggle active cameras");
-        println("6. Run tests");
-        println("7. Help");
-        println("8. Exit");
+        println("1. Configure camera");
+        println("2. Set serial numbers");
+        println("3. Change test iteration count");
+        println("4. Toggle active cameras");
+        println("5. Run tests");
+        println("6. Help");
+        println("7. Exit");
         println("======================================");
     }
 
     /**
      * Predefined print statements for the movement submenu.
      */
-    private static void printMovementMenu()
-    {
-        println("\n\n");
-        println("====================================");
-        println("Movement Menu:");
-        println("------------------------------------");
-        println("Current Frequency: " + MovementFacade.getUserFrequency() + "KHz");
-        println("Current Motor Time-out: " + MovementFacade.getTimeout());
-        println("After " + (MovementFacade.getSlowFraction() * 100) + "% of the movement, motor speed will be " + MovementFacade.getSlowFactor() + "x slower.");
-        println("------------------------------------");
-        println("1. Change Frequency");
-        println("2. Change Motor Time-out");
-        println("3. Change Slow-down Point");
-        println("4. Change Slow-down Amount");
-        println("5. Exit");
-        println("====================================");
-    }
+    //private static void printMovementMenu()
+    //{
+    //    println("\n\n");
+    //    println("====================================");
+    //    println("Movement Menu:");
+    //    println("------------------------------------");
+    //    println("Current Frequency: " + MovementFacade.getUserFrequency() + "KHz");
+    //    println("Current Motor Time-out: " + MovementFacade.getTimeout());
+    //    println("After " + (MovementFacade.getSlowFraction() * 100) + "% of the movement, motor speed will be " + MovementFacade.getSlowFactor() + "x slower.");
+    //    println("------------------------------------");
+    //    println("1. Change Frequency");
+    //    println("2. Change Motor Time-out");
+    //    println("3. Change Slow-down Point");
+    //    println("4. Change Slow-down Amount");
+    //    println("5. Exit");
+    //    println("====================================");
+    //}
 
     /**
      * Pre-defined method for printing all available cameras in a menu
@@ -386,89 +373,89 @@ public class Cli
      */
     private static void testMovement()
     {
-        int userInput = -1;
         //Loop to allow multiple changes to device GPIO settings
-        do
-        {
-            println("Testing movement...");
-            MovementFacade.reset();
-            MovementFacade.FinalState downwardMove = MovementFacade.goDown();
-            switch(downwardMove)
-            {
-                case UNSAFE: 
-                    ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
-                    break;
-                case FAILED:
-                    ErrorLogging.logError("Movement warning!!! - Fixture did not hit lower limit switch. Consider changing frequency.");
-                    ErrorLogging.logError("Fixture movement configuration: Downward movement missed.");
-                    break;
-                case SAFE:
-                    MovementFacade.FinalState returnMove = MovementFacade.goUp();
-                    switch(returnMove)
-                    {
-                        case UNSAFE: 
-                            ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
-                            break;
-                        case FAILED:
-                            ErrorLogging.logError("Movement warning!!! - Fixture did not hit upper limit switch. Consider changing frequency.");
-                            ErrorLogging.logError("Fixture movement configuration: Return movement missed.");
-                            break;
-                        case SAFE:
-                    }
-            }
-            printMovementMenu();
-            userInput = (int)inputFiltering(inputScanner.nextLine());
-            switch (userInput)
-            {
-                /*
-                 * Menu options:
-                 * 1. Change Frequency
-                 * 2. Change Motor Time-out
-                 * 3. Change slow-down point
-                 * 4. Change slow-down amount
-                 * 5. Exit
-                 */
-                case 1:
-                    prompt("Input the desired frequency value (in KHz): ");
-                    int newFrequency = (int)inputFiltering(inputScanner.nextLine());
-                    if (newFrequency != -1) 
-                    {
-                        MovementFacade.setFrequency(newFrequency);
-                        break;
-                    }
-                case 2:
-                    prompt("Input the desired time-out (in seconds): ");
-                    double newTimeout = inputFiltering(inputScanner.nextLine());
-                    if (newTimeout != -1) 
-                    {
-                        MovementFacade.setTimeout(newTimeout);
-                        break;
-                    }
-                case 3:
-                    prompt("Input the desired percentage of travel to be slower: ");
-                    double newSlowFraction = inputFiltering(inputScanner.nextLine());
-                    if(newSlowFraction != -1)
-                    {
-                        newSlowFraction = newSlowFraction / 100;
-                        MovementFacade.setSlowFraction(newSlowFraction);
-                        break;
-                    }
-                case 4:
-                    prompt("Input the desired speed reduction factor: ");
-                    double newSpeedReduceFactor = inputFiltering(inputScanner.nextLine());
-                    if(newSpeedReduceFactor != -1) 
-                    {
-                        MovementFacade.setSlowFactor(newSpeedReduceFactor);
-                        break;
-                    }
-                case movementMenuOptionCount:
-                    break;
-                default:
-                    ErrorLogging.logError("User Input Error!!! - Invalid input.");
-            }
-        } 
-        while(userInput != movementMenuOptionCount);
-        ConfigFacade.saveCurrentConfig();
+        MovementFacade.calibrate();
+        //do
+        //{
+        //    println("Testing movement...");
+        //    //MovementFacade.reset();
+        //    MovementFacade.FinalState downwardMove = MovementFacade.goDown();
+        //    switch(downwardMove)
+        //    {
+        //        case UNSAFE: 
+        //            ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
+        //            break;
+        //        case FAILED:
+        //            ErrorLogging.logError("Movement warning!!! - Fixture did not hit lower limit switch. Consider changing frequency.");
+        //            ErrorLogging.logError("Fixture movement configuration: Downward movement missed.");
+        //            break;
+        //        case SAFE:
+        //            MovementFacade.FinalState returnMove = MovementFacade.goUp();
+        //            switch(returnMove)
+        //            {
+        //                case UNSAFE: 
+        //                    ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
+        //                    break;
+        //                case FAILED:
+        //                    ErrorLogging.logError("Movement warning!!! - Fixture did not hit upper limit switch. Consider changing frequency.");
+        //                    ErrorLogging.logError("Fixture movement configuration: Return movement missed.");
+        //                    break;
+        //                case SAFE:
+        //            }
+        //    }
+        //    //printMovementMenu();
+        //    userInput = (int)inputFiltering(inputScanner.nextLine());
+        //    switch (userInput)
+        //    {
+        //        /*
+        //         * Menu options:
+        //         * 1. Change Frequency
+        //         * 2. Change Motor Time-out
+        //         * 3. Change slow-down point
+        //         * 4. Change slow-down amount
+        //         * 5. Exit
+        //         */
+        //        case 1:
+        //            prompt("Input the desired frequency value (in KHz): ");
+        //            int newFrequency = (int)inputFiltering(inputScanner.nextLine());
+        //            if (newFrequency != -1) 
+        //            {
+        //                //MovementFacade.setFrequency(newFrequency);
+        //                break;
+        //            }
+        //        case 2:
+        //            prompt("Input the desired time-out (in seconds): ");
+        //            double newTimeout = inputFiltering(inputScanner.nextLine());
+        //            if (newTimeout != -1) 
+        //            {
+        //                //MovementFacade.setTimeout(newTimeout);
+        //                break;
+        //            }
+        //        case 3:
+        //            prompt("Input the desired percentage of travel to be slower: ");
+        //            double newSlowFraction = inputFiltering(inputScanner.nextLine());
+        //            if(newSlowFraction != -1)
+        //            {
+        //                newSlowFraction = newSlowFraction / 100;
+        //                MovementFacade.setSlowFraction(newSlowFraction);
+        //                break;
+        //            }
+        //        case 4:
+        //            prompt("Input the desired speed reduction factor: ");
+        //            double newSpeedReduceFactor = inputFiltering(inputScanner.nextLine());
+        //            if(newSpeedReduceFactor != -1) 
+        //            {
+        //                MovementFacade.setSlowFactor(newSpeedReduceFactor);
+        //                break;
+        //            }
+        //        case movementMenuOptionCount:
+        //            break;
+        //        default:
+        //            ErrorLogging.logError("User Input Error!!! - Invalid input.");
+        //    }
+        //} 
+        //while(userInput != movementMenuOptionCount);
+        //ConfigFacade.saveCurrentConfig();
     }
 
     /** 
