@@ -81,9 +81,9 @@ public class Cli
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
         try{
-            inputScanner = new Scanner(System.in);
+            //inputScanner = new Scanner(System.in);
 
-            ConfigFacade.init();
+            //ConfigFacade.init();
 
             //int userInput = 0;
 

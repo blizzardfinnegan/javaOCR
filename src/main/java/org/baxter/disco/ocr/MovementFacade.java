@@ -52,22 +52,17 @@ public class MovementFacade
      * Max allowed speed by current fixture design.
      * Motor appears to start acting erratically over 192kHz.
      */
-    private static final double MAX_SPEED = 10.0;
+    private static final int MAX_FREQUENCY = 192000;
 
     /**
      * Amount of buffer between the found absolute speed, and used speed.
      */
-    private static final double SPEED_BUFFER = 0.2;
+    private static final int SPEED_BUFFER = 4000;
 
     /**
      * Minimum allowed speed of the fixture arm; also used for reset travels.
      */
-    private static final double MIN_SPEED = 0.5;
-
-    /**
-     * minimum speed, represented as frequency
-     */
-    private static final int MIN_FREQUENCY = (int)(MIN_SPEED * PWM_FREQ_CONVERT);
+    private static final int MIN_FREQUENCY = 10000;
 
     /**
      * Distance in cm the fixture needs to travel.
@@ -88,14 +83,9 @@ public class MovementFacade
     private static final double STEP_2 = 5/6;
 
     /**
-     * Speed of the fixture arm, in cm/s
-     */
-    private static double SPEED = MIN_SPEED;
-
-    /**
      * Frequency fed to the PWM pin, which the motor controller converts into movement speed.
      */
-    private static int FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
+    private static int FREQUENCY = MIN_FREQUENCY;
 
     /**
      * PWM Duty Cycle.
@@ -254,7 +244,7 @@ public class MovementFacade
 
         //Initialise PWM object. 
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
-        //pwm.on(DUTY_CYCLE, FREQUENCY);
+        pwm.on(DUTY_CYCLE, FREQUENCY);
     }
 
     /**
@@ -286,6 +276,7 @@ public class MovementFacade
                                    .name(name)
                                    .address(address)
                                    .pwmType(PwmType.HARDWARE)
+                                   .frequency(FREQUENCY)
                                    .provider("pigpio-pwm")
                                    .initial(1)
                                    //On program close, turn off PWM.
@@ -298,6 +289,7 @@ public class MovementFacade
                                    .name(name)
                                    .address(address)
                                    .pwmType(PwmType.SOFTWARE)
+                                   .frequency(FREQUENCY)
                                    .provider("pigpio-pwm")
                                    .initial(1)
                                    //On program close, turn off PWM.
@@ -394,12 +386,12 @@ public class MovementFacade
         ErrorLogging.logError("Initial Calibration reset.");
         resetArm();
         ErrorLogging.logError("Coarse calibrating...");
-        SPEED = calib(3, MAX_SPEED, 1);
+        FREQUENCY = calib(MIN_FREQUENCY, MAX_FREQUENCY, 10000);
         ErrorLogging.logError("Fine calibrating...");
-        SPEED = calib(SPEED,(SPEED+1),0.1);
+        FREQUENCY = calib(FREQUENCY,(FREQUENCY+10000),1000);
         ErrorLogging.logError("Calibration complete!");
-        ErrorLogging.logError("DEBUG: Speed set to " + (SPEED - SPEED_BUFFER));
-        setSpeed(SPEED - SPEED_BUFFER);
+        ErrorLogging.logError("DEBUG: Speed set to " + (FREQUENCY - SPEED_BUFFER));
+        setSpeed(FREQUENCY - SPEED_BUFFER);
     }
 
     /**
@@ -411,22 +403,22 @@ public class MovementFacade
      *
      * @return The largest safe value between start and max. 
      */
-    private static double calib(double start, double max, double iterate)
+    private static int calib(int start, int max, int iterate)
     {
         ErrorLogging.logError("DEBUG: Calibrating. Iterating from " + start + " to " + max + " in " + iterate + " steps.");
         //start -= iterate;
-        for(double i = start; i < max; i+=iterate)
+        for(int i = start; i < max; i+=iterate)
         {
             ErrorLogging.logError("DEBUG: Testing speed " + i + "...");
             if(!setSpeed(i))
             {
-                ErrorLogging.logError("DEBUG: Speed set unsuccessfully! returning " + MIN_SPEED + "...");
-                return MIN_SPEED;
+                ErrorLogging.logError("DEBUG: Speed set unsuccessfully! returning " + MIN_FREQUENCY + "...");
+                return MIN_FREQUENCY;
             }
             ErrorLogging.logError("DEBUG: Motor travelling down.");
             motorDirection.low();
-            ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
-            pwm.on(DUTY_CYCLE,FREQUENCY);
+            //ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
+            //pwm.on(DUTY_CYCLE,FREQUENCY);
             ErrorLogging.logError("DEBUG: Motor calibrate on.");
             motorEnable.on();
             for(int j = 0; j < 20; j++)
@@ -466,21 +458,19 @@ public class MovementFacade
      *
      * @return true if set successfully, else false
      */
-    private static boolean setSpeed(double newSpeed)
+    private static boolean setSpeed(int newFrequency)
     {
         boolean output;
-        if(newSpeed < MIN_SPEED || newSpeed > MAX_SPEED) 
+        if(newFrequency < MIN_FREQUENCY || newFrequency > MAX_FREQUENCY) 
         {
-            SPEED = MIN_SPEED;
+            FREQUENCY = MIN_FREQUENCY;
             output = false;
         }
         else
         {
-            SPEED = newSpeed;
+            FREQUENCY = newFrequency;
             output = true;
         }
-        SPEED = newSpeed;
-        FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
         ErrorLogging.logError("DEBUG: Setting frequency to " + FREQUENCY);
         pwm.on(DUTY_CYCLE, FREQUENCY);
         return output;
@@ -514,9 +504,8 @@ public class MovementFacade
 
         if(limitSense.isHigh()) return FinalState.SAFE;
 
-        FREQUENCY = (int)(SPEED * TIME_CONVERSION);
         pwm.on(DUTY_CYCLE, FREQUENCY);
-        int TRAVEL_TIME = (int)(TRAVEL_DIST / SPEED);
+        int TRAVEL_TIME = (int)(TRAVEL_DIST / (FREQUENCY / PWM_FREQ_CONVERT));
         int POLL_COUNT = TRAVEL_TIME * TIME_CONVERSION;
         int VEL_STEP_1 = (int)(STEP_1 * POLL_COUNT);
         int VEL_STEP_2 = (int)(STEP_2 * POLL_COUNT);
@@ -525,7 +514,7 @@ public class MovementFacade
         ErrorLogging.logError("DEBUG: Transition 1: " + VEL_STEP_1);
         ErrorLogging.logError("DEBUG: Transition 2: " + VEL_STEP_2);
         ErrorLogging.logError("DEBUG: Travel time: " + TRAVEL_TIME);
-        ErrorLogging.logError("DEBUG: Travel speed: " + SPEED);
+        ErrorLogging.logError("DEBUG: Travel speed: " + (FREQUENCY/PWM_FREQ_CONVERT));
         ErrorLogging.logError("DEBUG: STEP_1: " + STEP_1);
         ErrorLogging.logError("DEBUG: STEP_2: " + STEP_2);
         motorEnable.on();
