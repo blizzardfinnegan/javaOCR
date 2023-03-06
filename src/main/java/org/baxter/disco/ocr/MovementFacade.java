@@ -20,45 +20,19 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 2.4.0, 01 Mar. 2023
+ * @version 3.0.0, 06 Mar. 2023
  */
 public class MovementFacade
 {
-    private static boolean exit = false;
     /**
-     * Constructor for MovementFacade.
-     *
-     * @param LOCK  A Lock object, used for interactions with
-     *              the physical lock switch on the fixture.
+     * Boolean used to communicate with runSwitchThread to gracefully exit.
      */
-    //public MovementFacade(Lock LOCK)
-    //{
-    //    //ErrorLogging.logError("DEBUG: Starting lock thread...");
-    //    runSwitchThread = new Thread(() -> 
-    //            {
-    //                boolean unlock = false;
-    //                while(!exit)
-    //                {
-    //                    if(runSwitch.isOn())
-    //                    {
-    //                        ErrorLogging.logError("Run switch turned off!");
-    //                        while(!LOCK.tryLock())
-    //                        {}
-    //                        unlock = true;
-    //                    }
-    //                    else
-    //                    {
-    //                        //ErrorLogging.logError("Run switch on!");
-    //                        if(unlock) 
-    //                        { LOCK.unlock(); unlock = false; }
-    //                    }
-    //                    //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
-    //                }
-    //            }, "Run switch monitor.");
-    //    runSwitchThread.start();
-    //    //ErrorLogging.logError("DEBUG: Lock thread started!");
-    //}
+    private static boolean exit = false;
 
+    /**
+     * Thread that watches the physical Run switch on the device so that 
+     * fixture movement can be stopped.
+     */
     private static Thread runSwitchThread;
 
     /**
@@ -73,11 +47,6 @@ public class MovementFacade
      * Frequency (Hz) = Speed (cm/s) * (pulses/rev) * (lead)
      */
     private static final int PWM_FREQ_CONVERT = 19200;
-
-    /**
-     * Max allowed frequency by current fixture design.
-     */
-    //private static int MAX_FREQUENCY = 175000;
 
     /**
      * Max allowed speed by current fixture design.
@@ -108,7 +77,14 @@ public class MovementFacade
      */
     private static final int TRAVEL_DIST = 30;
 
+    /**
+     * What percentage of the travel to slow down the motor.
+     */
     private static final double STEP_1 = 2/3;
+
+    /**
+     * What percentage of the travel to slow down the motor farther.
+     */
     private static final double STEP_2 = 5/6;
 
     /**
@@ -116,6 +92,9 @@ public class MovementFacade
      */
     private static double SPEED = MIN_SPEED;
 
+    /**
+     * Frequency fed to the PWM pin, which the motor controller converts into movement speed.
+     */
     private static int FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
 
     /**
@@ -254,7 +233,7 @@ public class MovementFacade
                             if(unlock) 
                             { Cli.LOCK.unlock(); unlock = false; }
                         }
-                        //try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
+                        try{ Thread.sleep(100); } catch(Exception e) { ErrorLogging.logError(e); }
                     }
                 }, "Run switch monitor.");
         runSwitchThread.start();
@@ -273,11 +252,9 @@ public class MovementFacade
         motorDirection = outputBuilder("motorDirection", "Motor Direction", MOTOR_DIRECTION_ADDR);
         pistonActivate = outputBuilder("piston"        , "Piston Activate", PISTON_ADDR);
 
-        //Initialise PWM object. This object is never used, 
-        //as the PWM signal is simply a clock for the motor.
+        //Initialise PWM object. 
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
         //pwm.on(DUTY_CYCLE, FREQUENCY);
-
     }
 
     /**
@@ -378,27 +355,26 @@ public class MovementFacade
     public static int resetArm()
     {
         int counter = 0;
-        //ErrorLogging.logError("Setting minimum frequency of PWM...");
-        //ErrorLogging.logError("Minimum frequency: " + MIN_FREQUENCY);
+        ErrorLogging.logError("DEBUG: Setting minimum frequency of PWM...");
         pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
         if(upperLimit.isHigh())
         {
-            //ErrorLogging.logError("Motor at highest point! Lowering to reset.");
+            ErrorLogging.logError("DEBUG: Motor at highest point! Lowering to reset.");
             motorDirection.low();
-            //ErrorLogging.logError("Motor on!");
+            ErrorLogging.logError("DEBUG: Motor offset on.");
             motorEnable.on();
             try{ Thread.sleep(500); }
             catch (Exception e){ ErrorLogging.logError(e); }
             motorEnable.off();
-            //ErrorLogging.logError("Motor off!");
+            ErrorLogging.logError("DEBUG: Motor offset off.");
         }
-        //ErrorLogging.logError("Moving motor to highest point.");
+        ErrorLogging.logError("DEBUG: Moving motor to highest point.");
         motorDirection.high();
 
-        //ErrorLogging.logError("Motor on!");
+        ErrorLogging.logError("DEBUG: Motor return on.");
         motorEnable.on();
 
-        //ErrorLogging.logError("Is the upper limit switch reached? " + upperLimit.isHigh());
+        ErrorLogging.logError("DEBUG: Is the upper limit switch reached? " + upperLimit.isHigh());
         while(!upperLimit.isHigh()) 
         { 
             try{ Thread.sleep(100); }
@@ -406,7 +382,7 @@ public class MovementFacade
             counter++;
         }
         motorEnable.off();
-        //ErrorLogging.logError("Motor returned after " + counter + " polls.");
+        ErrorLogging.logError("DEBUG: Motor returned after " + counter + " polls.");
         return counter;
     }
 
@@ -418,10 +394,11 @@ public class MovementFacade
         ErrorLogging.logError("Initial Calibration reset.");
         resetArm();
         ErrorLogging.logError("Coarse calibrating...");
-        SPEED = calib(1, MAX_SPEED, 1);
-        ErrorLogging.logError("Coarse calibrating...");
+        SPEED = calib(3, MAX_SPEED, 1);
+        ErrorLogging.logError("Fine calibrating...");
         SPEED = calib(SPEED,(SPEED+1),0.1);
-        ErrorLogging.logError("Speed set to " + (SPEED - SPEED_BUFFER));
+        ErrorLogging.logError("Calibration complete!");
+        ErrorLogging.logError("DEBUG: Speed set to " + (SPEED - SPEED_BUFFER));
         setSpeed(SPEED - SPEED_BUFFER);
     }
 
@@ -436,39 +413,47 @@ public class MovementFacade
      */
     private static double calib(double start, double max, double iterate)
     {
-        ErrorLogging.logError("Calibrating. Iterating from " + start + " to " + max + " in " + iterate + " steps.");
+        ErrorLogging.logError("DEBUG: Calibrating. Iterating from " + start + " to " + max + " in " + iterate + " steps.");
+        //start -= iterate;
         for(double i = start; i < max; i+=iterate)
         {
-            //ErrorLogging.logError("Testing speed " + i + "...");
+            ErrorLogging.logError("DEBUG: Testing speed " + i + "...");
             if(!setSpeed(i))
             {
-                //ErrorLogging.logError("Speed set unsuccessfully! returning " + MIN_SPEED + "...");
+                ErrorLogging.logError("DEBUG: Speed set unsuccessfully! returning " + MIN_SPEED + "...");
                 return MIN_SPEED;
             }
-            //ErrorLogging.logError("Motor travelling down.");
+            ErrorLogging.logError("DEBUG: Motor travelling down.");
             motorDirection.low();
-            //ErrorLogging.logError("Motor on!");
+            ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
+            pwm.on(DUTY_CYCLE,FREQUENCY);
+            ErrorLogging.logError("DEBUG: Motor calibrate on.");
             motorEnable.on();
-            for(int j = 0; j < 5; j++)
+            for(int j = 0; j < 20; j++)
             {
                 try{ Thread.sleep(100); }
                 catch (Exception e){ ErrorLogging.logError(e); }
-                if(lowerLimit.isHigh()) break;
+                if(lowerLimit.isHigh()) 
+                {
+                    ErrorLogging.logError("DEBUG: Breaking loop early!");
+                    break;
+                }
             }
             motorEnable.off();
-            //ErrorLogging.logError("Motor off!");
+            ErrorLogging.logError("DEBUG: Motor calibrate off.");
             if(upperLimit.isHigh())
             {
-                ErrorLogging.logError("Motor faild to move! Returning " + (i - iterate));
+                ErrorLogging.logError("DEBUG: Upper limit is high = " + upperLimit.isHigh());
+                ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
                 return i-iterate;
             }
             else
             {
 
-                //ErrorLogging.logError("Motor moved at speed " + i + ". Checking for errors.");
-                if(resetArm() < 10 && i > 1.0)
+                ErrorLogging.logError("DEBUG: Motor moved at speed " + i + ". Checking for errors.");
+                if(resetArm() < 10 && i > 3.0)
                 {
-                    ErrorLogging.logError("Motor failed to move! Returning " + (i - iterate));
+                    ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
                     return i - iterate;
                 }
             }
@@ -496,6 +481,7 @@ public class MovementFacade
         }
         SPEED = newSpeed;
         FREQUENCY = (int)(SPEED * PWM_FREQ_CONVERT);
+        ErrorLogging.logError("DEBUG: Setting frequency to " + FREQUENCY);
         pwm.on(DUTY_CYCLE, FREQUENCY);
         return output;
     }
@@ -504,11 +490,9 @@ public class MovementFacade
      * Internal function to send the fixture to a given limit switch.
      *
      * Detects if the limit switch is active before activating motor.
-     *
-     * Motor slows down after timeout is halfway through, to protect hardware.
+     * Motor movement is written to slow down at {@link #STEP_1} and {@link #STEP_2} 
      *
      * @param moveUp    Whether to send the fixture up or down. (True = up, False = down)
-     * @param timeout   How long (in seconds) to wait before timing out.
      * @return true if movement was successful; otherwise false
      */
     private static FinalState gotoLimit(boolean moveUp)
@@ -536,28 +520,28 @@ public class MovementFacade
         int POLL_COUNT = TRAVEL_TIME * TIME_CONVERSION;
         int VEL_STEP_1 = (int)(STEP_1 * POLL_COUNT);
         int VEL_STEP_2 = (int)(STEP_2 * POLL_COUNT);
-        //int mostlyThere = (int) (POLL_COUNT * slowFraction);
-        //int slowerSpeed = (int) (FREQUENCY / speedReduceFactor);
 
-        ErrorLogging.logError("Total Poll count: " + POLL_COUNT);
-        ErrorLogging.logError("Transition 1: " + VEL_STEP_1);
-        ErrorLogging.logError("Transition 2: " + VEL_STEP_2);
-        ErrorLogging.logError("Travel time: " + TRAVEL_TIME);
-        ErrorLogging.logError("Travel speed: " + SPEED);
+        ErrorLogging.logError("DEBUG: Total Poll count: " + POLL_COUNT);
+        ErrorLogging.logError("DEBUG: Transition 1: " + VEL_STEP_1);
+        ErrorLogging.logError("DEBUG: Transition 2: " + VEL_STEP_2);
+        ErrorLogging.logError("DEBUG: Travel time: " + TRAVEL_TIME);
+        ErrorLogging.logError("DEBUG: Travel speed: " + SPEED);
+        ErrorLogging.logError("DEBUG: STEP_1: " + STEP_1);
+        ErrorLogging.logError("DEBUG: STEP_2: " + STEP_2);
         motorEnable.on();
         for(int i = 0; i < (POLL_COUNT);i++)
         {
-            ErrorLogging.logError("Iteration " + i);
+            ErrorLogging.logError("DEBUG: Iteration " + i);
             try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
             if(i >= VEL_STEP_1 && i < VEL_STEP_2)
             {
                 output = FinalState.UNSAFE;
-                ErrorLogging.logError("Slow down!");
+                ErrorLogging.logError("DEBUG: Slowing down.");
                 pwm.on(DUTY_CYCLE, FREQUENCY / 2);
             }
             else if(i >= VEL_STEP_2)
             {
-                ErrorLogging.logError("Slow down more!");
+                ErrorLogging.logError("DEBUG: Slowing down more.");
                 pwm.on(DUTY_CYCLE, FREQUENCY / 4);
                 output = FinalState.SAFE;
             }

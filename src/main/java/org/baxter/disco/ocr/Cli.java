@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.6.1, 10 Feb. 2023
+ * @version 1.7.0, 06 Mar. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.5";
+    private static final String version = "4.3.6";
 
     /**
      * Currently saved iteration count.
@@ -54,11 +54,6 @@ public class Cli
      * Number of options currently available in the main menu.
      */
     private static final int mainMenuOptionCount = 7;
-
-    /**
-     * Number of options currently available in the movement sub-menu.
-     */
-    private static final int movementMenuOptionCount = 5;
 
     /**
      * Number of options currently available in the camera configuration sub-menu.
@@ -90,70 +85,71 @@ public class Cli
 
             ConfigFacade.init();
 
-            int userInput = 0;
+            //int userInput = 0;
 
+            ErrorLogging.logError("Initialising fixture movement. This will take a few moments, and may produce some temporary unnerving sounds from the motor. This is expected behaviour, and no damage is being done.");
             MovementFacade.calibrate();
 
-            do
-            {
-                printMainMenu();
-                userInput = (int)inputFiltering(inputScanner.nextLine());
+            //do
+            //{
+            //    printMainMenu();
+            //    userInput = (int)inputFiltering(inputScanner.nextLine());
 
-                switch (userInput)
-                {
-                    case 1:
-                        println("Setting up cameras...");
-                        println("This may take a moment...");
-                        configureCameras();
-                        camerasConfigured = true;
-                        break;
-                    case 2:
-                        setDUTSerials();
-                        break;
-                    case 3:
-                        setIterationCount();
-                        break;
-                    case 4:
-                        setActiveCameras();
-                        break;
-                    case 5:
-                        if(!camerasConfigured)
-                        {
-                            prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase().trim();
-                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
-                            else 
-                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
-                        }
+            //    switch (userInput)
+            //    {
+            //        case 1:
+            //            println("Setting up cameras...");
+            //            println("This may take a moment...");
+            //            configureCameras();
+            //            camerasConfigured = true;
+            //            break;
+            //        case 2:
+            //            setDUTSerials();
+            //            break;
+            //        case 3:
+            //            setIterationCount();
+            //            break;
+            //        case 4:
+            //            setActiveCameras();
+            //            break;
+            //        case 5:
+            //            if(!camerasConfigured)
+            //            {
+            //                prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
+            //                String input = inputScanner.nextLine().toLowerCase().trim();
+            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
+            //                else 
+            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
+            //            }
 
-                        serialsSet = true;
-                        for(String cameraName : OpenCVFacade.getCameraNames())
-                        {
-                            if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
-                               ConfigFacade.getSerial(cameraName) == null )
-                                serialsSet = false;
-                        }
-                        if(!serialsSet) 
-                        { 
-                            prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase().trim();
-                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
-                            else
-                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
-                        }
+            //            serialsSet = true;
+            //            for(String cameraName : OpenCVFacade.getCameraNames())
+            //            {
+            //                if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
+            //                   ConfigFacade.getSerial(cameraName) == null )
+            //                    serialsSet = false;
+            //            }
+            //            if(!serialsSet) 
+            //            { 
+            //                prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
+            //                String input = inputScanner.nextLine().toLowerCase().trim();
+            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
+            //                else
+            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
+            //            }
 
-                        runTests();
-                        break;
-                    case 6:
-                        printHelp();
-                        break;
-                    case 8:
-                        break;
-                    default:
-                        //Input handling already done by inputFiltering()
-                }
+            //            runTests();
+            //            break;
+            //        case 6:
+            //            printHelp();
+            //            break;
+            //        case 8:
+            //            break;
+            //        default:
+            //            //Input handling already done by inputFiltering()
+            //    }
 
-        } while (userInput != mainMenuOptionCount);
+            //} while (userInput != mainMenuOptionCount);
 
         }
         //If anything ever goes wrong, catch the error and exit
@@ -262,27 +258,6 @@ public class Cli
     }
 
     /**
-     * Predefined print statements for the movement submenu.
-     */
-    //private static void printMovementMenu()
-    //{
-    //    println("\n\n");
-    //    println("====================================");
-    //    println("Movement Menu:");
-    //    println("------------------------------------");
-    //    println("Current Frequency: " + MovementFacade.getUserFrequency() + "KHz");
-    //    println("Current Motor Time-out: " + MovementFacade.getTimeout());
-    //    println("After " + (MovementFacade.getSlowFraction() * 100) + "% of the movement, motor speed will be " + MovementFacade.getSlowFactor() + "x slower.");
-    //    println("------------------------------------");
-    //    println("1. Change Frequency");
-    //    println("2. Change Motor Time-out");
-    //    println("3. Change Slow-down Point");
-    //    println("4. Change Slow-down Amount");
-    //    println("5. Exit");
-    //    println("====================================");
-    //}
-
-    /**
      * Pre-defined method for printing all available cameras in a menu
      */
     private static void printCameraMenu(List<String> cameraList)
@@ -365,97 +340,6 @@ public class Cli
         println("5. Toggle threshold");
         println("6. Exit");
         println("====================================");
-    }
-
-
-    /**
-     * Function for testing movement, and modifying hardware values
-     */
-    private static void testMovement()
-    {
-        //Loop to allow multiple changes to device GPIO settings
-        MovementFacade.calibrate();
-        //do
-        //{
-        //    println("Testing movement...");
-        //    //MovementFacade.reset();
-        //    MovementFacade.FinalState downwardMove = MovementFacade.goDown();
-        //    switch(downwardMove)
-        //    {
-        //        case UNSAFE: 
-        //            ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
-        //            break;
-        //        case FAILED:
-        //            ErrorLogging.logError("Movement warning!!! - Fixture did not hit lower limit switch. Consider changing frequency.");
-        //            ErrorLogging.logError("Fixture movement configuration: Downward movement missed.");
-        //            break;
-        //        case SAFE:
-        //            MovementFacade.FinalState returnMove = MovementFacade.goUp();
-        //            switch(returnMove)
-        //            {
-        //                case UNSAFE: 
-        //                    ErrorLogging.logError("Movement warning!!! - Time-out too long, motor does not slow down before hitting limit switch. Consider setting this value to be lower.");
-        //                    break;
-        //                case FAILED:
-        //                    ErrorLogging.logError("Movement warning!!! - Fixture did not hit upper limit switch. Consider changing frequency.");
-        //                    ErrorLogging.logError("Fixture movement configuration: Return movement missed.");
-        //                    break;
-        //                case SAFE:
-        //            }
-        //    }
-        //    //printMovementMenu();
-        //    userInput = (int)inputFiltering(inputScanner.nextLine());
-        //    switch (userInput)
-        //    {
-        //        /*
-        //         * Menu options:
-        //         * 1. Change Frequency
-        //         * 2. Change Motor Time-out
-        //         * 3. Change slow-down point
-        //         * 4. Change slow-down amount
-        //         * 5. Exit
-        //         */
-        //        case 1:
-        //            prompt("Input the desired frequency value (in KHz): ");
-        //            int newFrequency = (int)inputFiltering(inputScanner.nextLine());
-        //            if (newFrequency != -1) 
-        //            {
-        //                //MovementFacade.setFrequency(newFrequency);
-        //                break;
-        //            }
-        //        case 2:
-        //            prompt("Input the desired time-out (in seconds): ");
-        //            double newTimeout = inputFiltering(inputScanner.nextLine());
-        //            if (newTimeout != -1) 
-        //            {
-        //                //MovementFacade.setTimeout(newTimeout);
-        //                break;
-        //            }
-        //        case 3:
-        //            prompt("Input the desired percentage of travel to be slower: ");
-        //            double newSlowFraction = inputFiltering(inputScanner.nextLine());
-        //            if(newSlowFraction != -1)
-        //            {
-        //                newSlowFraction = newSlowFraction / 100;
-        //                MovementFacade.setSlowFraction(newSlowFraction);
-        //                break;
-        //            }
-        //        case 4:
-        //            prompt("Input the desired speed reduction factor: ");
-        //            double newSpeedReduceFactor = inputFiltering(inputScanner.nextLine());
-        //            if(newSpeedReduceFactor != -1) 
-        //            {
-        //                MovementFacade.setSlowFactor(newSpeedReduceFactor);
-        //                break;
-        //            }
-        //        case movementMenuOptionCount:
-        //            break;
-        //        default:
-        //            ErrorLogging.logError("User Input Error!!! - Invalid input.");
-        //    }
-        //} 
-        //while(userInput != movementMenuOptionCount);
-        //ConfigFacade.saveCurrentConfig();
     }
 
     /** 
@@ -802,7 +686,9 @@ public class Cli
      */
     private static void close()
     {
+        ErrorLogging.logError("DEBUG: =================");
         ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
+        ErrorLogging.logError("DEBUG: =================");
         if(inputScanner != null) inputScanner.close();
         MovementFacade.closeGPIO();
         ErrorLogging.logError("DEBUG: END OF PROGRAM.");
@@ -852,13 +738,6 @@ public class Cli
                         output = -1;
                     }
                     break;
-                case MOVEMENT:
-                    if(output > movementMenuOptionCount)
-                    {
-                        invalidMovementMenuInput();
-                        output = -1;
-                    }
-                    break;
                 case CAMERA:
                     if(output > cameraMenuOptionCount)
                     {
@@ -879,14 +758,6 @@ public class Cli
     private static void invalidMainMenuInput()
     {
         invalidMenuInput(mainMenuOptionCount);
-    }
-
-    /**
-     * Prints a message when user inputs an invalid main menu value.
-     */
-    private static void invalidMovementMenuInput()
-    {
-        invalidMenuInput(movementMenuOptionCount);
     }
 
     /**
@@ -939,5 +810,5 @@ public class Cli
     /**
      * Enum of possible menus available
      */
-    private enum Menus { MAIN,MOVEMENT,CAMERA,OTHER; }
+    private enum Menus { MAIN,CAMERA,OTHER; }
 }
