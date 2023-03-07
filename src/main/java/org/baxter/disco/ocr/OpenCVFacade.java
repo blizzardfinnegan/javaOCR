@@ -84,6 +84,7 @@ public class OpenCVFacade
         {
             String cameraName = cameraFile.getName().
                                 substring(CAMERA_FILE_PREFIX.length());
+            ErrorLogging.logError("DEBUG: Camera name: " + cameraName);
             newCamera(cameraName, cameraFile.getAbsolutePath());
         }
     }

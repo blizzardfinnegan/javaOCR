@@ -83,99 +83,73 @@ public class Cli
         try{
             inputScanner = new Scanner(System.in);
 
-            //ConfigFacade.init();
+            ConfigFacade.init();
 
             int userInput = 0;
 
-            MovementFacade.resetArm();
-            MovementFacade.goDown();
-            MovementFacade.goUp();
+            ErrorLogging.logError("Calibrating motor movement. This may take several minutes...");
+            MovementFacade.calibrate();
 
-            prompt("Did the motor move successfully? (Y/n): ");
-            String successfulMovement = inputScanner.next().trim().toLowerCase();
-            ErrorLogging.logError("DEBUG: user report of motor movement = " + successfulMovement);
-            if(successfulMovement == "" || successfulMovement.charAt(0) != 'y')
+            do
             {
-                ErrorLogging.logError("DEBUG: User reported failed movement of the motor! Allowing reset of frequency...");
-                print("As the default frequency did not work successfully, a new frequency value is required.");
-                print("Higher frequency: Faster motor movement, not guaranteed to work, may cause damage to motor.");
-                print(" Lower frequency: Slower motor movement, safer, but longer iteration time.");
-                boolean frequencyReset = false;
-                while(true)
+                printMainMenu();
+                userInput = (int)inputFiltering(inputScanner.nextLine());
+
+                switch (userInput)
                 {
-                    prompt("Please enter a new frequency value (Default: 50kHz): ");
-                    userInput = (int)inputFiltering(inputScanner.next());
-                    frequencyReset = MovementFacade.setFrequency(userInput);
-                    if(!frequencyReset) continue;
-                    MovementFacade.resetArm();
-                    MovementFacade.goDown();
-                    MovementFacade.goUp();
-                    prompt("Did the motor move successfully? (Y/n): ");
-                    successfulMovement = inputScanner.next();
-                    if(successfulMovement != "" || successfulMovement.toLowerCase().charAt(0) != 'n') break;
-                } 
-            }
+                    case 1:
+                        println("Setting up cameras...");
+                        println("This may take a moment...");
+                        configureCameras();
+                        camerasConfigured = true;
+                        break;
+                    case 2:
+                        setDUTSerials();
+                        break;
+                    case 3:
+                        setIterationCount();
+                        break;
+                    case 4:
+                        setActiveCameras();
+                        break;
+                    case 5:
+                        if(!camerasConfigured)
+                        {
+                            prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
+                            String input = inputScanner.nextLine().toLowerCase().trim();
+                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
+                            else 
+                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
+                        }
 
-            //do
-            //{
-            //    printMainMenu();
-            //    userInput = (int)inputFiltering(inputScanner.nextLine());
+                        serialsSet = true;
+                        for(String cameraName : OpenCVFacade.getCameraNames())
+                        {
+                            if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
+                               ConfigFacade.getSerial(cameraName) == null )
+                                serialsSet = false;
+                        }
+                        if(!serialsSet) 
+                        { 
+                            prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
+                            String input = inputScanner.nextLine().toLowerCase().trim();
+                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
+                            else
+                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
+                        }
 
-            //    switch (userInput)
-            //    {
-            //        case 1:
-            //            println("Setting up cameras...");
-            //            println("This may take a moment...");
-            //            configureCameras();
-            //            camerasConfigured = true;
-            //            break;
-            //        case 2:
-            //            setDUTSerials();
-            //            break;
-            //        case 3:
-            //            setIterationCount();
-            //            break;
-            //        case 4:
-            //            setActiveCameras();
-            //            break;
-            //        case 5:
-            //            if(!camerasConfigured)
-            //            {
-            //                prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
-            //                String input = inputScanner.nextLine().toLowerCase().trim();
-            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
-            //                else 
-            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
-            //            }
+                        runTests();
+                        break;
+                    case 6:
+                        printHelp();
+                        break;
+                    case 8:
+                        break;
+                    default:
+                        //Input handling already done by inputFiltering()
+                }
 
-            //            serialsSet = true;
-            //            for(String cameraName : OpenCVFacade.getCameraNames())
-            //            {
-            //                if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
-            //                   ConfigFacade.getSerial(cameraName) == null )
-            //                    serialsSet = false;
-            //            }
-            //            if(!serialsSet) 
-            //            { 
-            //                prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
-            //                String input = inputScanner.nextLine().toLowerCase().trim();
-            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
-            //                else
-            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
-            //            }
-
-            //            runTests();
-            //            break;
-            //        case 6:
-            //            printHelp();
-            //            break;
-            //        case 8:
-            //            break;
-            //        default:
-            //            //Input handling already done by inputFiltering()
-            //    }
-
-            //} while (userInput != mainMenuOptionCount);
+            } while (userInput != mainMenuOptionCount);
 
         }
         //If anything ever goes wrong, catch the error and exit
@@ -693,8 +667,6 @@ public class Cli
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
         }
-        //Close the Excel workbook
-        DataSaving.closeWorkbook(cameraList.size());
         //Alert the user to testing being complete
         println("=======================================");
         println("Testing complete!");
