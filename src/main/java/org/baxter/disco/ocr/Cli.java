@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.6";
+    private static final String version = "4.3.5";
 
     /**
      * Currently saved iteration count.
@@ -81,14 +81,40 @@ public class Cli
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
         try{
-            //inputScanner = new Scanner(System.in);
+            inputScanner = new Scanner(System.in);
 
             //ConfigFacade.init();
 
-            //int userInput = 0;
+            int userInput = 0;
 
-            ErrorLogging.logError("Initialising fixture movement. This will take a few moments, and may produce some temporary unnerving sounds from the motor. This is expected behaviour, and no damage is being done.");
-            MovementFacade.calibrate();
+            MovementFacade.resetArm();
+            MovementFacade.goDown();
+            MovementFacade.goUp();
+
+            prompt("Did the motor move successfully? (Y/n): ");
+            String successfulMovement = inputScanner.next().trim().toLowerCase();
+            ErrorLogging.logError("DEBUG: user report of motor movement = " + successfulMovement);
+            if(successfulMovement == "" || successfulMovement.charAt(0) != 'y')
+            {
+                ErrorLogging.logError("DEBUG: User reported failed movement of the motor! Allowing reset of frequency...");
+                print("As the default frequency did not work successfully, a new frequency value is required.");
+                print("Higher frequency: Faster motor movement, not guaranteed to work, may cause damage to motor.");
+                print(" Lower frequency: Slower motor movement, safer, but longer iteration time.");
+                boolean frequencyReset = false;
+                while(true)
+                {
+                    prompt("Please enter a new frequency value (Default: 50kHz): ");
+                    userInput = (int)inputFiltering(inputScanner.next());
+                    frequencyReset = MovementFacade.setFrequency(userInput);
+                    if(!frequencyReset) continue;
+                    MovementFacade.resetArm();
+                    MovementFacade.goDown();
+                    MovementFacade.goUp();
+                    prompt("Did the motor move successfully? (Y/n): ");
+                    successfulMovement = inputScanner.next();
+                    if(successfulMovement != "" || successfulMovement.toLowerCase().charAt(0) != 'n') break;
+                } 
+            }
 
             //do
             //{

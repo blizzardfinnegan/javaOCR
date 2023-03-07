@@ -22,7 +22,7 @@ This is a personal/professional project, which makes use of JavaCV, OpenCV, Tess
 
 ## Known Bugs
 
-- As of v4.1.0, cropping images is done by a temporary window created by OpenCV. This window will crash after being used correctly. This can be safely killed when prompted, without affecting the rest of the project. Investigation into how to fix this crashing is ongoing, but it has not yet been resolved.
+- As of v4.1.0, cropping images is done by a temporary window created by OpenCV. This window does not close itself, but is re-used if a new cropping region is requested. This can be safely killed when prompted, without affecting the rest of the project. 
 
 ## Dependencies
 

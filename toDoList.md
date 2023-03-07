@@ -2,17 +2,14 @@
 
 ## High-priority fixes
 
-## Cli(?)
+### DataSaving
 
-- [x] enable camera toggling
+- [ ] Modify initialisation to create formula cells outside data lines
+	- Will need to evaluate functions on every line write
 
 ### OpenCVFacade
 
 - [ ] completeProcess should have more robust file output checking
-
-### Gui
-
-- [ ] Debug and ensure GUI is written properly
 
 ## Low-priority improvements
 
@@ -22,13 +19,12 @@
 - [ ] reduce Javadoc linking to one link per reference per class
 - [ ] Use generated Javadocs to improve Javadocs (perpetual)
 
-### Cli
+### Gui
 
-- [ ] Find way to kill CanvasFrame protection Thread on exit
+- [ ] Debug and ensure GUI is written properly
 
 ### TesseractFacade
 
-- [ ] parse text-based input?
-	- requires further communication with Pete to determine if necessary.
-	- requires retraining Tesseract
+- [x] parse text-based input?
+	- Determined to be unnecessary, as further data filtering is all that is required.
 
