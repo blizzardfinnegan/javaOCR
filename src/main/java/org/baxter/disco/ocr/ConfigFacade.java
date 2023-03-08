@@ -76,6 +76,7 @@ public class ConfigFacade
     //This block will ALWAYS run first.
     static 
     {
+        //Get config values
         ErrorLogging.logError("Starting configuration setup...");
         //Give CONFIG_STORE an intentionally bad value
         CONFIG_STORE = null;
@@ -140,6 +141,7 @@ public class ConfigFacade
         //Autosave the config
         CONFIG_BUILDER.setAutoSave(true);
     }
+
     /**
      * Get a given config value. 
      * All values are stored as doubles.
@@ -169,7 +171,6 @@ public class ConfigFacade
         Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
         output = cameraConfig.get(property);
         //Debug logger. 
-        //NOTE THAT THIS BREAKS TUI MENUS, AS OF ErrorLogging 1.1.0
         //ErrorLogging.logError("DEBUG: getValue - return value: " + cameraName 
         //                      + "/" + property.getConfig() + " = " + output);
         return output;
@@ -277,6 +278,7 @@ public class ConfigFacade
     //**********************************************
     //SAVE AND LOAD SETTINGS
     //**********************************************
+    //
     
     /**
      * Save current config to a user-defined file location.
@@ -433,22 +435,10 @@ public class ConfigFacade
             for(String sectionName : configSections)
             {
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
-                String subSectionPrefix = "";
                 for(String cameraName : cameraNames)
                 {
-                    if(sectionName.equals(cameraName))
-                    {
-                        subSectionPrefix = cameraName;
-                        break;
-                    }
-                }
-
-                //If an imported section fails, fallback to saving the default values to 
-                //the given location
-                if(subSectionPrefix.equals("")) 
-                {
-                    ErrorLogging.logError("CONFIG LOAD ERROR!!! - Failed import from file. Setting default config.");
-                    return saveDefaultConfig(filename);
+                    if(!sectionName.equals(cameraName))
+                    { saveSingleDefault(cameraName); }
                 }
 
                 for(ConfigProperties configState : ConfigProperties.values())
@@ -482,4 +472,34 @@ public class ConfigFacade
      * @return true if loaded successfully, otherwise false
      */
     public static boolean loadConfig() { return loadConfig(configFileLocation); }
+
+    /**
+     * Save default values to a single camera's config.
+     *
+     * @param sectionName   Name of the config section being saved to.
+     * 
+     * @return false if error, else true
+     */
+    private static boolean saveSingleDefault(String sectionName)
+    {
+        boolean output = false;
+        Map<ConfigProperties,Double> cameraConfig = new HashMap<>();
+        for(ConfigProperties property : ConfigProperties.values())
+        {
+            String propertyName = sectionName + "." + property.getConfig();
+            double propertyValue = property.getDefaultValue();
+            cameraConfig.put(property,propertyValue);
+            //ErrorLogging.logError("DEBUG: Attempting to save to config: ");
+            //ErrorLogging.logError("DEBUG: " + propertyName + ", " + propertyValue);
+            CONFIG_STORE.setProperty(propertyName,propertyValue);
+        }
+        configMap.put(sectionName,cameraConfig);
+        try
+        { 
+            CONFIG_BUILDER.save(); 
+            output = true;
+        }
+        catch(Exception e){ ErrorLogging.logError(e); }
+        return output;
+    }
 }
