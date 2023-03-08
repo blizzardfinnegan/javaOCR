@@ -37,7 +37,7 @@ import java.util.List;
  * Performs image capture, as well as image manipulation.
  *  
  * @author Blizzard Finnegan
- * @version 2.0.1, 15 Feb. 2023
+ * @version 2.1.0, 06 Mar. 2023
  */
 public class OpenCVFacade
 {
@@ -57,28 +57,36 @@ public class OpenCVFacade
      * Width of the image created by the camera.
      * !!See camera documentation before modifying!!
      */
-    private static final int IMG_WIDTH = 3264;
-    //Previously used code:
-    //private static final int IMG_WIDTH = 800;
+    private static final int IMG_WIDTH = 800;
     /**
      * Height of the image created by the camera.
      * !!See camera documentation before modifying!!
      */
-    private static final int IMG_HEIGHT = 2448;
-    //Previously used code:
-    //private static final int IMG_HEIGHT = 600;
+    private static final int IMG_HEIGHT = 600;
     /**
      * FourCC code of the image created by the camera.
      * !!See camera documentation before modifying!!
      */
     private static final String CAMERA_CODEC = "mjpg";
 
+    /**
+     * Name of custom-created symlink for cameras.
+     * This configuration must be done manually on initial install. 
+     */
+    private static final String CAMERA_FILE_PREFIX = "video-cam-";
+
     //Initial Camera creation
     static
     {
-        //Pis should already be configured to create this symlink.
-        newCamera("left", "/dev/video-cam1");
-        newCamera("right","/dev/video-cam2");
+        File devDirectory = new File("/dev");
+        for(File cameraFile : devDirectory.listFiles(
+                    (file) -> { return file.getName().contains(CAMERA_FILE_PREFIX); }))
+        {
+            String cameraName = cameraFile.getName().
+                                substring(CAMERA_FILE_PREFIX.length());
+            ErrorLogging.logError("DEBUG: Camera name: " + cameraName);
+            newCamera(cameraName, cameraFile.getAbsolutePath());
+        }
     }
 
     /**

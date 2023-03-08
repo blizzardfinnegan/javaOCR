@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.6.1, 10 Feb. 2023
+ * @version 1.7.0, 06 Mar. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.4";
+    private static final String version = "4.3.5";
 
     /**
      * Currently saved iteration count.
@@ -53,27 +53,17 @@ public class Cli
     /**
      * Number of options currently available in the main menu.
      */
-    private static final int mainMenuOptionCount = 8;
-
-    /**
-     * Number of options currently available in the movement sub-menu.
-     */
-    private static final int movementMenuOptionCount = 4;
+    private static final int mainMenuOptionCount = 7;
 
     /**
      * Number of options currently available in the camera configuration sub-menu.
      */
-    private static final int cameraMenuOptionCount = 10;
+    private static final int cameraMenuOptionCount = 6;
 
     /**
      * Lock object, used for temporary interruption of {@link #runTests()}
      */
-    private static Lock LOCK = new ReentrantLock();
-
-    /**
-     * Instance of {@link MovementFacade} for controlling the fixture.
-     */
-    private static MovementFacade fixture;
+    public static final Lock LOCK = new ReentrantLock();
 
     //private static Thread safeThread;
 
@@ -91,118 +81,76 @@ public class Cli
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
         try{
-            //Create scanner for user input from the console
             inputScanner = new Scanner(System.in);
 
-            //Initialise the fixture, start monitor thread
-            fixture = new MovementFacade(LOCK);
-            
-            //Initialise the config
             ConfigFacade.init();
 
-            //Create the user input value
             int userInput = 0;
 
-            //Main menu loop
+            ErrorLogging.logError("Calibrating motor movement. This may take several minutes...");
+            ErrorLogging.logError("The piston will fire momentarily when the motor calibration is complete.");
+            MovementFacade.pressButton();
+
             do
             {
-                //Show the main menu, wait for user input
                 printMainMenu();
                 userInput = (int)inputFiltering(inputScanner.nextLine());
 
-                //Perform action based on user input
                 switch (userInput)
                 {
                     case 1:
-                        //Test fixture movement, modify fixture values as necessary
-                        testMovement();
-                        break;
-                    case 2:
-                        //Warn user that starting cameras will take a moment.
                         println("Setting up cameras...");
                         println("This may take a moment...");
                         configureCameras();
-                        //Set that cameras are successfully configured, to mute runTests warning
                         camerasConfigured = true;
                         break;
-                    case 3:
-                        //Set serials of the DUTs
+                    case 2:
                         setDUTSerials();
                         break;
-                    case 4:
-                        //Change the number of iterations to run the tests
+                    case 3:
                         setIterationCount();
                         break;
-                    case 5:
-                        //Set cameras to use in testing
+                    case 4:
                         setActiveCameras();
                         break;
-                    case 6:
-                        //Warn user that cameras haven't been set up, if they haven't been set up
-                        //Won't warn user if config was imported successfully
+                    case 5:
                         if(!camerasConfigured)
                         {
                             prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase();
-                            if( input.isBlank())
-                            {
-                                break;
-                            }
-                            else if (input.charAt(0) != 'y' ) 
-                            {
-                                break;
-                            }
-                            //Save in the logs that cameras may not have been configured.
+                            String input = inputScanner.nextLine().toLowerCase().trim();
+                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
                             else 
-                            {
-                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised cameras.");
-                            }
+                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
                         }
 
-                        //If there's an unset camera serial, prompt the user to go back and set that up
+                        serialsSet = true;
                         for(String cameraName : OpenCVFacade.getCameraNames())
                         {
                             if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
                                ConfigFacade.getSerial(cameraName) == null )
-                            {
                                 serialsSet = false;
-                                break;
-                            }
-                            else serialsSet = true;
                         }
                         if(!serialsSet) 
                         { 
                             prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase();
-                            if( input.isBlank())
-                            {
-                                break;
-                            }
-                            else if (input.charAt(0) != 'y' ) 
-                            {
-                                break;
-                            }
+                            String input = inputScanner.nextLine().toLowerCase().trim();
+                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
                             else
-                            {
-                                ErrorLogging.logError("WARNING! - Potential for error: Un-initialised DUT Serial numbers.");
-                            }
+                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
                         }
 
-                        //Run tests for the given number of iterations
                         runTests();
                         break;
-                    case 7:
-                        //Show help menu
+                    case 6:
                         printHelp();
                         break;
                     case 8:
-                        //Leave the menu
                         break;
                     default:
                         //Input handling already done by inputFiltering()
                 }
 
-        } while (userInput != mainMenuOptionCount);
+            } while (userInput != mainMenuOptionCount);
 
         }
         //If anything ever goes wrong, catch the error and exit
@@ -253,7 +201,6 @@ public class Cli
                     "\n\tdirections, to check range"+
                     "\n\tof motion." +
                     "\n\tAvailable variables to change:"+
-                    "\n\t\tPWM Duty Cycle"+
                     "\n\t\tPWM Frequency"+
                     "\n\t\tMotor Time-out");
         println("----------------------------------------");
@@ -301,35 +248,14 @@ public class Cli
         println("--------------------------------------");
         println("Current iteration count: " + iterationCount);
         println("--------------------------------------");
-        println("1. Test and configure fixture movement");
-        println("2. Configure camera");
-        println("3. Set serial numbers");
-        println("4. Change test iteration count");
-        println("5. Toggle active cameras");
-        println("6. Run tests");
-        println("7. Help");
-        println("8. Exit");
+        println("1. Configure camera");
+        println("2. Set serial numbers");
+        println("3. Change test iteration count");
+        println("4. Toggle active cameras");
+        println("5. Run tests");
+        println("6. Help");
+        println("7. Exit");
         println("======================================");
-    }
-
-    /**
-     * Predefined print statements for the movement submenu.
-     */
-    private static void printMovementMenu()
-    {
-        println("\n\n");
-        println("====================================");
-        println("Movement Menu:");
-        println("------------------------------------");
-        println("Current Duty Cycle: " + fixture.getDutyCycle());
-        println("Current Frequency: " + fixture.getFrequency());
-        println("Current Motor Time-out: " + fixture.getTimeout());
-        println("------------------------------------");
-        println("1. Change Duty Cycle");
-        println("2. Change Frequency");
-        println("3. Change Motor Time-out");
-        println("4. Exit");
-        println("====================================");
     }
 
     /**
@@ -408,69 +334,13 @@ public class Cli
         println("Will the image be thresholded? " + thresholdImage);
         println("Tesseract parsed value for camera " + cameraName + ": " + tesseractValue);
         println("------------------------------------");
-        println("1. Change Crop Point");
+        println("1. Change Crop Region");
         println("2. Change Composite Frame Count");
         println("3. Change Threshold Value");
         println("4. Toggle crop");
         println("5. Toggle threshold");
         println("6. Exit");
         println("====================================");
-    }
-
-
-    /**
-     * Function for testing movement, and modifying hardware values
-     */
-    private static void testMovement()
-    {
-        int userInput = -1;
-        //Loop to allow multiple changes to device GPIO settings
-        do
-        {
-            println("Testing movement...");
-            fixture.testMotions();
-            printMovementMenu();
-            userInput = (int)inputFiltering(inputScanner.nextLine());
-            switch (userInput)
-            {
-                /*
-                 * Menu options:
-                 * 1. Change Duty Cycle
-                 * 2. Change Frequency
-                 * 3. Change Motor Time-out
-                 * 4. Exit
-                 */
-                case 1:
-                    prompt("Input the desired duty cycle value: ");
-                    int newDutyCycle = (int)inputFiltering(inputScanner.nextLine());
-                    if (newDutyCycle != -1)
-                    {
-                        fixture.setDutyCycle(newDutyCycle);
-                        break;
-                    }
-                case 2:
-                    prompt("Input the desired frequency value: ");
-                    int newFrequency = (int)inputFiltering(inputScanner.nextLine());
-                    if (newFrequency != -1) 
-                    {
-                        fixture.setFrequency(newFrequency);
-                        break;
-                    }
-                case 3:
-                    prompt("Input the desired time-out (in seconds): ");
-                    double newTimeout = inputFiltering(inputScanner.nextLine());
-                    if (newTimeout != -1) 
-                    {
-                        fixture.setTimeout(newTimeout);
-                        break;
-                    }
-                case 4:
-                    break;
-                default:
-                    ErrorLogging.logError("User Input Error!!! - Invalid input.");
-            }
-        } 
-        while(userInput != 4);
     }
 
     /** 
@@ -481,7 +351,7 @@ public class Cli
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
 
         //Always wake the camera, to ensure that the image is useful
-        fixture.iterationMovement(true);
+        MovementFacade.iterationMovement(true);
         double tesseractValue = 0.0;
 
         //Main camera config loop
@@ -509,9 +379,9 @@ public class Cli
             do
             {
                 //Press button twice, to make sure the DUT is awake
-                fixture.pressButton();
+                MovementFacade.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
-                fixture.pressButton();
+                MovementFacade.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
                 //Show image 
@@ -707,7 +577,7 @@ public class Cli
 
         //Wake the device, then wait to ensure they're awake before continuing
         ErrorLogging.logError("DEBUG: Waking devices...");
-        fixture.pressButton();
+        MovementFacade.pressButton();
         try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
         //Create final maps for result images, result values, and camera names
@@ -739,7 +609,7 @@ public class Cli
                 fail = false;
                 //Move the fixture for one iteration, with whether or not the DUTs need to be primed
                 while(!LOCK.tryLock()) {}
-                fixture.iterationMovement(prime);
+                MovementFacade.iterationMovement(prime);
                 LOCK.unlock();
 
                 //Wait for the DUT to display an image
@@ -778,10 +648,10 @@ public class Cli
                        result >= 100 || 
                        result == Double.NEGATIVE_INFINITY)
                     {
-                        fixture.goUp();
+                        MovementFacade.goUp();
                         try{ Thread.sleep(20000); } 
                         catch(Exception e){ ErrorLogging.logError(e); }
-                        fixture.pressButton();
+                        MovementFacade.pressButton();
                         fail = true;
                         break;
                     }
@@ -798,8 +668,6 @@ public class Cli
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
         }
-        //Close the Excel workbook
-        DataSaving.closeWorkbook(cameraList.size());
         //Alert the user to testing being complete
         println("=======================================");
         println("Testing complete!");
@@ -817,9 +685,11 @@ public class Cli
      */
     private static void close()
     {
+        ErrorLogging.logError("DEBUG: =================");
         ErrorLogging.logError("DEBUG: PROGRAM CLOSING.");
+        ErrorLogging.logError("DEBUG: =================");
         if(inputScanner != null) inputScanner.close();
-        fixture.closeGPIO();
+        MovementFacade.closeGPIO();
         ErrorLogging.logError("DEBUG: END OF PROGRAM.");
         ErrorLogging.closeLogs();
         println("The program has exited successfully. Please press Ctrl-c to return to the terminal prompt.");
@@ -867,13 +737,6 @@ public class Cli
                         output = -1;
                     }
                     break;
-                case MOVEMENT:
-                    if(output > movementMenuOptionCount)
-                    {
-                        invalidMovementMenuInput();
-                        output = -1;
-                    }
-                    break;
                 case CAMERA:
                     if(output > cameraMenuOptionCount)
                     {
@@ -894,14 +757,6 @@ public class Cli
     private static void invalidMainMenuInput()
     {
         invalidMenuInput(mainMenuOptionCount);
-    }
-
-    /**
-     * Prints a message when user inputs an invalid main menu value.
-     */
-    private static void invalidMovementMenuInput()
-    {
-        invalidMenuInput(movementMenuOptionCount);
     }
 
     /**
@@ -954,5 +809,5 @@ public class Cli
     /**
      * Enum of possible menus available
      */
-    private enum Menus { MAIN,MOVEMENT,CAMERA,OTHER; }
+    private enum Menus { MAIN,CAMERA,OTHER; }
 }

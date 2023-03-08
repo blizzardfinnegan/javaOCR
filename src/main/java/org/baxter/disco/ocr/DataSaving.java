@@ -32,7 +32,7 @@ import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 4.1.0, 24 Feb. 2023
+ * @version 5.0.0, 07 Mar. 2023
  */
 public class DataSaving
 {
@@ -148,6 +148,10 @@ public class DataSaving
             cell = row.createCell(cellnum++);
             cell.setCellValue("");
         }
+        HSSFCell serialTitleCell = row.createCell(cellnum++);
+        serialTitleCell.setCellValue("Serial");
+        HSSFCell passPercentCell = row.createCell(cellnum++);
+        passPercentCell.setCellValue("Pass %");
 
         //Save to file
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
@@ -163,44 +167,44 @@ public class DataSaving
      *
      * @param cameraCount   The number of cameras that were used.
      */
-    public static void closeWorkbook(int cameraCount)
+    private static void updateFormulas(int cameraCount)
     {
+        int rowIndex = 0;
+        FormulaEvaluator formulaEvaluator = outputWorkbook.getCreationHelper().createFormulaEvaluator();
+        int lastColumnOfData = outputSheet.getRow(rowIndex).getLastCellNum();
+        int serialColumn = lastColumnOfData + 1;
+        int percentColumn = lastColumnOfData + 2;
+        
         //Get the last row, add another row below it, and name the first cell "Totals:"
         int lastRowOfData = outputSheet.getLastRowNum();
-        HSSFRow finalRow = outputSheet.createRow(++lastRowOfData);
-        HSSFCell titleCell = finalRow.createCell(0);
-        titleCell.setCellValue("Totals:");
 
-        //ErrorLogging.logError("DEBUG: 3 ?= " + (cameraCount*3));
-        
         //For each camera, create a unique total line
         for(int column = 3; column <= (cameraCount*3); column+=3)
         {
-            //Create a cell in the right column
-            HSSFCell cell = finalRow.createCell(column);
-            FormulaEvaluator formulaEvaluator = outputWorkbook.getCreationHelper().createFormulaEvaluator();
             String columnName = CellReference.convertNumToColString(column);
-            
-            //Intermediate variable to store the array of possible values
-            //Dollar signs in use here indicate that if the cell is copied and pasted, 
-            //the same cells will be referenced
+            HSSFRow row = outputSheet.getRow(++rowIndex);
+            HSSFCell serialCell = row.createCell(serialColumn);
+            String formula = "$" + columnName + "$" + rowIndex;
+            serialCell.setCellFormula(formula);
+            formulaEvaluator.evaluate(serialCell);
+
+            HSSFCell percentCell = row.createCell(percentColumn);
             String verticalArray = String.format("$%s$2:$%s$%s",columnName,columnName,lastRowOfData);
             ErrorLogging.logError("DEBUG: Vertical Array: " + verticalArray);
 
-            //Create the error formula, then set it as the cell's formula.
-            String formula = String.format(
-                "(COUNT(%s)-COUNTIF(%s,{\"<%s\",\">%s\"}))/(COUNT(%s))",
+            formula = String.format(
+                "(COUNT(%s)-(COUNTIF(%s,\"<%s\")+COUNTIF(%s,\">%s\",))/(COUNT(%s))",
                 verticalArray,
-                verticalArray, (targetTemp - failRange), (targetTemp + failRange), 
+                verticalArray, (targetTemp - failRange), 
+                verticalArray, (targetTemp + failRange), 
                 verticalArray);
-            cell.setCellFormula(formula);
+            percentCell.setCellFormula(formula);
 
-            //Make the percentage human-readable
-            cell.setCellStyle(finalValuesStyle);
+            percentCell.setCellStyle(finalValuesStyle);
 
-            //To make the cell be a readable value, you need to
-            //evaluate the formula within the cell.
-            formulaEvaluator.evaluate(cell);
+            //To make the percentCell be a readable value, you need to
+            //evaluate the formula within the percentCell.
+            formulaEvaluator.evaluate(percentCell);
 
             ErrorLogging.logError("DEBUG: Formula: " + formula);
         }
@@ -282,44 +286,8 @@ public class DataSaving
 
             //Create a blank cell as a spacer
             row.createCell(cellnum++);
-            //ErrorLogging.logError("DEBUG: " + cameraName);
-
-            //objectArray.add(serialNumber);
-            //objectArray.add(file.getPath());
-            //objectArray.add(inputMap.get(file));
-            //objectArray.add(" ");
         }
-        //for(Object cellObject : objectArray)
-        //{
-        //    HSSFCell cell = row.createCell(cellnum++);
-        //    if(cellObject instanceof Double) 
-        //    {
-        //        Double cellValue = (Double)cellObject;
-        //        ErrorLogging.logError("DEBUG: " + cellValue + " ?= " + targetTemp + " +- " + failRange);
-        //        if(cellValue.equals(Double.NEGATIVE_INFINITY))
-        //        {
-        //            cell.setCellValue("ERROR!");
-        //            cell.setCellStyle(errorStyle);
-        //        }
-        //        else 
-        //        {
-        //            cell.setCellValue(cellValue);
-        //            if( cellValue.doubleValue() > (targetTemp + failRange) ||
-        //                cellValue.doubleValue() < (targetTemp - failRange) )
-        //            {
-        //                ErrorLogging.logError("DEBUG: Cell value " + cellValue.doubleValue() + " is outside the allowed range! (" + (targetTemp -failRange) + "-" + (targetTemp + failRange) + "). Setting cell to fail colouring.");
-        //                cell.setCellStyle(failStyle);
-        //            }
-        //        }
-        //    }
-        //    else if(cellObject instanceof String) cell.setCellValue((String) cellObject);
-        //    else 
-        //    { 
-        //        ErrorLogging.logError("XLSX Write Error!!! - Invalid input."); 
-        //        ErrorLogging.logError("\t" + cellObject.toString());
-        //    }
-
-        //}
+        updateFormulas(cameraNames.size());
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
         { outputWorkbook.write(outputStream); output = true; }
         catch(Exception e) {ErrorLogging.logError(e);}

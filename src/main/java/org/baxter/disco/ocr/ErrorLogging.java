@@ -18,7 +18,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * as well as stderr.
  *
  * @author Blizzard Finnegan
- * @version 1.3.1, 09 Feb. 2023
+ * @version 1.3.2, 07 Mar. 2023
  */
 
 public class ErrorLogging
@@ -109,7 +109,7 @@ public class ErrorLogging
      */
     public static void logError(String error)
     {
-        String errorMessage = datetime.format(LocalDateTime.now())  + " - " + error;
+        String errorMessage = datetime.format(LocalDateTime.now())  + "\t- " + error;
         fileOut.println(errorMessage);
         fileOut.flush();
         if(!error.substring(0,5).equals("DEBUG"))
