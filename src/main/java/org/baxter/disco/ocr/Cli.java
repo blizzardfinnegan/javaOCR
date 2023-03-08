@@ -91,10 +91,6 @@ public class Cli
             ErrorLogging.logError("The piston will fire momentarily when the motor calibration is complete.");
             MovementFacade.pressButton();
 
-            ErrorLogging.logError("Testing config.");
-            MovementFacade.goDown();
-            MovementFacade.goUp();
-
             do
             {
                 printMainMenu();

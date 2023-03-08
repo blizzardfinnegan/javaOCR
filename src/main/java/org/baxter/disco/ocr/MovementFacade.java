@@ -556,6 +556,9 @@ public class MovementFacade
         int medSpeedPolls = (int)(notHighSpeedPolls * SLOW_POLL_FACTOR);
         int lowSpeedPolls = notHighSpeedPolls - medSpeedPolls;
 
+        medSpeedPolls *= SPEED_DOWN_FACTOR;
+        lowSpeedPolls *= 2 * SPEED_DOWN_FACTOR;
+
         ErrorLogging.logError("DEBUG: =============================");
         ErrorLogging.logError("DEBUG: Travel time: " + totalPollCount);
         ErrorLogging.logError("DEBUG: High speed poll count: " + highSpeedPolls);
@@ -598,7 +601,7 @@ public class MovementFacade
         if(motorEnable.isOn())
         {
             output = FinalState.SAFE;
-            pwm.on(DUTY_CYCLE, (FREQUENCY / SPEED_DOWN_FACTOR));
+            pwm.on(DUTY_CYCLE, (FREQUENCY / (2 * SPEED_DOWN_FACTOR)));
             for(int i = 0; i < lowSpeedPolls; i++)
             {
                 try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
