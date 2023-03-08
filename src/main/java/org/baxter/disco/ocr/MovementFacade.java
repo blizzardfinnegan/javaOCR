@@ -36,19 +36,6 @@ public class MovementFacade
     private static Thread runSwitchThread;
 
     /**
-     * Conversion factor from cm/s to PWM frequency. 
-     *
-     * PWM to linear speed conversion:
-     * Motor controller should be set to 6400 pulses / revolution
-     *      (See motor controller documentation)
-     * Fixture corkscrew has a lead of 3 revolutions / cm
-     *      (Lead = thread pitch * # of thread starts)
-     *
-     * Frequency (Hz) = Speed (cm/s) * (pulses/rev) * (lead)
-     */
-    private static final double PWM_FREQ_CONVERT = 19200;
-
-    /**
      * Max allowed speed by current fixture design.
      * Motor appears to start acting erratically over 192kHz.
      */
@@ -65,26 +52,21 @@ public class MovementFacade
     private static final int MIN_FREQUENCY = 10000;
 
     /**
-     * Distance in cm the fixture needs to travel.
-     *
-     * Distance between limit switches: ~80cm.
-     * Thickness of fixture arm: ~50cm.
-     *  *** ABOVE MATH IS WRONG ***
-     *  I don't know what I did wrong, but this value doesn't work 
-     *  properly if straight calculated. 
-     *  I will look into this more at some point.
+     * Fraction of the total travel time at speed to start slowing down.
      */
-    private static final int TRAVEL_DIST = 12;
+    private static final double SLOW_POLL_FACTOR = 3.0 / 4.0;
 
     /**
-     * What percentage of the travel to slow down the motor.
+     * Amount to slow down the speed by.
      */
-    private static final double STEP_1 = 2.0/3.0;
+    private static final int SPEED_DOWN_FACTOR = 2;
 
     /**
-     * What percentage of the travel to slow down the motor farther.
+     * Amount of distance to travel.
+     * Measured in... seemingly arbitrary units? Not sure on the math here.
+     * Set in {@link #findDistance()}
      */
-    private static final double STEP_2 = 5.0/6.0;
+    private static double TRAVEL_DIST;
 
     /**
      * Frequency fed to the PWM pin, which the motor controller converts into movement speed.
@@ -231,7 +213,6 @@ public class MovementFacade
                     }
                 }, "Run switch monitor.");
         runSwitchThread.start();
-        //ErrorLogging.logError("DEBUG: Lock thread started!");
 
         //Initialise Pi4J
         pi4j = Pi4J.newAutoContext();
@@ -249,6 +230,9 @@ public class MovementFacade
         //Initialise PWM object. 
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
         pwm.on(DUTY_CYCLE, FREQUENCY);
+
+        //Find Distance and max speeds
+        calibrate();
     }
 
     /**
@@ -351,7 +335,7 @@ public class MovementFacade
     public static int resetArm()
     {
         ErrorLogging.logError("DEBUG: --------------------------------------");
-        int counter = 0;
+        int counter;
         ErrorLogging.logError("DEBUG: Setting minimum frequency of PWM...");
         pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
         if(upperLimit.isHigh())
@@ -372,24 +356,29 @@ public class MovementFacade
         motorEnable.on();
 
         ErrorLogging.logError("DEBUG: Is the upper limit switch reached? " + upperLimit.isHigh());
-        while(!upperLimit.isHigh()) 
+        for(counter = 0; counter < Integer.MAX_VALUE; counter++)
         { 
-            try{ Thread.sleep(100); }
-            catch (Exception e) { ErrorLogging.logError(e); }
-            counter++;
+            try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+            if(upperLimit.isOn()) 
+            {
+                try{ Thread.sleep(1); } catch(Exception e){ErrorLogging.logError(e); }
+                if(upperLimit.isOn()) break;
+            }
         }
         motorEnable.off();
-        ErrorLogging.logError("DEBUG: Motor returned after " + counter + " polls.");
+        ErrorLogging.logError("Motor returned after " + counter + " polls.");
         ErrorLogging.logError("DEBUG: --------------------------------------");
         return counter;
     }
 
     /**
-     * Used to set the motor's max speed.
+     * Used to programmatically determine the motor's max speed.
      */
-    public static void calibrate()
+    private static void calibrate()
     {
-        ErrorLogging.logError("Initial Calibration reset.");
+        ErrorLogging.logError("Determining distance to limit switches...");
+        findDistance();
+        ErrorLogging.logError("Resetting arm to set speed.");
         resetArm();
         ErrorLogging.logError("Coarse calibrating...");
         FREQUENCY = calib(MIN_FREQUENCY, MAX_FREQUENCY, 10000);
@@ -401,10 +390,64 @@ public class MovementFacade
     }
 
     /**
-     * Find the max speed of the fixure between two points.
+     * Used to programmatically find the distance between the upper and lower limit switches.
+     */
+    private static void findDistance()
+    {
+        resetArm();
+        int downTravelCounter = 0;
+        int upTravelCounter = 0;
+        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
+        motorDirection.low();
+        motorEnable.on();
+        for(downTravelCounter = 0; downTravelCounter < Integer.MAX_VALUE; downTravelCounter++)
+        {
+            try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+            if(lowerLimit.isOn()) 
+            {
+                try{ Thread.sleep(1); } catch(Exception e){ErrorLogging.logError(e); }
+                if(lowerLimit.isOn()) break;
+            }
+        }
+        motorEnable.off();
+        if(lowerLimit.isOff()) ErrorLogging.logError("False positive on findDistance down!");
+        
+        int downTravelDist = downTravelCounter * MIN_FREQUENCY;
+        ErrorLogging.logError("DEBUG: Down travel distance found to be: " + downTravelDist);
+        ErrorLogging.logError("Down travel count: " + downTravelCounter);
+
+        motorDirection.high();
+        motorEnable.on();
+        for(upTravelCounter = 0; upTravelCounter < Integer.MAX_VALUE; upTravelCounter++)
+        { 
+            try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+            if(upperLimit.isOn()) 
+            {
+                try{ Thread.sleep(1); } catch(Exception e){ErrorLogging.logError(e); }
+                if(upperLimit.isOn()) break;
+            }
+        }
+        motorEnable.off();
+        if(upperLimit.isOff()) ErrorLogging.logError("False positive on findDistance up!");
+
+        int upTravelDist = upTravelCounter * MIN_FREQUENCY;
+        ErrorLogging.logError("DEBUG: Up travel distance found to be: " + upTravelDist);
+        ErrorLogging.logError("Up travel count: " + downTravelCounter);
+
+        if(Math.abs(upTravelCounter - downTravelCounter) > 3)
+        {
+            ErrorLogging.logError("DEBUG: Values differ too far to be error. Setting to lower value.");
+        }
+        int travelCounter = Math.min(upTravelCounter, downTravelCounter);
+        TRAVEL_DIST = travelCounter * MIN_FREQUENCY;
+    }
+
+
+    /**
+     * Find the max frequency to feed to the motor.
      *
-     * @param start     Lowest speed to check 
-     * @param max       Highest speed to check
+     * @param start     Lowest frequency to check 
+     * @param max       Highest frequency to check
      * @param iterate   How much to iterate by
      *
      * @return The largest safe value between start and max. 
@@ -424,10 +467,10 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
             ErrorLogging.logError("DEBUG: Motor calibrate on.");
             motorEnable.on();
-            for(int j = 0; j < 20; j++)
+            int TWO_SECONDS = 2 * TIME_CONVERSION;
+            for(int j = 0; j < TWO_SECONDS; j++)
             {
-                try{ Thread.sleep(100); }
-                catch (Exception e){ ErrorLogging.logError(e); }
+                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
                 if(lowerLimit.isHigh()) 
                 {
                     ErrorLogging.logError("DEBUG: Breaking loop early!");
@@ -445,7 +488,7 @@ public class MovementFacade
             {
 
                 ErrorLogging.logError("DEBUG: Motor moved at speed " + i + ". Checking for errors.");
-                if(resetArm() < 10 && i > 3.0)
+                if(resetArm() < 10)
                 {
                     ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
                     return i - iterate;
@@ -508,59 +551,59 @@ public class MovementFacade
         if(limitSense.isHigh()) return FinalState.SAFE;
 
         pwm.on(DUTY_CYCLE, FREQUENCY);
-        int TRAVEL_TIME = (int)(TRAVEL_DIST / (FREQUENCY / PWM_FREQ_CONVERT));
-        int POLL_COUNT = TRAVEL_TIME * TIME_CONVERSION;
-        int VEL_STEP_1 = (int)(STEP_1 * POLL_COUNT);
-        int VEL_STEP_2 = (int)(STEP_2 * POLL_COUNT);
-
-        ErrorLogging.logError("DEBUG: =================================");
-        ErrorLogging.logError("DEBUG: Total Poll count: " + POLL_COUNT);
-        ErrorLogging.logError("DEBUG: Transition 1: " + VEL_STEP_1);
-        ErrorLogging.logError("DEBUG: Transition 2: " + VEL_STEP_2);
-        ErrorLogging.logError("DEBUG: Travel time: " + TRAVEL_TIME);
-        ErrorLogging.logError("DEBUG: Travel speed: " + (FREQUENCY/PWM_FREQ_CONVERT));
-        ErrorLogging.logError("DEBUG: STEP_1: " + STEP_1);
-        ErrorLogging.logError("DEBUG: STEP_2: " + STEP_2);
-        ErrorLogging.logError("DEBUG: =================================");
+        int travelTime = (int)(TRAVEL_DIST / FREQUENCY);
+        int totalPollCount = travelTime * TIME_CONVERSION;
+        int highSpeedPolls = (int)(totalPollCount * SLOW_POLL_FACTOR);
+        int notHighSpeedPolls = totalPollCount - highSpeedPolls;
+        int medSpeedPolls = (int)(notHighSpeedPolls * SLOW_POLL_FACTOR);
+        int lowSpeedPolls = notHighSpeedPolls - medSpeedPolls;
         motorEnable.on();
-        for(int i = 0; i < (POLL_COUNT);i++)
+        for(int i = 0; i < highSpeedPolls; i++)
         {
             try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
             if(limitSense.isOn())
             {
-                ErrorLogging.logError("DEBUG: Motor at lower limit switch early! Pre-emptively exiting loop on poll " + i);
+                ErrorLogging.logError("DEBUG: Motor moved too fast! Stopping motor early.");
+                motorEnable.off();
+                output = FinalState.FAILED;
                 break;
             }
-            else if(i >= VEL_STEP_1 && i < VEL_STEP_2)
+        }
+
+        if(motorEnable.isOn())
+        {
+            output = FinalState.UNSAFE;
+            pwm.on(DUTY_CYCLE, (FREQUENCY / SPEED_DOWN_FACTOR));
+            for(int i = 0; i < medSpeedPolls; i++)
             {
-                if(output != FinalState.UNSAFE)
+                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+                if(limitSense.isOn())
                 {
-                    output = FinalState.UNSAFE;
-                    ErrorLogging.logError("DEBUG: Slowing down.");
-                    pwm.on(DUTY_CYCLE, (int)(FREQUENCY / 1.25));
-                }
-            }
-            else if(i >= VEL_STEP_2)
-            {
-                if(output != FinalState.SAFE)
-                {
-                    ErrorLogging.logError("DEBUG: Slowing down more.");
-                    pwm.on(DUTY_CYCLE, FREQUENCY / 2);
-                    output = FinalState.SAFE;
+                    ErrorLogging.logError("DEBUG: Motor only partially slowed down! Stopping motor early.");
+                    motorEnable.off();
+                    break;
                 }
             }
         }
+
+        if(motorEnable.isOn())
+        {
+            output = FinalState.SAFE;
+            pwm.on(DUTY_CYCLE, (FREQUENCY / SPEED_DOWN_FACTOR));
+            for(int i = 0; i < lowSpeedPolls; i++)
+            {
+                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
+                if(limitSense.isOn())
+                {
+                    ErrorLogging.logError("DEBUG: Motor slowed down completely, but hit limit switch early.");
+                    motorEnable.off();
+                    break;
+                }
+            }
+        }
+
         motorEnable.off();
         
-        if(output == FinalState.FAILED) 
-            ErrorLogging.logError("Motor moved too fast!");
-        else if(output == FinalState.UNSAFE)
-            ErrorLogging.logError("DEBUG: Motor only slowed down partially.");
-        else if(output == FinalState.SAFE)
-        {
-            if(limitSense.isOn()) ErrorLogging.logError("DEBUG: Motor slowed down successfully.");
-            else                  ErrorLogging.logError("DEBUG: Motor did not reach limit switch successfully.");
-        }
         pwm.on(DUTY_CYCLE, FREQUENCY);
         return output;
     }

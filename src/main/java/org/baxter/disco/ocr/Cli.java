@@ -81,75 +81,80 @@ public class Cli
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
         try{
-            inputScanner = new Scanner(System.in);
+            //inputScanner = new Scanner(System.in);
 
-            ConfigFacade.init();
+            //ConfigFacade.init();
 
-            int userInput = 0;
+            //int userInput = 0;
 
             ErrorLogging.logError("Calibrating motor movement. This may take several minutes...");
-            MovementFacade.calibrate();
+            ErrorLogging.logError("The piston will fire momentarily when the motor calibration is complete.");
+            MovementFacade.pressButton();
 
-            do
-            {
-                printMainMenu();
-                userInput = (int)inputFiltering(inputScanner.nextLine());
+            ErrorLogging.logError("Testing config.");
+            MovementFacade.goDown();
+            MovementFacade.goUp();
 
-                switch (userInput)
-                {
-                    case 1:
-                        println("Setting up cameras...");
-                        println("This may take a moment...");
-                        configureCameras();
-                        camerasConfigured = true;
-                        break;
-                    case 2:
-                        setDUTSerials();
-                        break;
-                    case 3:
-                        setIterationCount();
-                        break;
-                    case 4:
-                        setActiveCameras();
-                        break;
-                    case 5:
-                        if(!camerasConfigured)
-                        {
-                            prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase().trim();
-                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
-                            else 
-                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
-                        }
+            //do
+            //{
+            //    printMainMenu();
+            //    userInput = (int)inputFiltering(inputScanner.nextLine());
 
-                        serialsSet = true;
-                        for(String cameraName : OpenCVFacade.getCameraNames())
-                        {
-                            if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
-                               ConfigFacade.getSerial(cameraName) == null )
-                                serialsSet = false;
-                        }
-                        if(!serialsSet) 
-                        { 
-                            prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
-                            String input = inputScanner.nextLine().toLowerCase().trim();
-                            if( input.isBlank() || input.charAt(0) != 'y' ) break;
-                            else
-                                ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
-                        }
+            //    switch (userInput)
+            //    {
+            //        case 1:
+            //            println("Setting up cameras...");
+            //            println("This may take a moment...");
+            //            configureCameras();
+            //            camerasConfigured = true;
+            //            break;
+            //        case 2:
+            //            setDUTSerials();
+            //            break;
+            //        case 3:
+            //            setIterationCount();
+            //            break;
+            //        case 4:
+            //            setActiveCameras();
+            //            break;
+            //        case 5:
+            //            if(!camerasConfigured)
+            //            {
+            //                prompt("You have not configured the cameras yet! Are you sure you would like to continue? (y/N): ");
+            //                String input = inputScanner.nextLine().toLowerCase().trim();
+            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
+            //                else 
+            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised cameras.");
+            //            }
 
-                        runTests();
-                        break;
-                    case 6:
-                        printHelp();
-                        break;
-                    case 8:
-                        break;
-                    default:
-                        //Input handling already done by inputFiltering()
-                }
+            //            serialsSet = true;
+            //            for(String cameraName : OpenCVFacade.getCameraNames())
+            //            {
+            //                if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0 && 
+            //                   ConfigFacade.getSerial(cameraName) == null )
+            //                    serialsSet = false;
+            //            }
+            //            if(!serialsSet) 
+            //            { 
+            //                prompt("You have not set the serial numbers for your DUTs yet! Are you sure you would like to continue? (y/N): ");
+            //                String input = inputScanner.nextLine().toLowerCase().trim();
+            //                if( input.isBlank() || input.charAt(0) != 'y' ) break;
+            //                else
+            //                    ErrorLogging.logError("DEBUG: Potential for error: Un-initialised DUT Serial numbers.");
+            //            }
 
-            } while (userInput != mainMenuOptionCount);
+            //            runTests();
+            //            break;
+            //        case 6:
+            //            printHelp();
+            //            break;
+            //        case 8:
+            //            break;
+            //        default:
+            //            //Input handling already done by inputFiltering()
+            //    }
+
+            //} while (userInput != mainMenuOptionCount);
 
         }
         //If anything ever goes wrong, catch the error and exit
