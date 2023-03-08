@@ -44,7 +44,7 @@ public class MovementFacade
     /**
      * Amount of buffer between the found absolute speed, and used speed.
      */
-    private static final int SPEED_BUFFER = 4000;
+    private static final int SPEED_BUFFER = 5000;
 
     /**
      * Minimum allowed speed of the fixture arm; also used for reset travels.
@@ -366,7 +366,7 @@ public class MovementFacade
             }
         }
         motorEnable.off();
-        ErrorLogging.logError("Motor returned after " + counter + " polls.");
+        ErrorLogging.logError("DEBUG: Motor returned after " + counter + " polls.");
         ErrorLogging.logError("DEBUG: --------------------------------------");
         return counter;
     }
@@ -380,10 +380,10 @@ public class MovementFacade
         findDistance();
         ErrorLogging.logError("Resetting arm to set speed.");
         resetArm();
-        ErrorLogging.logError("Coarse calibrating...");
+        ErrorLogging.logError("Calibrating...");
         FREQUENCY = calib(MIN_FREQUENCY, MAX_FREQUENCY, 10000);
-        ErrorLogging.logError("Fine calibrating...");
-        FREQUENCY = calib(FREQUENCY,(FREQUENCY+10000),1000);
+        //ErrorLogging.logError("Fine calibrating...");
+        //FREQUENCY = calib(FREQUENCY,(FREQUENCY+10000),1000);
         ErrorLogging.logError("Calibration complete!");
         ErrorLogging.logError("DEBUG: Speed set to " + (FREQUENCY - SPEED_BUFFER));
         setFrequency(FREQUENCY - SPEED_BUFFER);
@@ -410,11 +410,11 @@ public class MovementFacade
             }
         }
         motorEnable.off();
-        if(lowerLimit.isOff()) ErrorLogging.logError("False positive on findDistance down!");
+        if(lowerLimit.isOff()) ErrorLogging.logError("DEBUG: False positive on findDistance down!");
         
         int downTravelDist = downTravelCounter * MIN_FREQUENCY;
         ErrorLogging.logError("DEBUG: Down travel distance found to be: " + downTravelDist);
-        ErrorLogging.logError("Down travel count: " + downTravelCounter);
+        ErrorLogging.logError("DEBUG: Down travel count: " + downTravelCounter);
 
         motorDirection.high();
         motorEnable.on();
@@ -428,11 +428,11 @@ public class MovementFacade
             }
         }
         motorEnable.off();
-        if(upperLimit.isOff()) ErrorLogging.logError("False positive on findDistance up!");
+        if(upperLimit.isOff()) ErrorLogging.logError("DEBUG: False positive on findDistance up!");
 
         int upTravelDist = upTravelCounter * MIN_FREQUENCY;
         ErrorLogging.logError("DEBUG: Up travel distance found to be: " + upTravelDist);
-        ErrorLogging.logError("Up travel count: " + downTravelCounter);
+        ErrorLogging.logError("DEBUG: Up travel count: " + downTravelCounter);
 
         if(Math.abs(upTravelCounter - downTravelCounter) > 3)
         {
@@ -526,7 +526,6 @@ public class MovementFacade
      * Internal function to send the fixture to a given limit switch.
      *
      * Detects if the limit switch is active before activating motor.
-     * Motor movement is written to slow down at {@link #STEP_1} and {@link #STEP_2} 
      *
      * @param moveUp    Whether to send the fixture up or down. (True = up, False = down)
      * @return true if movement was successful; otherwise false
@@ -551,20 +550,28 @@ public class MovementFacade
         if(limitSense.isHigh()) return FinalState.SAFE;
 
         pwm.on(DUTY_CYCLE, FREQUENCY);
-        int travelTime = (int)(TRAVEL_DIST / FREQUENCY);
-        int totalPollCount = travelTime * TIME_CONVERSION;
+        int totalPollCount = (int)(TRAVEL_DIST / FREQUENCY);
         int highSpeedPolls = (int)(totalPollCount * SLOW_POLL_FACTOR);
         int notHighSpeedPolls = totalPollCount - highSpeedPolls;
         int medSpeedPolls = (int)(notHighSpeedPolls * SLOW_POLL_FACTOR);
         int lowSpeedPolls = notHighSpeedPolls - medSpeedPolls;
+
+        ErrorLogging.logError("DEBUG: =============================");
+        ErrorLogging.logError("DEBUG: Travel time: " + totalPollCount);
+        ErrorLogging.logError("DEBUG: High speed poll count: " + highSpeedPolls);
+        ErrorLogging.logError("DEBUG: Medium speed poll count: " + medSpeedPolls);
+        ErrorLogging.logError("DEBUG: Low speed poll count: " + lowSpeedPolls);
+        ErrorLogging.logError("DEBUG: =============================");
         motorEnable.on();
         for(int i = 0; i < highSpeedPolls; i++)
         {
             try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
             if(limitSense.isOn())
             {
-                ErrorLogging.logError("DEBUG: Motor moved too fast! Stopping motor early.");
                 motorEnable.off();
+                ErrorLogging.logError("DEBUG: Motor moved too fast! Stopping motor early.");
+                ErrorLogging.logError("DEBUG: Breaking high-speed loop and turning off motor!");
+                ErrorLogging.logError("DEBUG: Iteration count: " + i);
                 output = FinalState.FAILED;
                 break;
             }
@@ -579,8 +586,10 @@ public class MovementFacade
                 try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
                 if(limitSense.isOn())
                 {
-                    ErrorLogging.logError("DEBUG: Motor only partially slowed down! Stopping motor early.");
                     motorEnable.off();
+                    ErrorLogging.logError("DEBUG: Motor only partially slowed down! Stopping motor early.");
+                    ErrorLogging.logError("DEBUG: Breaking medium-speed loop and turning off motor!");
+                    ErrorLogging.logError("DEBUG: Iteration count: " + i);
                     break;
                 }
             }
@@ -595,8 +604,10 @@ public class MovementFacade
                 try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
                 if(limitSense.isOn())
                 {
-                    ErrorLogging.logError("DEBUG: Motor slowed down completely, but hit limit switch early.");
                     motorEnable.off();
+                    ErrorLogging.logError("DEBUG: Motor slowed down completely, but hit limit switch early.");
+                    ErrorLogging.logError("DEBUG: Breaking low-speed loop and turning off motor!");
+                    ErrorLogging.logError("DEBUG: Iteration count: " + i);
                     break;
                 }
             }
