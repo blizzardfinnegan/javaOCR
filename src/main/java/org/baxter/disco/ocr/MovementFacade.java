@@ -438,7 +438,6 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Motor calibrate off.");
             if(upperLimit.isHigh())
             {
-                ErrorLogging.logError("DEBUG: Upper limit is high = " + upperLimit.isHigh());
                 ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
                 return i-iterate;
             }
@@ -527,7 +526,12 @@ public class MovementFacade
         for(int i = 0; i < (POLL_COUNT);i++)
         {
             try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
-            if(i >= VEL_STEP_1 && i < VEL_STEP_2)
+            if(limitSense.isOn())
+            {
+                ErrorLogging.logError("DEBUG: Motor at lower limit switch early! Pre-emptively exiting loop on poll " + i);
+                break;
+            }
+            else if(i >= VEL_STEP_1 && i < VEL_STEP_2)
             {
                 if(output != FinalState.UNSAFE)
                 {
