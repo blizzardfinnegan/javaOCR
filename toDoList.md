@@ -2,11 +2,6 @@
 
 ## High-priority fixes
 
-### DataSaving
-
-- [ ] Modify initialisation to create formula cells outside data lines
-	- Will need to evaluate functions on every line write
-
 ### OpenCVFacade
 
 - [ ] completeProcess should have more robust file output checking
