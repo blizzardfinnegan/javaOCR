@@ -84,7 +84,7 @@ The first command stops all currently running `pigpio` daemon processes. The sec
 	4. Unplug *ONE* camera, and plug it back in to the same port. This will generate several lines of text in your terminal window. 
 	5. Copy one of the lines, starting with `platform`, and, *crucially*, ending `.0`.
 	6. Paste this into your `udev` rule file, replacing the `fillerText` portion, but leaving the quotes. If you are using a terminal text editor, this will require you to either right click to paste, or press `Ctrl-Shift-v` rather than `Ctrl-v`, as `Ctrl-v` is used by the terminal for a separate purpose. The first line of the file distributed in this repo contains a commented-out example line, with the correct syntax.
-	7. Repeat steps 4-6 for all cameras in the fixture. If there are no new lines available, copy and paste the line into a new line to create a new rule, *ensuring to increment the number at the end of the line in the `SYMLINK` section*.
+	7. Repeat steps 4-6 for all cameras in the fixture. If there are no new lines available, copy and paste the line into a new line to create a new rule, *ensuring to add a unique name to the end of the line in the `SYMLINK` section*.
 	8. Save the file. If the file fails to save, you most likely have insufficient permissions to save the file, and will need to follow the terminal text editor instructions.
 	9. Once the file has been saved, reboot the Raspberry Pi to load the new `udev` rule. 
 	9. Open a terminal, and check that the new symlinks were created successfully. This can be done by running the below command. If the symlinks have not been created successfully, restart from step 3 until all symlinks are created properly.
@@ -112,9 +112,10 @@ To use this program, it *must* be run on a Raspberry Pi, with available GPIO.
 sudo java -jar [name of JAR file, including extension]
 ```
 4. What will happen next depends on your current version:
-	- Versions `4.0.0-rc1`,`4.0.0-rc2`, and `4.0.0` will create a terminal window. From there, use the numbers shown in the menu to control the fixture, and run tests as necessary.
+	- Versions `4.0.0-rc1`, `4.0.0-rc2`, `4.1.x`, and `4.3.x` will create a terminal window. From there, use the numbers shown in the menu to control the fixture, and run tests as necessary.
 	- An upcoming version will create a terminal window, which load things for a moment before also creating a GUI. This GUI can be used to control the fixture, and run tests as necessary. 
 		- GUI development is currently limited to the `gui` branch.
+	- Version `4.2` contains a partially GUI design which is by now relatively out of date.
 
 
 ### Potential Errors
@@ -127,7 +128,7 @@ sudo killall pigpiod
 - If the file contains a `CAMERA INIT ERROR`, this means that the associated camera was not picked up properly. This can be due to several reasons. Below are some debugging steps to take. Note that this will cause cascading errors, if attempting to import a camera's config from a pre-existing config file, so config-related errors can be ignored.
     1. Ensure that both cameras are plugged in properly.
     2. Unplug, and then plug back in, the erroring camera.
-    3. Ensure that the `/dev/video-cam1` and `/dev/video-cam2` files are both created. If they are not, then you will need to update your `udev` rules, as in the Installation section.
+    3. Ensure that the `/dev/video-cam-left` and `/dev/video-cam-right` files are both created. If they are not, then you will need to update your `udev` rules, as in the Installation section.
     4. Reboot the Raspberry Pi. (This can be done by opening the terminal, and typing `reboot`, then hitting enter.) Camera drivers occasionally fail to load on boot, and will unload after a long time with no use. Rebooting generally solves this issue (although it may take multiple reboots.)
 
 ## Building from source
