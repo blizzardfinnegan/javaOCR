@@ -172,28 +172,37 @@ public class DataSaving
         int rowIndex = 0;
         FormulaEvaluator formulaEvaluator = outputWorkbook.getCreationHelper().createFormulaEvaluator();
         int lastColumnOfData = outputSheet.getRow(rowIndex).getLastCellNum();
-        int serialColumn = lastColumnOfData + 1;
-        int percentColumn = lastColumnOfData + 2;
+        int serialColumn = lastColumnOfData - 2;
+        int percentColumn = lastColumnOfData - 1;
         
         //Get the last row, add another row below it, and name the first cell "Totals:"
         int lastRowOfData = outputSheet.getLastRowNum();
 
         //For each camera, create a unique total line
-        for(int column = 3; column <= (cameraCount*3); column+=3)
+        int column = 1;
+        for(int i = 0; i < cameraCount; i++)
         {
-            String columnName = CellReference.convertNumToColString(column);
+            String serialColumnName = CellReference.convertNumToColString(column);
+            String dataColumnName = CellReference.convertNumToColString(column + 2);
+            ErrorLogging.logError("DEBUG: Serial Column name: " + serialColumnName);
             HSSFRow row = outputSheet.getRow(++rowIndex);
+            if(row == null) 
+            {
+                row = outputSheet.createRow(rowIndex);
+            }
+            ErrorLogging.logError("DEBUG: Row index: " + rowIndex);
+            ErrorLogging.logError("DEBUG: Column (int): " + serialColumn);
             HSSFCell serialCell = row.createCell(serialColumn);
-            String formula = "$" + columnName + "$" + rowIndex;
+            String formula = "$" + serialColumnName + "$" + (rowIndex+1);
             serialCell.setCellFormula(formula);
             formulaEvaluator.evaluate(serialCell);
 
             HSSFCell percentCell = row.createCell(percentColumn);
-            String verticalArray = String.format("$%s$2:$%s$%s",columnName,columnName,lastRowOfData);
+            String verticalArray = String.format("$%s$2:$%s$%s",dataColumnName,dataColumnName,(lastRowOfData+1));
             ErrorLogging.logError("DEBUG: Vertical Array: " + verticalArray);
 
             formula = String.format(
-                "(COUNT(%s)-(COUNTIF(%s,\"<%s\")+COUNTIF(%s,\">%s\",))/(COUNT(%s))",
+                "(COUNT(%s)-(COUNTIF(%s,\"<%s\")+COUNTIF(%s,\">%s\")))/(COUNT(%s))",
                 verticalArray,
                 verticalArray, (targetTemp - failRange), 
                 verticalArray, (targetTemp + failRange), 
@@ -207,6 +216,7 @@ public class DataSaving
             formulaEvaluator.evaluate(percentCell);
 
             ErrorLogging.logError("DEBUG: Formula: " + formula);
+            column += 4;
         }
 
         //Once all totals have been created, write to the file
@@ -228,7 +238,7 @@ public class DataSaving
         boolean output = false;
         int cellnum = 0;
         int startingRow = outputSheet.getLastRowNum();
-        HSSFRow row = outputSheet.createRow(++startingRow);
+        HSSFRow row = (startingRow == 1) ? outputSheet.getRow(++startingRow) : outputSheet.createRow(++startingRow);
         List<String> cameraNames = new ArrayList<>(cameraToFile.keySet());
         //ErrorLogging.logError("DEBUG: image locations: " + imageLocations.toString());
         //List<Object> objectArray = new LinkedList<>();
@@ -287,10 +297,10 @@ public class DataSaving
             //Create a blank cell as a spacer
             row.createCell(cellnum++);
         }
-        updateFormulas(cameraNames.size());
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
         { outputWorkbook.write(outputStream); output = true; }
         catch(Exception e) {ErrorLogging.logError(e);}
+        updateFormulas(cameraNames.size());
         return output;
     }
 }
