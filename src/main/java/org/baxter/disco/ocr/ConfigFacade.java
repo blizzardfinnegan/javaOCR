@@ -437,16 +437,20 @@ public class ConfigFacade
                 Map<ConfigProperties,Double> savedSection = new HashMap<>();
                 for(String cameraName : cameraNames)
                 {
-                    if(!sectionName.equals(cameraName))
-                    { saveSingleDefault(cameraName); }
+                    if(sectionName.equals(cameraName))
+                    {
+                        for(ConfigProperties configState : ConfigProperties.values())
+                        {
+                            Double configValue = CONFIG_STORE.getDouble(sectionName + "." + configState.getConfig());
+                            //ErrorLogging.logError("DEBUG: Imported config value: " + Double.toString(configValue));
+                            savedSection.put(configState,configValue);
+                        }
+                    }
                 }
 
-                for(ConfigProperties configState : ConfigProperties.values())
-                {
-                    Double configValue = CONFIG_STORE.getDouble(sectionName + "." + configState.getConfig());
-                    //ErrorLogging.logError("DEBUG: Imported config value: " + Double.toString(configValue));
-                    savedSection.put(configState,configValue);
-                }
+                if(savedSection.size() == 0)
+                { saveSingleDefault(sectionName); }
+
                 if(emptyMap) configMap.put(sectionName,savedSection);
                 else
                 {

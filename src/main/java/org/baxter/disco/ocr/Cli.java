@@ -448,7 +448,11 @@ public class Cli
                 }
 
                 //Exit loop
-                else break;
+                else 
+                {
+                    ConfigFacade.saveCurrentConfig();
+                    break;
+                }
             } while(true);
 
         } while(true);
@@ -613,7 +617,7 @@ public class Cli
                 LOCK.unlock();
 
                 //Wait for the DUT to display an image
-                try{ Thread.sleep(1500); } catch(Exception e){ ErrorLogging.logError(e); }
+                try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
                 //For all available cameras:
                 //  take an image, process it, and save it to a file
@@ -648,9 +652,12 @@ public class Cli
                        result >= 100 || 
                        result == Double.NEGATIVE_INFINITY)
                     {
+                        ErrorLogging.logError("Invalid OCR reading! Resetting DUTs...");
                         MovementFacade.goUp();
+                        ErrorLogging.logError("Waiting for 20 seconds to allow devices to fall asleep.");
                         try{ Thread.sleep(20000); } 
                         catch(Exception e){ ErrorLogging.logError(e); }
+                        ErrorLogging.logError("Waking devices...");
                         MovementFacade.pressButton();
                         fail = true;
                         break;
