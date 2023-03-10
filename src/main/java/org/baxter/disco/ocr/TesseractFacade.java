@@ -69,23 +69,16 @@ public class TesseractFacade
      */
     public static double imageToDouble(File file)
     {
-        //Set default output
         double output = Double.NEGATIVE_INFINITY;
 
-        //Import image, parse image
         PIX importedImage = pixRead(file.getAbsolutePath());
         api.SetImage(importedImage);
         String stringOutput = api.GetUTF8Text().getString();
 
-        //Determine whether the OCR output is actually a double
         if(!stringOutput.isEmpty())
         {
-            try(Scanner sc = new Scanner(stringOutput.trim());)
+            try( Scanner sc = new Scanner(stringOutput.trim()); )
             {
-                /*
-                 * Discos have error messages (LO, HI, POS, ?). Consider parsing as well.
-                 * Update on above note: Requires retraining Tesseract
-                 */
                 if(sc.hasNextDouble()) 
                 {
                     output = sc.nextDouble();
@@ -98,19 +91,14 @@ public class TesseractFacade
                             output = output / 10;
                             ErrorLogging.logError("OCR output saved, as value appears to be real. Value needs to be verified.");
                         }
-                        else if(output >= 200)
-                            ErrorLogging.logError("OCR WARNING - OCR output is too high for DUT, potential misread.");
-                        else
-                            ErrorLogging.logError("OCR output successfully adjusted. Disregard warning.");
+                        else if(output >= 200)  ErrorLogging.logError("OCR WARNING - OCR output is too high for DUT, potential misread.");
+                        else            ErrorLogging.logError("OCR output successfully adjusted. Disregard warning.");
                     }
-                    if(output <= -10) 
-                        ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
+                    if(output <= -10)   ErrorLogging.logError("OCR ERROR!!! - OCR output is too low  for DUT, potential misread.");
                 }
                 else ErrorLogging.logError("OCR ERROR!!! - OCR output is not a Double.");
             }
         }
-
-        //Return output
         return output;
     }
 }

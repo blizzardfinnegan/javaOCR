@@ -20,7 +20,7 @@ import com.pi4j.io.pwm.PwmType;
  * Currently missing Run switch compatibility.
  *
  * @author Blizzard Finnegan
- * @version 3.0.0, 06 Mar. 2023
+ * @version 3.0.1, 10 Mar. 2023
  */
 public class MovementFacade
 {
@@ -190,7 +190,7 @@ public class MovementFacade
 
     static
     {
-        //ErrorLogging.logError("DEBUG: Starting lock thread...");
+        ErrorLogging.logError("DEBUG: Starting lock thread...");
         runSwitchThread = new Thread(() -> 
                 {
                     boolean unlock = false;
@@ -198,7 +198,7 @@ public class MovementFacade
                     {
                         if(runSwitch.isOn())
                         {
-                            ErrorLogging.logError("Run switch turned off!");
+                            ErrorLogging.logError("DEBUG: Run switch turned off!");
                             while(!Cli.LOCK.tryLock())
                             {}
                             unlock = true;
@@ -214,24 +214,19 @@ public class MovementFacade
                 }, "Run switch monitor.");
         runSwitchThread.start();
 
-        //Initialise Pi4J
         pi4j = Pi4J.newAutoContext();
 
-        //Initialise input pins
         upperLimit = inputBuilder("upperLimit", "Upper Limit Switch", UPPER_LIMIT_ADDR);
         lowerLimit = inputBuilder("lowerLimit", "Lower Limit Switch", LOWER_LIMIT_ADDR);
         runSwitch  = inputBuilder("runSwitch" , "Run Switch"        , RUN_SWITCH_ADDR);
 
-        //Initialise output pins
         motorEnable    = outputBuilder("motorEnable"   , "Motor Enable"   , MOTOR_ENABLE_ADDR);
         motorDirection = outputBuilder("motorDirection", "Motor Direction", MOTOR_DIRECTION_ADDR);
         pistonActivate = outputBuilder("piston"        , "Piston Activate", PISTON_ADDR);
 
-        //Initialise PWM object. 
         pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
         pwm.on(DUTY_CYCLE, FREQUENCY);
 
-        //Find Distance and max speeds
         calibrate();
     }
 
@@ -267,7 +262,6 @@ public class MovementFacade
                                    .frequency(FREQUENCY)
                                    .provider("pigpio-pwm")
                                    .initial(1)
-                                   //On program close, turn off PWM.
                                    .shutdown(0);
                 break;
             //Any pin not listed above must be software PWM controlled.
@@ -280,7 +274,6 @@ public class MovementFacade
                                    .frequency(FREQUENCY)
                                    .provider("pigpio-pwm")
                                    .initial(1)
-                                   //On program close, turn off PWM.
                                    .shutdown(0);
         }
         return pi4j.create(configBuilder);
@@ -299,7 +292,6 @@ public class MovementFacade
     { 
         DigitalInputConfigBuilder configBuilder = DigitalInput.newConfigBuilder(pi4j)
                                                               .id(id)
-                                                              //.name(name)
                                                               .address(address)
                                                               .pull(PullResistance.PULL_DOWN)
                                                               .debounce(3000L)
@@ -320,7 +312,6 @@ public class MovementFacade
     {
         DigitalOutputConfigBuilder configBuilder = DigitalOutput.newConfigBuilder(pi4j)
                                                                 .id(id)
-                                                                .name(name)
                                                                 .address(address)
                                                                 .shutdown(DigitalState.LOW)
                                                                 .initial(DigitalState.LOW)
@@ -382,8 +373,6 @@ public class MovementFacade
         resetArm();
         ErrorLogging.logError("Calibrating...");
         FREQUENCY = calib(MIN_FREQUENCY, MAX_FREQUENCY, 10000);
-        //ErrorLogging.logError("Fine calibrating...");
-        //FREQUENCY = calib(FREQUENCY,(FREQUENCY+10000),1000);
         ErrorLogging.logError("Calibration complete!");
         ErrorLogging.logError("DEBUG: Speed set to " + (FREQUENCY - SPEED_BUFFER));
         setFrequency(FREQUENCY - SPEED_BUFFER);
@@ -454,7 +443,6 @@ public class MovementFacade
      */
     private static int calib(int start, int max, int iterate)
     {
-        //start -= iterate;
         for(int i = start; i < max; i+=iterate)
         {
             if(!setFrequency(i))
@@ -467,7 +455,7 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
             ErrorLogging.logError("DEBUG: Motor calibrate on.");
             motorEnable.on();
-            int TWO_SECONDS = 2 * TIME_CONVERSION;
+            int TWO_SECONDS = 20 * TIME_CONVERSION;
             for(int j = 0; j < TWO_SECONDS; j++)
             {
                 try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }

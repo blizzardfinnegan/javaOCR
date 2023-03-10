@@ -61,10 +61,8 @@ public class ErrorLogging
         //Make sure the filename formatter is compatible with Windows and Linux
         fileDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
-        //Local formatter for logs
         datetime = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-        //Create a new log file on every run; put them all in a common folder
         logFile =  "logs/" + fileDatetime.format(LocalDateTime.now()) + "-log.txt";
         File logDirectory = new File("logs");
         File outFile = new File(logFile);
