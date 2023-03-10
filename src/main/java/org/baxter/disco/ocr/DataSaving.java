@@ -228,7 +228,7 @@ public class DataSaving
         boolean output = false;
         int cellnum = 0;
         int startingRow = outputSheet.getLastRowNum();
-        HSSFRow row = (cycle == 1) ? outputSheet.getRow(++startingRow) : outputSheet.createRow(++startingRow);
+        HSSFRow row = (cycle == 1) ? outputSheet.getRow(startingRow) : outputSheet.createRow(++startingRow);
         List<String> cameraNames = new ArrayList<>(cameraToFile.keySet());
 
         cycle++;

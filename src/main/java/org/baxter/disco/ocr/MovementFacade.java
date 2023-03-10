@@ -44,7 +44,7 @@ public class MovementFacade
     /**
      * Amount of buffer between the found absolute speed, and used speed.
      */
-    private static final int SPEED_BUFFER = 5000;
+    private static final int SPEED_BUFFER = 7500;
 
     /**
      * Minimum allowed speed of the fixture arm; also used for reset travels.
@@ -455,7 +455,7 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
             ErrorLogging.logError("DEBUG: Motor calibrate on.");
             motorEnable.on();
-            int TWO_SECONDS = 20 * TIME_CONVERSION;
+            int TWO_SECONDS = 2 * TIME_CONVERSION;
             for(int j = 0; j < TWO_SECONDS; j++)
             {
                 try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }

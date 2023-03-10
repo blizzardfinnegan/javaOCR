@@ -4,7 +4,7 @@
   <groupId>org.baxter.disco</groupId>
   <artifactId>ocr</artifactId>
   <name>Disco OCR Accuracy Over Life Testing</name>
-  <version>4.3.5</version>
+  <version>4.3.6</version>
   <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>
   <organization>
     <name>Baxter International</name>
@@ -91,9 +91,6 @@
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.4.1</version>
-        <configuration>
-          <show>private</show>
-        </configuration>
       </plugin>
     </plugins>
   </reporting>
