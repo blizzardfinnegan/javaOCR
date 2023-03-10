@@ -1,10 +1,10 @@
 package org.baxter.disco.ocr;
 
-import java.io.DataInputStream;
 //Standard imports
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.DataInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import static org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
  * Facade for saving data out to a file.
  *
  * @author Blizzard Finnegan
- * @version 5.0.0, 07 Mar. 2023
+ * @version 5.0.1, 10 Mar. 2023
  */
 public class DataSaving
 {
@@ -99,16 +99,13 @@ public class DataSaving
 
         //Create workbook, Sheet, and DataFormat object
         //HSSF objects are used, as these are compatible with Microsoft Excel
-        //XSSF objects were initially used, but caused issues.
         outputWorkbook = new HSSFWorkbook(); 
         outputSheet = outputWorkbook.createSheet();
         format = outputWorkbook.createDataFormat();
 
-        //Create a default style for values.
         defaultStyle = outputWorkbook.createCellStyle();
         defaultStyle.setDataFormat(format.getFormat("0.0"));
 
-        //Create a style for the final percentage values
         finalValuesStyle = outputWorkbook.createCellStyle();
         finalValuesStyle.setDataFormat(format.getFormat("0.000%"));
 
@@ -124,19 +121,16 @@ public class DataSaving
         failStyle.setDataFormat(format.getFormat("0.0"));
         failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        //Create a style for error-ed, but not out-of-range, values
         errorStyle = outputWorkbook.createCellStyle();
         errorStyle.setFillForegroundColor(HSSFColorPredefined.YELLOW.getIndex());
         errorStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
 
-        //Create the header
         int startingRow = outputSheet.getLastRowNum();
         HSSFRow row = outputSheet.createRow(++startingRow);
         int cellnum = 0;
         HSSFCell cell = row.createCell(cellnum++);
         cell.setCellValue("Iteration");
-        //Create a section for every camera
         for(int i = 0; i < camCount; i++)
         {
             cell = row.createCell(cellnum++);
@@ -153,7 +147,6 @@ public class DataSaving
         HSSFCell passPercentCell = row.createCell(cellnum++);
         passPercentCell.setCellValue("Pass %");
 
-        //Save to file
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
         { outputWorkbook.write(outputStream); }
         catch(Exception e) {ErrorLogging.logError(e);}
@@ -175,10 +168,8 @@ public class DataSaving
         int serialColumn = lastColumnOfData - 2;
         int percentColumn = lastColumnOfData - 1;
         
-        //Get the last row, add another row below it, and name the first cell "Totals:"
         int lastRowOfData = outputSheet.getLastRowNum();
 
-        //For each camera, create a unique total line
         int column = 1;
         for(int i = 0; i < cameraCount; i++)
         {
@@ -219,7 +210,6 @@ public class DataSaving
             column += 4;
         }
 
-        //Once all totals have been created, write to the file
         try (FileOutputStream outputStream = new FileOutputStream(outputFile))
         { outputWorkbook.write(outputStream); }
         catch(Exception e) {ErrorLogging.logError(e);}
@@ -238,10 +228,8 @@ public class DataSaving
         boolean output = false;
         int cellnum = 0;
         int startingRow = outputSheet.getLastRowNum();
-        HSSFRow row = (startingRow == 1) ? outputSheet.getRow(++startingRow) : outputSheet.createRow(++startingRow);
+        HSSFRow row = (cycle == 1) ? outputSheet.getRow(startingRow) : outputSheet.createRow(++startingRow);
         List<String> cameraNames = new ArrayList<>(cameraToFile.keySet());
-        //ErrorLogging.logError("DEBUG: image locations: " + imageLocations.toString());
-        //List<Object> objectArray = new LinkedList<>();
 
         cycle++;
 
@@ -249,12 +237,10 @@ public class DataSaving
         indexCell.setCellValue(cycle);
         for(String cameraName : cameraNames)
         {
-            //put serial number into sheet
             String serialNumber = ConfigFacade.getSerial(cameraName);
             HSSFCell serialCell = row.createCell(cellnum++);
             serialCell.setCellValue(serialNumber);
 
-            //Put the generated image into the spreadsheet
             File file = cameraToFile.get(cameraName);
             HSSFCell imageCell = row.createCell(cellnum++);
             try

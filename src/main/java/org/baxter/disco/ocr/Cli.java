@@ -18,14 +18,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * classes).
  *
  * @author Blizzard Finnegan
- * @version 1.7.0, 06 Mar. 2023
+ * @version 1.7.1, 10 Mar. 2023
  */
 public class Cli
 {
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.5";
+    private static final String version = "4.3.6";
 
     /**
      * Currently saved iteration count.
@@ -65,12 +65,10 @@ public class Cli
      */
     public static final Lock LOCK = new ReentrantLock();
 
-    //private static Thread safeThread;
 
-    //Start of program message; always runs first
     static
     {
-        ErrorLogging.logError("START OF PROGRAM");
+        ErrorLogging.logError("DEBUG: START OF PROGRAM");
     }
 
     public static void main(String[] args)
@@ -354,13 +352,10 @@ public class Cli
         MovementFacade.iterationMovement(true);
         double tesseractValue = 0.0;
 
-        //Main camera config loop
         do
         {
-            //Show the menu
             printCameraMenu(cameraList);
 
-            //Pick a camera to configure
             int userInput;
             String cameraName = "";
             do
@@ -370,12 +365,10 @@ public class Cli
                 userInput--;
             } while (cameraList.size() < userInput && userInput < 0);
 
-            //Leave do-while loop if the user asks to
             if(userInput == (cameraList.size())) break;
             else if(userInput < 0) continue;
             else cameraName = cameraList.get((userInput));
 
-            //Single camera config loop
             do
             {
                 //Press button twice, to make sure the DUT is awake
@@ -384,17 +377,12 @@ public class Cli
                 MovementFacade.pressButton();
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
-                //Show image 
                 File image = OpenCVFacade.showImage(cameraName);
-
-                //Parse the image with Tesseract, to show user what the excel output will be
                 tesseractValue = TesseractFacade.imageToDouble(image);
 
-                //User input parsing
                 ConfigProperties modifiedProperty = null;
                 do
                 {
-                    //list configurable settings
                     printCameraConfigMenu(cameraName,tesseractValue);
 
                     userInput = (int)inputFiltering(inputScanner.nextLine(),Menus.CAMERA);
@@ -422,7 +410,6 @@ public class Cli
                     }
                 } while(modifiedProperty == null);
                 
-                //Toggle threshold/crop
                 if(modifiedProperty == ConfigProperties.THRESHOLD || 
                         modifiedProperty == ConfigProperties.CROP)
                 {
@@ -431,11 +418,9 @@ public class Cli
                     ConfigFacade.setValue(cameraName,modifiedProperty,newValue);
                 }
 
-                //Redefine crop points
                 else if(modifiedProperty == ConfigProperties.CROP_X)
                 { OpenCVFacade.setCrop(cameraName); }
 
-                //Modify number of composite frames, or threshold value
                 else if(modifiedProperty == ConfigProperties.COMPOSITE_FRAMES ||
                         modifiedProperty == ConfigProperties.THRESHOLD_VALUE)
                 {
@@ -447,7 +432,6 @@ public class Cli
                     ConfigFacade.setValue(cameraName,modifiedProperty,userInput);
                 }
 
-                //Exit loop
                 else 
                 {
                     ConfigFacade.saveCurrentConfig();
@@ -457,7 +441,6 @@ public class Cli
 
         } while(true);
 
-        //Save the current config to the config file
         ConfigFacade.saveCurrentConfig();
         println("Configuration complete!");
     }
@@ -467,15 +450,11 @@ public class Cli
      */
     private static void setDUTSerials()
     {
-        //Get a list of available cameras
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
-        //Main serial setting loop
         do
         {
-            //Main menu
             printSerialMenu(cameraList);
 
-            //Pick a camera to configure
             int userInput;
             String cameraName = "";
             do
@@ -486,12 +465,9 @@ public class Cli
                 userInput--;
             } while (cameraList.size() < userInput || userInput < 0);
 
-            //Leave do-while loop if the user asks to
             if(userInput == (cameraList.size())) break;
             else cameraName = cameraList.get((userInput));
 
-            //Save the serial number.
-            //No parsing is ever done on this serial number.
             prompt("Enter the serial number you wish to use for this camera: ");
             ConfigFacade.setSerial(cameraName,inputScanner.nextLine());
 
@@ -518,16 +494,12 @@ public class Cli
      */
     private static void setActiveCameras()
     {
-        //Get available cameras
         List<String> cameraList = new ArrayList<>(OpenCVFacade.getCameraNames());
 
-        //Main loop
         do
         {
-            //Print menu
             printActiveToggleMenu(cameraList);
 
-            //Pick a camera to configure
             int userInput;
             String cameraName = "";
             do
@@ -537,11 +509,9 @@ public class Cli
                 userInput--;
             } while (cameraList.size() < userInput || userInput < 0);
 
-            //Leave do-while loop if the user asks to
             if(userInput == (cameraList.size())) break;
             else cameraName = cameraList.get((userInput));
 
-            //Toggle whether the camera is active, at the config level
             double newValue = ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE);
             newValue = Math.abs(newValue - 1);
             ConfigFacade.setValue(cameraName,ConfigProperties.ACTIVE,newValue);
@@ -561,22 +531,18 @@ public class Cli
         //useful for multithreading, which isn't necessary in CLI
         final int localIterations = iterationCount;
 
-        //Save whether to prime the devices; defaults to false
+        //Hide legacy functionality
         boolean prime = false; 
 
-        //Create a List of *active* cameras.
         List<String> cameraList = new ArrayList<>();
         for(String cameraName : OpenCVFacade.getCameraNames())
         {
             prime = (ConfigFacade.getValue(cameraName,ConfigProperties.PRIME) != 0) || prime; 
 
             if(ConfigFacade.getValue(cameraName,ConfigProperties.ACTIVE) != 0)
-            {
                 cameraList.add(cameraName);
-            }
         }
 
-        //Initialise the workbook, with the number of cameras and the final output location
         DataSaving.initWorkbook(ConfigFacade.getOutputSaveLocation(),cameraList.size());
 
         //Wake the device, then wait to ensure they're awake before continuing
@@ -584,7 +550,6 @@ public class Cli
         MovementFacade.pressButton();
         try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
-        //Create final maps for result images, result values, and camera names
         Map<File,Double> resultMap = new HashMap<>();
         Map<String,File> cameraToFile = new HashMap<>();
 
@@ -595,7 +560,7 @@ public class Cli
         }
 
         ErrorLogging.logError("DEBUG: Starting tests...");
-        //Start actually running tests
+
         //All portions of the test check with the GPIO Run/Pause switch before 
         //continuing, using the Lock object.
         for(int i = 0; i < localIterations; i++)
@@ -611,7 +576,6 @@ public class Cli
             do
             {
                 fail = false;
-                //Move the fixture for one iteration, with whether or not the DUTs need to be primed
                 while(!LOCK.tryLock()) {}
                 MovementFacade.iterationMovement(prime);
                 LOCK.unlock();
@@ -619,9 +583,6 @@ public class Cli
                 //Wait for the DUT to display an image
                 try{ Thread.sleep(2000); } catch(Exception e){ ErrorLogging.logError(e); }
 
-                //For all available cameras:
-                //  take an image, process it, and save it to a file
-                //  put that file into the camera name file Map
                 for(String cameraName : cameraList)
                 {
                     while(!LOCK.tryLock()) {}
@@ -633,9 +594,6 @@ public class Cli
                     LOCK.unlock();
                 }
 
-                //ONCE ALL IMAGES ARE CREATED
-                //Re-iterate over list of cameras, parse the images with Tesseract, then add 
-                //the parsed value to the map
                 for(String cameraName : cameraList)
                 {
                     while(!LOCK.tryLock()) {}
@@ -666,16 +624,13 @@ public class Cli
             }
             while(fail);
 
-            //Write all given values to the Excel file
             while(!LOCK.tryLock()) {}
             DataSaving.writeValues(i,resultMap,cameraToFile);
             LOCK.unlock();
 
-            //Clear the result map
             //DO NOT CLEAR camera to file Map. This will change the order of the objects within it
             resultMap.clear();
         }
-        //Alert the user to testing being complete
         println("=======================================");
         println("Testing complete!");
     }
