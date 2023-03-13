@@ -97,8 +97,6 @@ public class Cli
                 switch (userInput)
                 {
                     case 1:
-                        println("Setting up cameras...");
-                        println("This may take a moment...");
                         configureCameras();
                         camerasConfigured = true;
                         break;
@@ -143,6 +141,7 @@ public class Cli
                         printHelp();
                         break;
                     case 8:
+                        ErrorLogging.logError("DEBUG: User requested manual exit of program. Cleanly exiting...");
                         break;
                     default:
                         //Input handling already done by inputFiltering()

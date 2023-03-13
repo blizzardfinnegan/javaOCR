@@ -76,13 +76,13 @@ public class OpenCVFacade
     //Initial Camera creation
     static
     {
+        ErrorLogging.logError("Initialising cameras...");
         File devDirectory = new File("/dev");
         for(File cameraFile : devDirectory.listFiles(
                     (file) -> { return file.getName().contains(CAMERA_FILE_PREFIX); }))
         {
             String cameraName = cameraFile.getName().
                                 substring(CAMERA_FILE_PREFIX.length());
-            ErrorLogging.logError("DEBUG: Camera name: " + cameraName);
             newCamera(cameraName, cameraFile.getAbsolutePath());
         }
     }
