@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.baxter.disco</groupId>
     <artifactId>ocr</artifactId>
-    <version>4.3.6</version>
+    <version>4.3.7</version>
     <packaging>jar</packaging>
     <name>Disco OCR Accuracy Over Life Testing</name>
     <description>Testing Discos for long-term accuracy, using automated optical character recognition.</description>

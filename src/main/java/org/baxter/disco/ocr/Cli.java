@@ -25,7 +25,7 @@ public class Cli
     /**
      * Complete build version number
      */
-    private static final String version = "4.3.6";
+    private static final String version = "4.3.7";
 
     /**
      * Currently saved iteration count.
@@ -58,7 +58,7 @@ public class Cli
     /**
      * Number of options currently available in the camera configuration sub-menu.
      */
-    private static final int cameraMenuOptionCount = 6;
+    private static final int cameraMenuOptionCount = 7;
 
     /**
      * Lock object, used for temporary interruption of {@link #runTests()}
@@ -85,7 +85,7 @@ public class Cli
 
             int userInput = 0;
 
-            ErrorLogging.logError("Calibrating motor movement. This may take several minutes...");
+            ErrorLogging.logError("Calibrating motor movement. ");
             ErrorLogging.logError("The piston will fire momentarily when the motor calibration is complete.");
             MovementFacade.pressButton();
 
@@ -191,6 +191,7 @@ public class Cli
      */
     private static void printHelp()
     {
+        println("\n\n");
         println("========================================");
         println("Explanations:");
         println("----------------------------------------");
@@ -261,6 +262,7 @@ public class Cli
      */
     private static void printCameraMenu(List<String> cameraList)
     {
+        println("\n\n");
         println("Available cameras to configure:");
         println("------------------------------------");
         for(int index = 0; index < cameraList.size(); index++)
@@ -278,6 +280,7 @@ public class Cli
      */
     private static void printSerialMenu(List<String> cameraList)
     {
+        println("\n\n");
         println("Available serial numbers to set:");
         println("------------------------------------");
         for(int index = 0; index < cameraList.size(); index++)
@@ -299,6 +302,7 @@ public class Cli
      */
     private static void printActiveToggleMenu(List<String> cameraList)
     {
+        println("\n\n");
         println("Available cameras to toggle:");
         println("------------------------------------");
         for(int index = 0; index < cameraList.size(); index++)
