@@ -9,9 +9,6 @@ import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.gpio.digital.DigitalOutputConfigBuilder;
 import com.pi4j.io.gpio.digital.DigitalState;
 import com.pi4j.io.gpio.digital.PullResistance;
-import com.pi4j.io.pwm.Pwm;
-import com.pi4j.io.pwm.PwmConfigBuilder;
-import com.pi4j.io.pwm.PwmType;
 
 /**
  * Facade for all movement of the fixture.
@@ -36,30 +33,9 @@ public class MovementFacade
     private static Thread runSwitchThread;
 
     /**
-     * Max allowed speed by current fixture design.
-     * Motor appears to start acting erratically over 192kHz.
+     * Fraction of the total travel time, so the arm won't push through the limit switch.
      */
-    private static final int MAX_FREQUENCY = 192000;
-
-    /**
-     * Amount of buffer between the found absolute speed, and used speed.
-     */
-    private static final int SPEED_BUFFER = 7500;
-
-    /**
-     * Minimum allowed speed of the fixture arm; also used for reset travels.
-     */
-    private static final int MIN_FREQUENCY = 10000;
-
-    /**
-     * Fraction of the total travel time at speed to start slowing down.
-     */
-    private static final double SLOW_POLL_FACTOR = 3.0 / 4.0;
-
-    /**
-     * Amount to slow down the speed by.
-     */
-    private static final int SPEED_DOWN_FACTOR = 2;
+    private static final double SLOW_POLL_FACTOR = 0.95;
 
     /**
      * Amount of distance to travel.
@@ -67,17 +43,6 @@ public class MovementFacade
      * Set in {@link #findDistance()}
      */
     private static double TRAVEL_DIST;
-
-    /**
-     * Frequency fed to the PWM pin, which the motor controller converts into movement speed.
-     */
-    private static int FREQUENCY = MIN_FREQUENCY;
-
-    /**
-     * PWM Duty Cycle.
-     * Does not affect motor speed; necessary for PWM setup.
-     */
-    private static final int DUTY_CYCLE = 50;
 
     //PWM Addresses
     //All addresses are in BCM format.
@@ -98,11 +63,6 @@ public class MovementFacade
     private static final int PISTON_ADDR = 25;
 
     /**
-     * PWM pin address.
-     */
-    private static final int PWM_PIN_ADDR = 12;
-
-    /**
      * Input pin address for the run switch. 
      */
     private static final int RUN_SWITCH_ADDR = 10;
@@ -121,11 +81,6 @@ public class MovementFacade
      * How many milliseconds to wait before polling the GPIO
      */
     private static final int POLL_WAIT = 10;
-
-    /**
-     * Multiply the time-out value by this value to get the number of polls to make.
-     */
-    private static final int TIME_CONVERSION = 1000 / POLL_WAIT;
 
     //Pi GPIO pin objects
     
@@ -178,12 +133,6 @@ public class MovementFacade
     private static DigitalOutput pistonActivate;
 
     /**
-     * PWM pin object.
-     * Never used, but needs to be initialised to get GPIO to work properly.
-     */
-    private static Pwm pwm;
-
-    /**
      * {@link Pi4J} API interaction object.
      */
     private static Context pi4j;
@@ -224,60 +173,9 @@ public class MovementFacade
         motorDirection = outputBuilder("motorDirection", "Motor Direction", MOTOR_DIRECTION_ADDR);
         pistonActivate = outputBuilder("piston"        , "Piston Activate", PISTON_ADDR);
 
-        pwm = pwmBuilder("pwm","PWM Pin",PWM_PIN_ADDR);
-        pwm.on(DUTY_CYCLE, FREQUENCY);
-
-        calibrate();
+        findDistance();
     }
 
-    /**
-     * Builder function for PWM pins.
-     *
-     * @param id        ID of the new PWM pin.
-     * @param name      Name of the new PWM pin.
-     * @param address   BCM address of the PWM pin.
-     * 
-     * @return newly created PWM pin object.
-     */
-    private static Pwm pwmBuilder(String id, String name, int address)
-    {
-        PwmConfigBuilder configBuilder;
-        switch (address)
-        {
-            //The following pins allow for hardware PWM support.
-            case 12:
-            case 13:
-            case 18:
-            case 19:
-            case 40:
-            case 41:
-            case 45:
-            case 52:
-            case 53:
-                configBuilder = Pwm.newConfigBuilder(pi4j)
-                                   .id(id)
-                                   .name(name)
-                                   .address(address)
-                                   .pwmType(PwmType.HARDWARE)
-                                   .frequency(FREQUENCY)
-                                   .provider("pigpio-pwm")
-                                   .initial(1)
-                                   .shutdown(0);
-                break;
-            //Any pin not listed above must be software PWM controlled.
-            default:
-                configBuilder = Pwm.newConfigBuilder(pi4j)
-                                   .id(id)
-                                   .name(name)
-                                   .address(address)
-                                   .pwmType(PwmType.SOFTWARE)
-                                   .frequency(FREQUENCY)
-                                   .provider("pigpio-pwm")
-                                   .initial(1)
-                                   .shutdown(0);
-        }
-        return pi4j.create(configBuilder);
-    }
 
     /**
      * Builder function for DigitalInput pins. 
@@ -328,7 +226,6 @@ public class MovementFacade
         ErrorLogging.logError("DEBUG: --------------------------------------");
         int counter;
         ErrorLogging.logError("DEBUG: Setting minimum frequency of PWM...");
-        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
         if(upperLimit.isHigh())
         {
             ErrorLogging.logError("DEBUG: Motor at highest point! Lowering to reset.");
@@ -363,22 +260,6 @@ public class MovementFacade
     }
 
     /**
-     * Used to programmatically determine the motor's max speed.
-     */
-    private static void calibrate()
-    {
-        ErrorLogging.logError("Determining distance to limit switches...");
-        findDistance();
-        ErrorLogging.logError("Resetting arm to set speed.");
-        resetArm();
-        ErrorLogging.logError("Calibrating...");
-        FREQUENCY = calib(MIN_FREQUENCY, MAX_FREQUENCY, 10000);
-        ErrorLogging.logError("Calibration complete!");
-        ErrorLogging.logError("DEBUG: Speed set to " + (FREQUENCY - SPEED_BUFFER));
-        setFrequency(FREQUENCY - SPEED_BUFFER);
-    }
-
-    /**
      * Used to programmatically find the distance between the upper and lower limit switches.
      */
     private static void findDistance()
@@ -386,7 +267,7 @@ public class MovementFacade
         resetArm();
         int downTravelCounter = 0;
         int upTravelCounter = 0;
-        pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
+        //pwm.on(DUTY_CYCLE, MIN_FREQUENCY);
         motorDirection.low();
         motorEnable.on();
         for(downTravelCounter = 0; downTravelCounter < Integer.MAX_VALUE; downTravelCounter++)
@@ -401,8 +282,6 @@ public class MovementFacade
         motorEnable.off();
         if(lowerLimit.isOff()) ErrorLogging.logError("DEBUG: False positive on findDistance down!");
         
-        int downTravelDist = downTravelCounter * MIN_FREQUENCY;
-        ErrorLogging.logError("DEBUG: Down travel distance found to be: " + downTravelDist);
         ErrorLogging.logError("DEBUG: Down travel count: " + downTravelCounter);
 
         motorDirection.high();
@@ -419,95 +298,10 @@ public class MovementFacade
         motorEnable.off();
         if(upperLimit.isOff()) ErrorLogging.logError("DEBUG: False positive on findDistance up!");
 
-        int upTravelDist = upTravelCounter * MIN_FREQUENCY;
-        ErrorLogging.logError("DEBUG: Up travel distance found to be: " + upTravelDist);
         ErrorLogging.logError("DEBUG: Up travel count: " + downTravelCounter);
 
-        if(Math.abs(upTravelCounter - downTravelCounter) > 3)
-        {
-            ErrorLogging.logError("DEBUG: Values differ too far to be error. Setting to lower value.");
-        }
         int travelCounter = Math.min(upTravelCounter, downTravelCounter);
-        TRAVEL_DIST = travelCounter * MIN_FREQUENCY;
-    }
-
-
-    /**
-     * Find the max frequency to feed to the motor.
-     *
-     * @param start     Lowest frequency to check 
-     * @param max       Highest frequency to check
-     * @param iterate   How much to iterate by
-     *
-     * @return The largest safe value between start and max. 
-     */
-    private static int calib(int start, int max, int iterate)
-    {
-        for(int i = start; i < max; i+=iterate)
-        {
-            if(!setFrequency(i))
-            {
-                ErrorLogging.logError("DEBUG: Speed set unsuccessfully! returning " + MIN_FREQUENCY + "...");
-                return MIN_FREQUENCY;
-            }
-            ErrorLogging.logError("DEBUG: Motor travelling down.");
-            motorDirection.low();
-            ErrorLogging.logError("DEBUG: Motor Frequency: " + FREQUENCY);
-            ErrorLogging.logError("DEBUG: Motor calibrate on.");
-            motorEnable.on();
-            int TWO_SECONDS = 2 * TIME_CONVERSION;
-            for(int j = 0; j < TWO_SECONDS; j++)
-            {
-                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
-                if(lowerLimit.isHigh()) 
-                {
-                    ErrorLogging.logError("DEBUG: Breaking loop early!");
-                    break;
-                }
-            }
-            motorEnable.off();
-            ErrorLogging.logError("DEBUG: Motor calibrate off.");
-            if(upperLimit.isHigh())
-            {
-                ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
-                return i-iterate;
-            }
-            else
-            {
-
-                ErrorLogging.logError("DEBUG: Motor moved at speed " + i + ". Checking for errors.");
-                if(resetArm() < 10)
-                {
-                    ErrorLogging.logError("DEBUG: Motor failed to move! Returning " + (i - iterate));
-                    return i - iterate;
-                }
-            }
-        }
-        return max-iterate;
-    }
-
-    /**
-     * Safely set the speed of the motor and fixture.
-     *
-     * @return true if set successfully, else false
-     */
-    private static boolean setFrequency(int newFrequency)
-    {
-        boolean output;
-        if(newFrequency < MIN_FREQUENCY || newFrequency > MAX_FREQUENCY) 
-        {
-            ErrorLogging.logError("DEBUG: Invalid MovementFacade.setFrequency() value, setting to minfrequency!");
-            FREQUENCY = MIN_FREQUENCY;
-            output = false;
-        }
-        else
-        {
-            FREQUENCY = newFrequency;
-            output = true;
-        }
-        ErrorLogging.logError("DEBUG: Setting frequency to " + FREQUENCY);
-        pwm.on(DUTY_CYCLE, FREQUENCY);
-        return output;
+        TRAVEL_DIST = travelCounter;
     }
 
     /**
@@ -526,32 +320,22 @@ public class MovementFacade
         {
             motorDirection.high();
             limitSense = upperLimit;
-            ErrorLogging.logError("Sending fixture up...");
+            ErrorLogging.logError("DEBUG: Sending fixture up...");
         }
         else        
         {
             motorDirection.low();
             limitSense = lowerLimit;
-            ErrorLogging.logError("Sending fixture down...");
+            ErrorLogging.logError("DEBUG: Sending fixture down...");
         }
 
         if(limitSense.isHigh()) return FinalState.SAFE;
 
-        pwm.on(DUTY_CYCLE, FREQUENCY);
-        int totalPollCount = (int)(TRAVEL_DIST / FREQUENCY);
+        int totalPollCount = (int)(TRAVEL_DIST);
         int highSpeedPolls = (int)(totalPollCount * SLOW_POLL_FACTOR);
-        int notHighSpeedPolls = totalPollCount - highSpeedPolls;
-        int medSpeedPolls = (int)(notHighSpeedPolls * SLOW_POLL_FACTOR);
-        int lowSpeedPolls = notHighSpeedPolls - medSpeedPolls;
-
-        medSpeedPolls *= SPEED_DOWN_FACTOR;
-        lowSpeedPolls *= 2 * SPEED_DOWN_FACTOR;
-
         ErrorLogging.logError("DEBUG: =============================");
         ErrorLogging.logError("DEBUG: Travel time: " + totalPollCount);
         ErrorLogging.logError("DEBUG: High speed poll count: " + highSpeedPolls);
-        ErrorLogging.logError("DEBUG: Medium speed poll count: " + medSpeedPolls);
-        ErrorLogging.logError("DEBUG: Low speed poll count: " + lowSpeedPolls);
         ErrorLogging.logError("DEBUG: =============================");
         motorEnable.on();
         for(int i = 0; i < highSpeedPolls; i++)
@@ -560,53 +344,13 @@ public class MovementFacade
             if(limitSense.isOn())
             {
                 motorEnable.off();
-                ErrorLogging.logError("DEBUG: Motor moved too fast! Stopping motor early.");
-                ErrorLogging.logError("DEBUG: Breaking high-speed loop and turning off motor!");
-                ErrorLogging.logError("DEBUG: Iteration count: " + i);
-                output = FinalState.FAILED;
                 break;
             }
         }
-
-        if(motorEnable.isOn())
-        {
-            output = FinalState.UNSAFE;
-            pwm.on(DUTY_CYCLE, (FREQUENCY / SPEED_DOWN_FACTOR));
-            for(int i = 0; i < medSpeedPolls; i++)
-            {
-                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
-                if(limitSense.isOn())
-                {
-                    motorEnable.off();
-                    ErrorLogging.logError("DEBUG: Motor only partially slowed down! Stopping motor early.");
-                    ErrorLogging.logError("DEBUG: Breaking medium-speed loop and turning off motor!");
-                    ErrorLogging.logError("DEBUG: Iteration count: " + i);
-                    break;
-                }
-            }
-        }
-
-        if(motorEnable.isOn())
-        {
-            output = FinalState.SAFE;
-            pwm.on(DUTY_CYCLE, (FREQUENCY / (2 * SPEED_DOWN_FACTOR)));
-            for(int i = 0; i < lowSpeedPolls; i++)
-            {
-                try{ Thread.sleep(POLL_WAIT); } catch(Exception e){ ErrorLogging.logError(e); }
-                if(limitSense.isOn())
-                {
-                    motorEnable.off();
-                    ErrorLogging.logError("DEBUG: Motor slowed down completely, but hit limit switch early.");
-                    ErrorLogging.logError("DEBUG: Breaking low-speed loop and turning off motor!");
-                    ErrorLogging.logError("DEBUG: Iteration count: " + i);
-                    break;
-                }
-            }
-        }
-
         motorEnable.off();
-        
-        pwm.on(DUTY_CYCLE, FREQUENCY);
+
+        output = (limitSense.isOn() ? FinalState.UNSAFE : FinalState.SAFE);
+
         return output;
     }
 
