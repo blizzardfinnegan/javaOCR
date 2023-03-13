@@ -249,6 +249,16 @@ public class OpenCVFacade
     {
         Mat uncroppedImage = takePicture(cameraName);
         Rect roi = selectROI("Pick Crop Location", uncroppedImage);
+        if(roi.x() == 0 && roi.y() == 0 && roi.width() == 0 && roi.height() == 0)
+        {
+            ErrorLogging.logError("Crop error! - Invalid crop selection.");
+            ErrorLogging.logError("If the crop region did not have a box indicating is location, please restart the program.");
+            ConfigFacade.setValue(cameraName,ConfigProperties.CROP_X,ConfigProperties.CROP_X.getDefaultValue());
+            ConfigFacade.setValue(cameraName,ConfigProperties.CROP_Y,ConfigProperties.CROP_Y.getDefaultValue());
+            ConfigFacade.setValue(cameraName,ConfigProperties.CROP_W,ConfigProperties.CROP_W.getDefaultValue());
+            ConfigFacade.setValue(cameraName,ConfigProperties.CROP_H,ConfigProperties.CROP_H.getDefaultValue());
+            return;
+        }
         ConfigFacade.setValue(cameraName,ConfigProperties.CROP_X, roi.x());
         ConfigFacade.setValue(cameraName,ConfigProperties.CROP_Y, roi.y());
         ConfigFacade.setValue(cameraName,ConfigProperties.CROP_W, roi.width());
