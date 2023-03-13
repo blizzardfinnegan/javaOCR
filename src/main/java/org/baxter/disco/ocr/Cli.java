@@ -337,8 +337,50 @@ public class Cli
         println("3. Change Threshold Value");
         println("4. Toggle crop");
         println("5. Toggle threshold");
-        println("6. Exit");
+        println("6. Help");
+        println("7. Exit");
         println("====================================");
+    }
+
+    /**
+     * Pre-defined menu for printing camera configuration options
+     */
+    private static void printCameraConfigHelpMenu()
+    {
+        println("\n\n");
+        println("============================================================");
+        println("Camera Config Menu options:");
+        println("------------------------------------------------------------");
+        println("1. Change Crop Region:");
+        println("\tChange where to crop the image down to.");
+        println("\tThis crop should only include the numbers");
+        println("\ton the screen of the DUT, and not include");
+        println("\tthe battery symbol, the degree symbol, or");
+        println("\tany other additional items on the screen.");
+        println("2. Change Composite Frame Count:");
+        println("\tChange the number of images to stack on top of each other.");
+        println("\tA higher number here can compensate slightly for low ");
+        println("\tthreshold value.");
+        println("");
+        println("3. Change Threshold Value:");
+        println("\tChange the threshold point used on the image.");
+        println("\tValid numbers range from 0 to 255.");
+        println("\tA higher number will make more of the image black.");
+        println("\tA lower  number will make more of the image white.");
+        println("");
+        println("4. Toggle crop:");
+        println("\tTurn off cropping for the preview.");
+        println("");
+        println("5. Toggle threshold:");
+        println("\tTurn off thesholding for the preview.");
+        println("");
+        println("6. Help:");
+        println("\tShow this menu");
+        println("");
+        println("7. Exit:");
+        println("\t Exit to the previous menu to pick another camera");
+        println("============================================================");
+        println("Press enter to continue...");
     }
 
     /** 
@@ -404,6 +446,10 @@ public class Cli
                             modifiedProperty = ConfigProperties.THRESHOLD;
                             break;
                         case 6:
+                            printCameraConfigHelpMenu();
+                            inputScanner.nextLine();
+                            break;
+                        case 7:
                             modifiedProperty = ConfigProperties.PRIME;
                             break;
                         default:
