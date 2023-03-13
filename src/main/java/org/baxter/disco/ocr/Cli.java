@@ -68,16 +68,14 @@ public class Cli
 
     static
     {
-        ErrorLogging.logError("DEBUG: START OF PROGRAM");
-    }
-
-    public static void main(String[] args)
-    {
-        //Beginning message to user
         ErrorLogging.logError("========================");
         ErrorLogging.logError("Accuracy Over Life Test");
         ErrorLogging.logError("Version: " + version);
         ErrorLogging.logError("========================");
+    }
+
+    public static void main(String[] args)
+    {
         try{
             inputScanner = new Scanner(System.in);
 
