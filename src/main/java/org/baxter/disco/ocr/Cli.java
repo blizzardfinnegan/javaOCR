@@ -654,7 +654,7 @@ public class Cli
                     LOCK.unlock();
                     while(!LOCK.tryLock()) {}
                     resultMap.put(file,result);
-                    ErrorLogging.logError("Tesseract final output: " + result);
+                    ErrorLogging.logError("Parsed value from camera " + cameraName +": " + result);
                     LOCK.unlock();
                     if(result <= 10  || 
                        result >= 100 || 
