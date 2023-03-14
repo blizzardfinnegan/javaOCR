@@ -4,7 +4,8 @@
 
 ### OpenCVFacade
 
-- [ ] completeProcess should have more robust file output checking
+- [ ] Break out compose into a separate function
+- [ ] saveImage should have more robust file output checking
 
 ## Low-priority improvements
 

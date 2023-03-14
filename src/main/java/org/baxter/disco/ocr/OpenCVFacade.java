@@ -90,29 +90,14 @@ public class OpenCVFacade
     /**
      * Default camera creator function.
      * Creates a camera, and adds it to cameraMap.
-     * Uses values in constants, listed previous.
+     * Uses {@link #IMG_WIDTH}, {@link #IMG_HEIGHT}, {@value #IMG_WIDTH}
      *
      * @param name      Name of the new camera
      * @param location  Location of the new camera
      */
     private static void newCamera(String name, String location)
     {
-        newCamera(name, location, IMG_WIDTH, IMG_HEIGHT);
-    }
-
-    /**
-     * Camera creator function, with custom width and height.
-     * Creates a camera, and adds it to cameraMap.
-     * Defaults to {@link #CAMERA_CODEC} definition.
-     *
-     * @param name      Name of the new camera
-     * @param location  Location of the new camera
-     * @param width     Width of the camera's image, in pixels.
-     * @param height    height of the camera's image, in pixels.
-     */
-    private static void newCamera(String name, String location, int width, int height)
-    {
-        newCamera(name, location, width, height, CAMERA_CODEC);
+        newCamera(name, location, IMG_WIDTH, IMG_HEIGHT, CAMERA_CODEC);
     }
 
     /**
@@ -166,7 +151,7 @@ public class OpenCVFacade
      * @param cameraName    Name of the camera to take a picture with.
      *
      * @return              null if camera doesn't exist, or if capture fails;
-     *                      otherwise, Frame of the taken image
+     *                      otherwise, Mat of the taken image
      */
     private static Mat takePicture(String cameraName)
     {
@@ -224,7 +209,7 @@ public class OpenCVFacade
      * @param cameraName    Name of the camera to take a picture with.
      * @param frameCount    The number of images to take.
      *
-     * @return List of Frames taken from the camera. List is in order
+     * @return List of {@link Mat} taken from the camera. List is in order
      */
     private static List<Mat> takeBurst(String cameraName, int frameCount)
     {
@@ -268,7 +253,7 @@ public class OpenCVFacade
     /**
      * Crop a given image, based on dimensions in the configuration.
      *
-     * @param image         Frame taken from the camera
+     * @param image         Mat taken from the camera
      * @param cameraName    Name of the camera the frame is from
      */
     private static Mat crop(Mat image, String cameraName)
@@ -278,18 +263,18 @@ public class OpenCVFacade
         int width = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_W);
         int height = (int)ConfigFacade.getValue(cameraName,ConfigProperties.CROP_H);
         Rect roi = new Rect(x,y,width,height);
-        return crop(image, roi,cameraName);
+        return crop(image, roi);
     }
 
     /** 
      * Crop the given image, based on dimensions defined in a {@link Rect}
      *
-     * @param image         Frame taken from the camera
+     * @param image         Mat taken from the camera
      * @param roi           The region of interest to crop the image to
      *
-     * @return Frame of the cropped image
+     * @return Mat of the cropped image
      */
-    private static Mat crop(Mat image, Rect roi, String cameraName)
+    private static Mat crop(Mat image, Rect roi)
     {
         Mat output = image.apply(roi).clone();
         return output;
@@ -300,24 +285,38 @@ public class OpenCVFacade
      * Put the given image through a binary threshold.
      * This reduces the image from greyscale to only pure white and black pixels.
      *
-     * @param image     Frame taken from the camera.
+     * @param image     Mat taken from the camera.
      *
-     * @return Frame of the thresholded image
+     * @return Mat of the thresholded image
      */
     private static Mat thresholdImage(Mat image,String cameraName)
     {
+        double thresholdValue = ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE);
+        return thresholdImage(image, thresholdValue);
+    }
+
+    /**
+     * Put the given image through a binary threshold.
+     * This reduces the image from greyscale to only pure white and black pixels.
+     *
+     * @param image     Mat taken from the camera.
+     *
+     * @return Mat of the thresholded image
+     */
+    private static Mat thresholdImage(Mat image, double thresholdValue)
+    {
         Mat output = image;
         Mat in = image;
-        double thresholdValue = ConfigFacade.getValue(cameraName,ConfigProperties.THRESHOLD_VALUE);
         threshold(in,output,thresholdValue,255,THRESH_BINARY);
         return output;
     }
 
     /**
-     * Save input Frame at the location given.
+     * Save input image at the location given.
      *
      * @param image         Image to be saved.
      * @param fileLocation  Where to save the image.
+     * @param cameraName    Name of the camera the image came from.
      *
      * @return File if save was successful, otherwise null
      */
@@ -340,6 +339,7 @@ public class OpenCVFacade
      * @param images        List of images to be composed
      * @param threshold     Whether to put the image through a binary threshold
      * @param crop          Whether to crop the image
+     * @param cameraName    Name of the camera the images came from (used to determine crop sizing and threshold value)
      *
      * @return A single image, found by boolean AND-ing together all parsed images.
      */

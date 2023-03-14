@@ -31,6 +31,7 @@ public class TesseractFacade
     private static TessBaseAPI api;
 
     /**
+     * <pre>
      * OCR engine mode.
      *
      * From https://ai-facets.org/tesseract-ocr-best-practices/:
@@ -40,6 +41,7 @@ public class TesseractFacade
      *  3: Default, based on what is available
      *
      * As I didn't write the training data, and don't actually know what kind of network the training set requires, this value is set to default.
+     * </pre>
      */
     private static final int OCR_ENGINE_MODE = 3;
 
