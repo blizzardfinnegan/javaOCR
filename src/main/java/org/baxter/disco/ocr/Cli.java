@@ -684,12 +684,6 @@ public class Cli
 
 
     /**
-     * Function used if a config file was successfully imported.
-     */
-    public static void configImported()
-    { camerasConfigured = true; }
-
-    /**
      * Function that closes GPIO and logging.
      */
     private static void close()

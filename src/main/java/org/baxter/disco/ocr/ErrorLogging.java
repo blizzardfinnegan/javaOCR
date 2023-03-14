@@ -85,8 +85,7 @@ public class ErrorLogging
      * Logs error thrown by runtime.
      * Prepends the current date and time to the log line.
      *
-     * @param error     Pass in the appropriate error,
-     *                  for it to be parsed and logged.
+     * @param error     Any error being thrown to be logged.
      */
     public static void logError(Throwable error)
     {
@@ -97,13 +96,9 @@ public class ErrorLogging
     }
 
     /**
-     * Logs error manually caught by user.
-     * Prepends the current date and time to the log line.
-     * Particularly useful for catching potential errors that do not 
-     * eplicitly throw an error.
+     * Logs data manually set by the developer.
      *
-     * @param error     Pass in the necessary error information,
-     *                  as a string.
+     * @param error     Any information to save to the log file.
      */
     public static void logError(String error)
     {
@@ -116,8 +111,6 @@ public class ErrorLogging
 
     /**
      * Close all open logs. 
-     *
-     * !!! CALL ONCE, AT END OF PROGRAM !!!
      */
     public static void closeLogs() 
     { 

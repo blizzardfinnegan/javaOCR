@@ -85,50 +85,62 @@ public class MovementFacade
     //Pi GPIO pin objects
     
     /**
+     * <pre>
      * Upper limit switch object.
      * 
      * Status: High; Upper limit switch has been reached.
      * Status: Low; Upper limit switch has not been reached.
+     * </pre>
      */
     private static DigitalInput upperLimit;
 
     /**
+     * <pre>
      * Lower limit switch object.
      * 
      * Status: High; Lower limit switch has been reached.
      * Status: Low; Lower limit switch has not been reached.
+     * </pre>
      */
     private static DigitalInput lowerLimit;
 
     /**
-     * Lower limit switch object.
+     * <pre>
+     * Run switch object.
      *
      * Status: High; Test may continue.
      * Status: Low; Test must stop immediately.
+     * </pre>
      */
     private static DigitalInput runSwitch;
 
     /**
+     * <pre>
      * Motor power object.
      *
      * Status: High; Motor starts moving, in the direction defined by {@link #motorDirection}.
      * Status: Low; Motor stops moving.
+     * </pre>
      */
     private static DigitalOutput motorEnable;
 
     /**
+     * <pre>
      * Defines the movement direction for the motor enabled by {@link #motorEnable}.
      *
      * Status: High; Motor will move upwards.
      * Status: Low; Motor will move downwards.
+     * </pre>
      */
     private static DigitalOutput motorDirection;
 
     /**
+     * <pre>
      * Piston control pin object.
      *
      * Status: High; Piston is extended.
      * Status: Low; Piston is retracted.
+     * </pre>
      */
     private static DigitalOutput pistonActivate;
 
@@ -165,13 +177,13 @@ public class MovementFacade
 
         pi4j = Pi4J.newAutoContext();
 
-        upperLimit = inputBuilder("upperLimit", "Upper Limit Switch", UPPER_LIMIT_ADDR);
-        lowerLimit = inputBuilder("lowerLimit", "Lower Limit Switch", LOWER_LIMIT_ADDR);
-        runSwitch  = inputBuilder("runSwitch" , "Run Switch"        , RUN_SWITCH_ADDR);
+        upperLimit = inputBuilder(UPPER_LIMIT_ADDR);
+        lowerLimit = inputBuilder(LOWER_LIMIT_ADDR);
+        runSwitch  = inputBuilder(RUN_SWITCH_ADDR);
 
-        motorEnable    = outputBuilder("motorEnable"   , "Motor Enable"   , MOTOR_ENABLE_ADDR);
-        motorDirection = outputBuilder("motorDirection", "Motor Direction", MOTOR_DIRECTION_ADDR);
-        pistonActivate = outputBuilder("piston"        , "Piston Activate", PISTON_ADDR);
+        motorEnable    = outputBuilder(MOTOR_ENABLE_ADDR);
+        motorDirection = outputBuilder(MOTOR_DIRECTION_ADDR);
+        pistonActivate = outputBuilder(PISTON_ADDR);
 
         findDistance();
     }
@@ -180,16 +192,13 @@ public class MovementFacade
     /**
      * Builder function for DigitalInput pins. 
      *
-     * @param id        ID of the new {@link DigitalInput} pin.
-     * @param name      Name of the new {@link DigitalInput} pin.
      * @param address   BCM address of the {@link DigitalInput} pin.
      *
      * @return newly created {@link DigitalInput} object.
      */
-    private static DigitalInput inputBuilder(String id, String name, int address)
+    private static DigitalInput inputBuilder(int address)
     { 
         DigitalInputConfigBuilder configBuilder = DigitalInput.newConfigBuilder(pi4j)
-                                                              .id(id)
                                                               .address(address)
                                                               .pull(PullResistance.PULL_DOWN)
                                                               .debounce(3000L)
@@ -200,16 +209,13 @@ public class MovementFacade
     /**
      * Builder function for DigitalOutput pins. 
      *
-     * @param id        ID of the new {@link DigitalOutput} pin.
-     * @param name      Name of the new {@link DigitalOutput} pin.
      * @param address   BCM address of the {@link DigitalOutput} pin.
      *
      * @return newly created {@link DigitalOutput} object
      */
-    private static DigitalOutput outputBuilder(String id, String name, int address)
+    private static DigitalOutput outputBuilder(int address)
     {
         DigitalOutputConfigBuilder configBuilder = DigitalOutput.newConfigBuilder(pi4j)
-                                                                .id(id)
                                                                 .address(address)
                                                                 .shutdown(DigitalState.LOW)
                                                                 .initial(DigitalState.LOW)
@@ -310,7 +316,10 @@ public class MovementFacade
      * Detects if the limit switch is active before activating motor.
      *
      * @param moveUp    Whether to send the fixture up or down. (True = up, False = down)
-     * @return true if movement was successful; otherwise false
+     * @return {@link FinalState} of the final status of the motor.
+     * FAILED if travel fails. (Theoretically possible, no return state though)
+     * UNSAFE if travel is stopped by the limit switch.
+     * SAFE if travel is stopped by timeout, or if fixture is already at limit switch before movement.
      */
     private static FinalState gotoLimit(boolean moveUp)
     {
@@ -329,7 +338,7 @@ public class MovementFacade
             ErrorLogging.logError("DEBUG: Sending fixture down...");
         }
 
-        if(limitSense.isHigh()) return FinalState.SAFE;
+        if(limitSense.isOn()) return FinalState.SAFE;
 
         int totalPollCount = (int)(TRAVEL_DIST);
         int highSpeedPolls = (int)(totalPollCount * SLOW_POLL_FACTOR);

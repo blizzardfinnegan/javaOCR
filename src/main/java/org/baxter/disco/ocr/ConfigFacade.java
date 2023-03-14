@@ -52,7 +52,7 @@ public class ConfigFacade
      * For values that are ultimately ints, truncate.
      * For values that are ultimately booleans, anything that isn't 0 should be considered True.    
      */
-    private static final Map<String, Map<ConfigProperties, Double>> configMap = new HashMap<>();
+    private static final Map<String, Map<ConfigProperties, Double>> CONFIG_MAP = new HashMap<>();
 
     /**
      * Temporary storage for the DUT's serial number.
@@ -149,15 +149,15 @@ public class ConfigFacade
     public static double getValue(String cameraName, ConfigProperties property)
     {
         double output = 0.0;
-        if(!configMap.keySet().contains(cameraName)) 
+        if(!CONFIG_MAP.keySet().contains(cameraName)) 
         {
             ErrorLogging.logError("CONFIG ERROR!!! - Invalid camera name: " + cameraName);
-            ErrorLogging.logError("\tKey set: " + configMap.keySet().toString());
+            ErrorLogging.logError("\tKey set: " + CONFIG_MAP.keySet().toString());
             ErrorLogging.logError("\tProperty: " + property.getConfig());
-            ErrorLogging.logError("\tconfigMap keys: " + configMap.keySet().toString());
+            ErrorLogging.logError("\tCONFIG_MAP keys: " + CONFIG_MAP.keySet().toString());
             return output;
         }
-        Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
+        Map<ConfigProperties,Double> cameraConfig = CONFIG_MAP.get(cameraName);
         output = cameraConfig.get(property);
         return output;
     }
@@ -230,7 +230,7 @@ public class ConfigFacade
         List<String> activeCameras = new ArrayList<>(OpenCVFacade.getCameraNames());
         if(!activeCameras.contains(cameraName)) return output;
 
-        Map<ConfigProperties,Double> cameraConfig = configMap.get(cameraName);
+        Map<ConfigProperties,Double> cameraConfig = CONFIG_MAP.get(cameraName);
         if(cameraConfig == null) return output;
 
         Double oldValue = cameraConfig.get(property);
@@ -306,7 +306,7 @@ public class ConfigFacade
                 cameraConfig.put(property,propertyValue);
                 CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
-            configMap.put(camera,cameraConfig);
+            CONFIG_MAP.put(camera,cameraConfig);
         }
 
         try
@@ -347,7 +347,7 @@ public class ConfigFacade
             for(ConfigProperties property : ConfigProperties.values())
             {
                 String propertyName = camera + "." + property.getConfig();
-                String propertyValue = configMap.get(camera).get(property).toString();
+                String propertyValue = CONFIG_MAP.get(camera).get(property).toString();
                 CONFIG_STORE.setProperty(propertyName,propertyValue);
             }
         }
@@ -379,8 +379,8 @@ public class ConfigFacade
      */
     public static boolean loadConfig(String filename)
     {
-        //Check if the current configMap is empty
-        boolean emptyMap = configMap.keySet().size() == 0;
+        //Check if the current CONFIG_MAP is empty
+        boolean emptyMap = CONFIG_MAP.keySet().size() == 0;
         boolean output = false;
 
         //If the config file we're trying to load from doesn't exist, failover to saving
@@ -427,13 +427,13 @@ public class ConfigFacade
                 if(savedSection.size() == 0)
                 { saveSingleDefault(sectionName); }
 
-                if(emptyMap) configMap.put(sectionName,savedSection);
+                if(emptyMap) CONFIG_MAP.put(sectionName,savedSection);
                 else
                 {
-                    for(String key : configMap.keySet())
+                    for(String key : CONFIG_MAP.keySet())
                     {
                         if( key.equals(sectionName))
-                        { configMap.put(key,savedSection); }
+                        { CONFIG_MAP.put(key,savedSection); }
                     }
                 }
             }
@@ -470,7 +470,7 @@ public class ConfigFacade
             cameraConfig.put(property,propertyValue);
             CONFIG_STORE.setProperty(propertyName,propertyValue);
         }
-        configMap.put(sectionName,cameraConfig);
+        CONFIG_MAP.put(sectionName,cameraConfig);
         try
         { 
             CONFIG_BUILDER.save(); 

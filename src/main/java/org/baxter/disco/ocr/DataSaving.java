@@ -156,7 +156,6 @@ public class DataSaving
 
     /**
      * Add final totals to the excel document. 
-     * Run at the end of testing.
      *
      * @param cameraCount   The number of cameras that were used.
      */
